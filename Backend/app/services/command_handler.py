@@ -10,7 +10,7 @@ from agents.command_agent.schemas import MRDetails, IssueRef, DiffBundle
 from agents.llm_factory import LLMFactory
 from clients.gitlab import GitlabClient
 from models.bot import Bot
-from core.config import settings
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 

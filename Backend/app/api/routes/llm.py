@@ -4,10 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
 
-from db.models import User, Bot, Llm as LlmModel
-from api.deps import SessionDep, get_current_user
-from clients.openrouter import OpenRouterClient, Model as OpenRouterModel
-from schemas.llm import (
+from app.db.models import User, Bot, Llm as LlmModel
+from app.api.deps import SessionDep, get_current_user
+from app.services.openrouter import OpenRouterClient, Model as OpenRouterModel
+from app.schemas.llm import (
     OpenRouterModelsQuery,
     LlmCreate,
     LlmUpdate,

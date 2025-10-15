@@ -2,7 +2,7 @@ from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, or_
-from db.models import User
+from app.db.models import User
 
 
 async def get_user_by_identifier(

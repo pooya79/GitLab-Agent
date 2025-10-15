@@ -1,8 +1,8 @@
 from typing import Any
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import Text, ForeignKey, JSON, String
-from db.database import Base
-from prompts.smart_review_agent import SMART_REVIEW_AGENT_PROMPT
+from app.db.database import Base
+from app.prompts.smart_review_agent import SMART_REVIEW_AGENT_PROMPT
 
 
 class Bot(Base):

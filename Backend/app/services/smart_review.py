@@ -1,17 +1,17 @@
-from core.log import logger
+from app.core.log import logger
 import httpx
 
 from llama_index.core.llms import ChatMessage
 from sqlalchemy.inspection import inspect
 
-from models.bot import Bot
+from db.models import Bot
 from clients.gitlab import GitlabClient
 from agents.review_agent.smart_review_agent import SmartReviewAgentFactory
-from agents.review_agent.prompts import (
+from app.prompts.smart_review_agent import (
     SMART_REVIEW_AGENT_PROMPT,
     SMART_REVIEW_AGENT_USER_PROMPT,
 )
-from core.config import settings
+from app.core.config import settings
 
 
 async def _get_chat_history(

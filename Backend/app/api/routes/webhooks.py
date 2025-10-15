@@ -3,14 +3,10 @@ import logging
 from fastapi import APIRouter, Request, HTTPException, status
 from fastapi.responses import Response
 
-from api.deps import SessionDep
-from db.models import Bot
-from services.event_handlers import (
-    handle_push_event,
+from app.api.deps import SessionDep
+from app.db.models import Bot
+from app.services.event_handlers import (
     handle_merge_request_event,
-    handle_tag_push_event,
-    handle_issue_event,
-    handle_pipeline_event,
     handle_note_event,
 )
 
@@ -20,11 +16,7 @@ router = APIRouter(tags=["webhooks"])
 
 # map GitLab event names to your handler coroutines
 EVENT_HANDLERS = {
-    "Push Hook": handle_push_event,
     "Merge Request Hook": handle_merge_request_event,
-    "Tag Push Hook": handle_tag_push_event,
-    "Issue Hook": handle_issue_event,
-    "Pipeline Hook": handle_pipeline_event,
     "Note Hook": handle_note_event,
 }
 

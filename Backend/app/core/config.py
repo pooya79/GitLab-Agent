@@ -40,7 +40,8 @@ class Settings(BaseSettings):
 
     ## External services
     gitlab_base: str
-
+    openrouter_api_base: str = "https://openrouter.ai"
+    openrouter_api_key: str | None = None
     logfire_token: str | None = None
 
     ## Agents Configs

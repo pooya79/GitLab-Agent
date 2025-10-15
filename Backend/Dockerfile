@@ -1,5 +1,5 @@
 # Use a Python image with uv pre-installed
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim
 
 # Setup a non-root user
 RUN groupadd --system --gid 999 nonroot \
@@ -38,8 +38,5 @@ ENTRYPOINT []
 # Use the non-root user to run our application
 USER nonroot
 
-# Run the FastAPI application by default
-# Uses `fastapi dev` to enable hot-reloading when the `watch` sync occurs
-# Uses `--host 0.0.0.0` to allow access from outside the container
-# Note in production, you should use `fastapi run` instead
-CMD ["uvicorn", "run", "app.main:app", "reload"]
+# Run the FastAPI application
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

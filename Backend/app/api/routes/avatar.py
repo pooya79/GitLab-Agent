@@ -1,9 +1,9 @@
 from pathlib import Path
 
 from fastapi import APIRouter, Depends
-from schemas.avatar import AvatarList, AvatarItem
-from db.models import User
-from api.deps import get_current_user
+from app.schemas.avatar import AvatarList, AvatarItem
+from app.db.models import User
+from app.api.deps import get_current_user
 
 IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp", ".gif"}
 AVATARS_SUBDIR = "avatars"

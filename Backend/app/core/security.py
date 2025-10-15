@@ -1,8 +1,8 @@
 import jwt
 from datetime import datetime, timedelta, timezone
 from passlib.context import CryptContext
-from core.config import settings
-from schemas.token import TokenPayload
+from app.core.config import settings
+from app.schemas.token import TokenPayload
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

@@ -8,9 +8,9 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.responses import JSONResponse, Response
 from sqlalchemy import select, func, and_
 
-from api.deps import SessionDep, get_current_user
-from db.models import Bot, Llm
-from schemas.bot import (
+from app.api.deps import SessionDep, get_current_user
+from app.db.models import Bot, Llm
+from app.schemas.bot import (
     BotCreate,
     BotRead,
     BotReadList,
@@ -23,8 +23,8 @@ from clients.gitlab import (
     GitlabClient,
     GitLabAccessLevel,
 )
-from db.models import User
-from core.config import settings
+from app.db.models import User
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 

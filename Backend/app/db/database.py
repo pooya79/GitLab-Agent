@@ -1,10 +1,10 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, declarative_base
-from core.config import settings
-import models  # noqa: F401
+from app.core.config import settings
+import app.db.models  # noqa: F401
 
 # Database URL — adjust for your environment
-SQLALCHEMY_DATABASE_URL = settings.sql_database.url
+SQLALCHEMY_DATABASE_URL = settings.sqlite.url
 
 # Create an async engine
 async_engine = create_async_engine(

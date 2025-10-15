@@ -1,5 +1,5 @@
 services:
-  web:
+  ga_backend:
     # Build the image from the Dockerfile in the current directory
     build:
       context: ./Backend
@@ -15,7 +15,7 @@ services:
       watch:
         # Sync the working directory with the `/app` directory in the container
         - action: sync
-          path: .
+          path: ./Backend
           target: /app
           # Exclude the project virtual environment — it could be for a
           # different platform in the container
@@ -25,18 +25,10 @@ services:
         # Rebuild the image if dependencies change by checking uv.lock
         - action: rebuild
           path: ./uv.lock
+    env_file:
+      - .env
     volumes:
-      - sqlite-database:/data
-    environment:
-      SQLITE_URL: ${SQLITE_URL}
-
-  sqlite-web:
-    image: coleifer/sqlite-web
-    ports:
-      - "8001:8080"
-    volumes:
-      - sqlite-database:/data
-    command: sqlite_web /data/database.db --host 0.0.0.0
+      - ./data:/data
 
 volumes:
-  sqlite-database:
+  data:

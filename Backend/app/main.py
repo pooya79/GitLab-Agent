@@ -1,6 +1,4 @@
-from dotenv import load_dotenv
 import os
-
 import logfire
 from sqlalchemy import select
 from contextlib import asynccontextmanager
@@ -9,20 +7,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
-from core.log import logger
-from db.models import User
-from core.config import settings
-from db.database import async_engine, Base, AsyncSessionLocal
-from core.security import hash_password
-from api.main import api_router
-
-load_dotenv()
-
-# Setup logfire for monitoring
-if settings.logfire_token:
-    logfire.configure(token=settings.logfire_token)
-    logfire.instrument_pydantic_ai()
-    logfire.instrument_fastapi()
+from app.core.log import logger
+from app.core.config import settings
+from app.core.security import hash_password
+from app.db.models import User
+from app.db.database import async_engine, Base, AsyncSessionLocal
+from app.api.main import api_router
 
 
 @asynccontextmanager
@@ -56,6 +46,12 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title=settings.project_name, lifespan=lifespan)
+
+# Setup logfire for monitoring
+if settings.logfire_token:
+    logfire.configure(token=settings.logfire_token)
+    logfire.instrument_pydantic_ai()
+    logfire.instrument_fastapi(app, capture_headers=True)
 
 ASSETS_DIR = Path(__file__).resolve().parent / "assets"
 AVATARS_DIR = ASSETS_DIR / "avatars"
