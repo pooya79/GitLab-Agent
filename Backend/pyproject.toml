@@ -1,0 +1,19 @@
+[project]
+name = "GitLab-Agent"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "aiosqlite>=0.21.0",
+    "fastapi>=0.118.3",
+    "uvicorn>=0.37.0",
+    "pydantic-ai>=1.0.17",
+    "pydantic-settings>=2.11.0",
+    "sqlalchemy>=2.0.44",
+    "python-gitlab>=6.4.0",
+    "logfire>=4.13.2",
+    "pyjwt>=2.10.1",
+    "passlib[bcrypt]>=1.7.4",
+    "jinja2>=3.1.6",
+]

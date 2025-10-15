@@ -1,0 +1,42 @@
+services:
+  web:
+    # Build the image from the Dockerfile in the current directory
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+
+    # Host the FastAPI application on port 8000
+    ports:
+      - "8000:8000"
+
+    develop:
+      # Create a `watch` configuration to update the app
+      # https://docs.docker.com/compose/file-watch/#compose-watch-versus-bind-mounts
+      watch:
+        # Sync the working directory with the `/app` directory in the container
+        - action: sync
+          path: .
+          target: /app
+          # Exclude the project virtual environment — it could be for a
+          # different platform in the container
+          ignore:
+            - .venv/
+
+        # Rebuild the image if dependencies change by checking uv.lock
+        - action: rebuild
+          path: ./uv.lock
+    volumes:
+      - sqlite-database:/data
+    environment:
+      SQLITE_URL: ${SQLITE_URL}
+
+  sqlite-web:
+    image: coleifer/sqlite-web
+    ports:
+      - "8001:8080"
+    volumes:
+      - sqlite-database:/data
+    command: sqlite_web /data/database.db --host 0.0.0.0
+
+volumes:
+  sqlite-database:
