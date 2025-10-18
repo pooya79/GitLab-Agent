@@ -1,17 +1,14 @@
 import os
 import logfire
-from sqlalchemy import select
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
-from app.core.log import logger
+from app.core.log import logger  # noqa: F401
 from app.core.config import settings
-from app.core.security import hash_password
-from app.db.models import User
-from app.db.database import async_engine, Base, AsyncSessionLocal
+from app.db.database import async_engine, Base
 from app.api.main import api_router
 
 
@@ -23,22 +20,6 @@ async def lifespan(app: FastAPI):
     # Startup: create all tables
     async with async_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-
-    async with AsyncSessionLocal() as session:
-        # look up by username (or email)
-        existing = await session.execute(
-            select(User).where(User.username == settings.admin_username)
-        )
-        if not existing.scalars().first():
-            admin = User(
-                username=settings.admin_username,
-                email=settings.admin_email,
-                hashed_password=hash_password(settings.admin_password),
-            )
-            session.add(admin)
-            await session.commit()
-
-            logger.info(f"Created admin user '{settings.admin_username}'")
     yield
 
     # Shutdown: dispose the async engine

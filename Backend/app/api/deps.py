@@ -23,7 +23,7 @@ SessionDep = Annotated[AsyncSession, Depends(get_db)]
 
 
 async def get_current_user(
-    db: SessionDep,
+    session: SessionDep,
     token: str = Depends(oauth2_scheme),
 ):
     creds_exc = HTTPException(
@@ -36,7 +36,7 @@ async def get_current_user(
     except Exception:
         raise creds_exc
 
-    user = await get_user_by_identifier(db, payload.sub)
+    user = await get_user_by_identifier(session, payload.sub)
     if not user:
         raise creds_exc
     return user

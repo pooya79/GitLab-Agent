@@ -6,9 +6,16 @@ class SQLDatabaseSettings(BaseModel):
     url: str = "sqlite+aiosqlite:////data/database.db"
 
 
+class GitlabSettings(BaseModel):
+    base: str
+    client_id: str
+    client_secret: str
+
+
 class Settings(BaseSettings):
     # --- grouped sub-settings ---
     sqlite: SQLDatabaseSettings = SQLDatabaseSettings()
+    gitlab: GitlabSettings = GitlabSettings()
 
     model_config = SettingsConfigDict()
 
@@ -39,7 +46,6 @@ class Settings(BaseSettings):
     admin_password: str
 
     ## External services
-    gitlab_base: str
     openrouter_api_base: str = "https://openrouter.ai"
     openrouter_api_key: str | None = None
     logfire_token: str | None = None
