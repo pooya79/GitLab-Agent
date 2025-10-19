@@ -1,9 +1,11 @@
 from typing import Any, Optional
 import datetime as dt
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, declarative_base
 from sqlalchemy import Text, ForeignKey, JSON, String, UniqueConstraint, Index, DateTime
-from app.db.database import Base
 from app.prompts.smart_review_agent import SMART_REVIEW_AGENT_PROMPT
+
+# Base class for models
+Base = declarative_base()
 
 
 class Bot(Base):
@@ -65,7 +67,7 @@ class Llm(Base):
 class OAuthAccount(Base):
     __tablename__ = "oauth_accounts"
     __table_args__ = (
-        UniqueConstraint("provider", "provider_account_id", name="uq_provider_account"),
+        UniqueConstraint("user_id", "provider", name="uq_user_provider"),
         Index("ix_user_provider", "user_id", "provider"),
     )
 
@@ -75,10 +77,12 @@ class OAuthAccount(Base):
     )
 
     provider: Mapped[str] = mapped_column(String(50), nullable=False)
-    provider_account_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    provider_account_id: Mapped[str] = mapped_column(
+        String(255), nullable=False, unique=True
+    )
 
     access_token: Mapped[str] = mapped_column(Text, nullable=False)
-    refresh_token_hash: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    refresh_token: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     token_type: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     scope: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     expires_at: Mapped[Optional[dt.datetime]] = mapped_column(nullable=True)
@@ -136,4 +140,17 @@ class Users(Base):
     )
     sessions: Mapped[list[RefreshSession]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
+    )
+
+
+class Cache(Base):
+    __tablename__ = "cache"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, index=True)
+    key: Mapped[str] = mapped_column(
+        String(255), unique=True, index=True, nullable=False
+    )
+    value: Mapped[str] = mapped_column(Text, nullable=False)
+    expires_at: Mapped[Optional[dt.datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
     )

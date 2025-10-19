@@ -3,7 +3,7 @@ from pydantic_settings import SettingsConfigDict, BaseSettings
 
 
 class SQLDatabaseSettings(BaseModel):
-    url: str = "sqlite+aiosqlite:////data/database.db"
+    url: str
 
 
 class GitlabSettings(BaseModel):
@@ -13,11 +13,11 @@ class GitlabSettings(BaseModel):
 
 
 class Settings(BaseSettings):
-    # --- grouped sub-settings ---
-    sqlite: SQLDatabaseSettings = SQLDatabaseSettings()
-    gitlab: GitlabSettings = GitlabSettings()
+    model_config = SettingsConfigDict(env_nested_delimiter="_", env_nested_max_split=1)
 
-    model_config = SettingsConfigDict()
+    # --- grouped sub-settings ---
+    sqlite: SQLDatabaseSettings
+    gitlab: GitlabSettings
 
     project_name: str = "Gitlab Agent"
     api_version: int = 1
@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     secret_key: str = "test"
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
+    refresh_token_expire_days: int = 7
 
     ## Admin User
     admin_username: str

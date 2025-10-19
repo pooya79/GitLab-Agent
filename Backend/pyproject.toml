@@ -18,5 +18,4 @@ dependencies = [
     "jinja2>=3.1.6",
     "pydantic[email]>=2.12.2",
     "opentelemetry-instrumentation-fastapi>=0.58b0",
-    "authlib>=1.6.5",
 ]

@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
 import app.db.models  # noqa: F401
 
@@ -18,6 +18,3 @@ AsyncSessionLocal = sessionmaker(
     class_=AsyncSession,
     expire_on_commit=False,  # optional, so objects don’t expire on you
 )
-
-# Base class for models
-Base = declarative_base()

@@ -32,7 +32,7 @@ def new_refresh_token() -> tuple[str, str]:
 
 
 def create_jti() -> str:
-    return uuid.uuid4()
+    return str(uuid.uuid4())
 
 
 def decode_token(token: str) -> dict:

@@ -8,7 +8,8 @@ from pathlib import Path
 
 from app.core.log import logger  # noqa: F401
 from app.core.config import settings
-from app.db.database import async_engine, Base
+from app.db.database import async_engine
+from app.db.models import Base
 from app.api.main import api_router
 
 
