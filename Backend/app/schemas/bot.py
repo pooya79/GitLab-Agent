@@ -1,30 +1,34 @@
-from typing import Optional, List
-from pydantic import BaseModel, Field
+from typing import Optional, List, Any, Dict
+from pydantic import BaseModel
 
 
 # ---- Create ----
 class BotCreate(BaseModel):
     gitlab_project_path: str
-    gitlab_access_token: str
-    llm_name: str
+    gitlab_access_token_id: Optional[int] = None
+    gitlab_access_token: Optional[str] = None
+    llm_model: str
+    llm_context_window: int
+    llm_output_tokens: int
+    llm_temperature: float
+    llm_additional_kwargs: Optional[Dict[str, Any]] = None
+    avatar_url: Optional[str] = None
 
 
 # ---- Read ----
 class BotRead(BaseModel):
     id: int
+    is_active: bool
     gitlab_project_path: str
-    gitlab_access_token: str
-    gitlab_access_token_name: str
+    gitlab_access_token_id: Optional[int] = None
     gitlab_webhook_id: Optional[int] = None
     gitlab_webhook_secret: Optional[str] = None
-    gitlab_scopes: List[str] = Field(default_factory=list)
-    gitlab_access_level: Optional[int] = None
-    smart_review_system_prompt: Optional[str] = None
-
-    # Associated LLM by name
-    llm_name: Optional[str] = None
-
-    avatar_name: Optional[str] = None
+    avatar_url: Optional[str] = None
+    llm_model: str
+    llm_context_window: int
+    llm_output_tokens: int
+    llm_temperature: float
+    llm_additional_kwargs: Optional[Dict[str, Any]] = None
 
     model_config = {"from_attributes": True}
 
@@ -37,15 +41,18 @@ class BotCreateResponse(BaseModel):
 
 # ---- Update (can change everything it can) ----
 class BotUpdate(BaseModel):
+    is_active: Optional[bool] = None
     gitlab_project_path: Optional[str] = None
+    gitlab_access_token_id: Optional[int] = None
     gitlab_access_token: Optional[str] = None
     gitlab_webhook_id: Optional[int] = None
     gitlab_webhook_secret: Optional[str] = None
-    gitlab_scopes: Optional[List[str]] = None
-    gitlab_access_level: Optional[int] = None
-    smart_review_system_prompt: Optional[str] = None
-    llm_name: Optional[str] = None  # re-point/clear LLM by name
-    avatar_name: Optional[str] = None
+    avatar_url: Optional[str] = None
+    llm_model: Optional[str] = None
+    llm_context_window: Optional[int] = None
+    llm_output_tokens: Optional[int] = None
+    llm_temperature: Optional[float] = None
+    llm_additional_kwargs: Optional[Dict[str, Any]] = None
 
 
 # ---- Update (response) ----
@@ -60,5 +67,7 @@ class BotReadList(BaseModel):
     items: List[BotRead]
 
 
-class BotActiveResponse(BaseModel):
+class BotStatusResponse(BaseModel):
+    exists: bool
     active: bool
+    status_message: Optional[str] = None

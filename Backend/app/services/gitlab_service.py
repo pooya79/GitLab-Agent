@@ -3,6 +3,8 @@ from gitlab.v4.objects import Project, ProjectAccessToken, ProjectHook
 
 from app.core.config import settings
 
+GitLabAccessLevel = gitlab.const.AccessLevel
+
 
 class GitlabService:
     def __init__(self, oauth_token: str):
@@ -25,14 +27,18 @@ class GitlabService:
         except gitlab.GitlabAuthenticationError:
             return None
 
-    def get_user_projects(self, page: int = 1, per_page: int = 20) -> list[Project]:
+    def list_user_projects(self, page: int = 1, per_page: int = 20) -> list[Project]:
         projects = self.gl.projects.list(
             page=page,
             per_page=per_page,
-            min_access_level=gitlab.const.AccessLevel.MAINTAINER,
+            min_access_level=GitLabAccessLevel.MAINTAINER,
         )
 
         return projects
+    
+    def get_user_project(self, project_id: str | int) -> Project:
+        project = self.gl.projects.get(project_id)
+        return project
 
     def list_project_tokens(self, project_id: str | int) -> list[ProjectAccessToken]:
         tokens = self.gl.projects.get(project_id, lazy=True).access_tokens.list()
@@ -78,13 +84,11 @@ class GitlabService:
     ) -> list[gitlab.v4.objects.ProjectHook]:
         hooks = self.gl.projects.get(project_id, lazy=True).hooks.list()
         return hooks
-    
-    def get_webhook(
-        self, project_id: str | int, hook_id: str | int
-    ) -> ProjectHook:
+
+    def get_webhook(self, project_id: str | int, hook_id: str | int) -> ProjectHook:
         hook = self.gl.projects.get(project_id, lazy=True).hooks.get(hook_id)
         return hook
-    
+
     def create_webhook(
         self,
         project_id: str | int,
@@ -99,8 +103,6 @@ class GitlabService:
         hook_data.update(events)
         hook = self.gl.projects.get(project_id, lazy=True).hooks.create(hook_data)
         return hook
-    
-    def delete_webhook(
-        self, project_id: str | int, hook_id: str | int
-    ) -> None:
+
+    def delete_webhook(self, project_id: str | int, hook_id: str | int) -> None:
         self.gl.projects.get(project_id, lazy=True).hooks.delete(hook_id)

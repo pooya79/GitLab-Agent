@@ -33,7 +33,7 @@ async def get_gitlab_projects(
     Get GitLab projects for the authenticated user.
     """
     gitlab_service = GitlabService(oauth_token=gitlab_oauth_token)
-    projects = gitlab_service.get_user_projects(page=page, per_page=per_page)
+    projects = gitlab_service.list_user_projects(page=page, per_page=per_page)
     if not projects:
         raise HTTPException(status_code=401, detail="Invalid GitLab OAuth token")
 
