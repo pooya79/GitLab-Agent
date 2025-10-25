@@ -8,7 +8,7 @@ import datetime as dt
 from app.api.deps import SessionDep, get_current_user
 from app.auth.jwt import create_access_token, new_refresh_token, create_jti, hash_token
 from app.auth.gitlab import GitlabAuthService
-from app.schemas.auth import RefreshTokenIn, RefreshTokenOut, UserInfo
+from app.schemas.auth import RefreshTokenIn, RefreshTokenOut, UserInfo, GitlabAuthUrl
 from app.db.models import Users, RefreshSession, OAuthAccount
 from app.services.cache_service import CacheService
 from app.core.config import settings
@@ -30,7 +30,8 @@ async def refresh_token(rf_in: RefreshTokenIn, session: SessionDep):
         .join(Users, RefreshSession.user_id == Users.id)
         .where(
             RefreshSession.refresh_token_hash == rf_token_hash,
-            RefreshSession.expires_at > dt.datetime.now(dt.timezone.utc),
+            RefreshSession.expires_at
+            > dt.datetime.now(dt.timezone.utc).replace(tzinfo=None),
         )
     )
     row = result.first()
@@ -54,7 +55,7 @@ async def refresh_token(rf_in: RefreshTokenIn, session: SessionDep):
                 user_id=user.id,
                 jti=new_jti,
                 refresh_token_hash=new_rf_token_hash,
-                expires_at=dt.datetime.now(dt.timezone.utc)
+                expires_at=dt.datetime.now(dt.timezone.utc).replace(tzinfo=None)
                 + dt.timedelta(days=settings.refresh_token_expire_days),
             )
             session.add(new_session)
@@ -105,7 +106,7 @@ async def get_current_user_info(current_user: Users = Depends(get_current_user))
     )
 
 
-@router.get("/gitlab/login")
+@router.get("/gitlab/login", response_model=GitlabAuthUrl)
 async def gitlab_login(request: Request, session: SessionDep):
     """
     Redirect to GitLab for authentication.
@@ -129,10 +130,7 @@ async def gitlab_login(request: Request, session: SessionDep):
     )
     await cache_service.set(f"oauth_state:{state}", cache_data, ttl_seconds=600)
 
-    return JSONResponse(
-        content={"url": authorization_url},
-        status_code=200,  # or 201 if you prefer “created” semantics
-    )
+    return GitlabAuthUrl(url=authorization_url)
 
 
 @router.get("/gitlab/callback", response_model=RefreshTokenOut)
@@ -211,13 +209,15 @@ async def gitlab_auth(code: str, state: str, session: SessionDep):
         oauth_account.token_type = token_response.get("token_type")
         oauth_account.scope = token_response.get("scope")
         oauth_account.expires_at = (
-            dt.datetime.now(dt.timezone.utc)
+            dt.datetime.now(dt.timezone.utc).replace(tzinfo=None)
             + dt.timedelta(seconds=token_response.get("expires_in", 7200))
             if token_response.get("expires_in")
             else None
         )
         oauth_account.profile_json = gitlab_user
-        oauth_account.last_refreshed_at = dt.datetime.now(dt.timezone.utc)
+        oauth_account.last_refreshed_at = dt.datetime.now(dt.timezone.utc).replace(
+            tzinfo=None
+        )
     else:
         # Create new OAuth account
         oauth_account = OAuthAccount(
@@ -228,12 +228,12 @@ async def gitlab_auth(code: str, state: str, session: SessionDep):
             refresh_token=token_response.get("refresh_token"),
             token_type=token_response.get("token_type"),
             scope=token_response.get("scope"),
-            expires_at=dt.datetime.now(dt.timezone.utc)
+            expires_at=dt.datetime.now(dt.timezone.utc).replace(tzinfo=None)
             + dt.timedelta(seconds=token_response.get("expires_in", 7200))
             if token_response.get("expires_in")
             else None,
             profile_json=gitlab_user,
-            last_refreshed_at=dt.datetime.now(dt.timezone.utc),
+            last_refreshed_at=dt.datetime.now(dt.timezone.utc).replace(tzinfo=None),
         )
         session.add(oauth_account)
 
@@ -246,7 +246,7 @@ async def gitlab_auth(code: str, state: str, session: SessionDep):
         user_id=user.id,
         jti=new_jti,
         refresh_token_hash=new_rf_token_hash,
-        expires_at=dt.datetime.now(dt.timezone.utc)
+        expires_at=dt.datetime.now(dt.timezone.utc).replace(tzinfo=None)
         + dt.timedelta(days=settings.refresh_token_expire_days),
     )
     session.add(refresh_session)

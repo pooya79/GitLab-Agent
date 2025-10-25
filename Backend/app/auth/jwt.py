@@ -9,7 +9,7 @@ from app.core.config import settings
 
 def create_access_token(user_id: str, jti: str) -> str:
     """Create a JWT access token."""
-    now = dt.datetime.now(dt.timezone.utc)
+    now = dt.datetime.now(dt.timezone.utc).replace(tzinfo=None)
     payload = {
         "sub": user_id,
         "jti": jti,

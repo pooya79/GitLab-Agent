@@ -7,7 +7,7 @@ from app.db.models import Cache
 
 
 def NOW():
-    return dt.datetime.now(dt.timezone.utc)
+    return dt.datetime.now(dt.timezone.utc).replace(tzinfo=None)
 
 
 class CacheService:

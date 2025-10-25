@@ -20,3 +20,9 @@ class UserInfo(BaseModel):
     avatar_url: Optional[str]
     is_active: bool
     is_superuser: bool
+
+
+class GitlabAuthUrl(BaseModel):
+    url: str
+
+
