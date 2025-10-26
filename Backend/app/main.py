@@ -43,6 +43,7 @@ app.mount(AVATARS_URL_PREFIX, StaticFiles(directory=str(AVATARS_DIR)), name="ava
 
 origins = [
     "http://localhost:3000",
+    settings.frontend_url,
 ]
 
 app.add_middleware(

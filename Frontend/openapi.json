@@ -159,6 +159,45 @@
                         "description": "Successful Response",
                         "content": {
                             "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/token/{session_id}": {
+            "get": {
+                "tags": ["auth"],
+                "summary": "Get Access Token",
+                "description": "Fetch access and refresh tokens using session ID.",
+                "operationId": "get_access_token_api_v1_auth_token__session_id__get",
+                "parameters": [
+                    {
+                        "name": "session_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Session Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/RefreshTokenOut"
                                 }

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 import httpx
+import uuid
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 import datetime as dt
@@ -133,7 +134,7 @@ async def gitlab_login(request: Request, session: SessionDep):
     return GitlabAuthUrl(url=authorization_url)
 
 
-@router.get("/gitlab/callback", response_model=RefreshTokenOut)
+@router.get("/gitlab/callback")
 async def gitlab_auth(code: str, state: str, session: SessionDep):
     """
     Handle the callback from GitLab after user authentication.
@@ -237,13 +238,41 @@ async def gitlab_auth(code: str, state: str, session: SessionDep):
         )
         session.add(oauth_account)
 
+    # Create a session id for the user
+    session_id = uuid.uuid4().hex
+    cache_service = CacheService(session)
+    await cache_service.set(
+        f"session_id:{session_id}", str(user.id), ttl_seconds=60 * 5
+    )  # only 5 minutes
+
+    # Redirect user to frontend with session id
+    frontend_redirect_url = (
+        f"{settings.frontend_url}/login/success?session_id={session_id}"
+    )
+    return RedirectResponse(url=frontend_redirect_url)
+
+
+@router.get("/token/{session_id}", response_model=RefreshTokenOut)
+async def get_access_token(session_id: str, session: SessionDep):
+    """
+    Fetch access and refresh tokens using session ID.
+    """
+    # Fetch user ID from cache using session ID
+    cache_service = CacheService(session)
+    user_id = await cache_service.get(f"session_id:{session_id}")
+
+    if not user_id:
+        raise HTTPException(status_code=400, detail="Invalid or expired session ID")
+
+    user_id = int(user_id)
+
     # Create refresh session for our app
     new_rf_token, new_rf_token_hash = new_refresh_token()
     new_jti = create_jti()
-    new_access_token = create_access_token(user_id=str(user.id), jti=new_jti)
+    new_access_token = create_access_token(user_id=str(user_id), jti=new_jti)
 
     refresh_session = RefreshSession(
-        user_id=user.id,
+        user_id=user_id,
         jti=new_jti,
         refresh_token_hash=new_rf_token_hash,
         expires_at=dt.datetime.now(dt.timezone.utc).replace(tzinfo=None)
@@ -252,6 +281,9 @@ async def gitlab_auth(code: str, state: str, session: SessionDep):
     session.add(refresh_session)
 
     await session.commit()
+
+    # Delete the used cache entry
+    await cache_service.delete(f"session_id:{session_id}")
 
     # Return tokens to the client
     return RefreshTokenOut(

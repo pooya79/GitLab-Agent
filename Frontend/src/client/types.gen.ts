@@ -219,11 +219,40 @@ export type GitlabAuthApiV1AuthGitlabCallbackGetResponses = {
     /**
      * Successful Response
      */
+    200: unknown;
+};
+
+export type GetAccessTokenApiV1AuthTokenSessionIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Session Id
+         */
+        session_id: string;
+    };
+    query?: never;
+    url: "/api/v1/auth/token/{session_id}";
+};
+
+export type GetAccessTokenApiV1AuthTokenSessionIdGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetAccessTokenApiV1AuthTokenSessionIdGetError =
+    GetAccessTokenApiV1AuthTokenSessionIdGetErrors[keyof GetAccessTokenApiV1AuthTokenSessionIdGetErrors];
+
+export type GetAccessTokenApiV1AuthTokenSessionIdGetResponses = {
+    /**
+     * Successful Response
+     */
     200: RefreshTokenOut;
 };
 
-export type GitlabAuthApiV1AuthGitlabCallbackGetResponse =
-    GitlabAuthApiV1AuthGitlabCallbackGetResponses[keyof GitlabAuthApiV1AuthGitlabCallbackGetResponses];
+export type GetAccessTokenApiV1AuthTokenSessionIdGetResponse =
+    GetAccessTokenApiV1AuthTokenSessionIdGetResponses[keyof GetAccessTokenApiV1AuthTokenSessionIdGetResponses];
 
 export type GetGitlabUserinfoApiV1GitlabUserinfoGetData = {
     body?: never;

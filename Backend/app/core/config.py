@@ -26,6 +26,8 @@ class Settings(BaseSettings):
     port: int = 8000
     host_url: str
 
+    frontend_url: str = "http://localhost:3000"
+
     log_dir: str = "logs"
     data_dir: str = "/data"  # don't change it
 

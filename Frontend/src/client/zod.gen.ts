@@ -102,10 +102,19 @@ export const zGitlabAuthApiV1AuthGitlabCallbackGetData = z.object({
     }),
 });
 
+export const zGetAccessTokenApiV1AuthTokenSessionIdGetData = z.object({
+    body: z.optional(z.never()),
+    path: z.object({
+        session_id: z.string(),
+    }),
+    query: z.optional(z.never()),
+});
+
 /**
  * Successful Response
  */
-export const zGitlabAuthApiV1AuthGitlabCallbackGetResponse = zRefreshTokenOut;
+export const zGetAccessTokenApiV1AuthTokenSessionIdGetResponse =
+    zRefreshTokenOut;
 
 export const zGetGitlabUserinfoApiV1GitlabUserinfoGetData = z.object({
     body: z.optional(z.never()),

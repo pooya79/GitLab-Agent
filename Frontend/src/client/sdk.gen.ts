@@ -3,6 +3,9 @@
 import type { Client, Options as Options2, TDataShape } from "./client";
 import { client } from "./client.gen";
 import type {
+    GetAccessTokenApiV1AuthTokenSessionIdGetData,
+    GetAccessTokenApiV1AuthTokenSessionIdGetErrors,
+    GetAccessTokenApiV1AuthTokenSessionIdGetResponses,
     GetCurrentUserInfoApiV1AuthMeGetData,
     GetCurrentUserInfoApiV1AuthMeGetResponses,
     GetGitlabProjectsApiV1GitlabProjectsGetData,
@@ -22,12 +25,13 @@ import type {
     RefreshTokenApiV1AuthRefreshPostResponses,
 } from "./types.gen";
 import {
+    zGetAccessTokenApiV1AuthTokenSessionIdGetData,
+    zGetAccessTokenApiV1AuthTokenSessionIdGetResponse,
     zGetCurrentUserInfoApiV1AuthMeGetData,
     zGetCurrentUserInfoApiV1AuthMeGetResponse,
     zGetGitlabProjectsApiV1GitlabProjectsGetData,
     zGetGitlabUserinfoApiV1GitlabUserinfoGetData,
     zGitlabAuthApiV1AuthGitlabCallbackGetData,
-    zGitlabAuthApiV1AuthGitlabCallbackGetResponse,
     zGitlabLoginApiV1AuthGitlabLoginGetData,
     zGitlabLoginApiV1AuthGitlabLoginGetResponse,
     zLogoutApiV1AuthLogoutPostData,
@@ -193,12 +197,40 @@ export const gitlabAuthApiV1AuthGitlabCallbackGet = <
                 data,
             );
         },
-        responseValidator: async (data) => {
-            return await zGitlabAuthApiV1AuthGitlabCallbackGetResponse.parseAsync(
+        url: "/api/v1/auth/gitlab/callback",
+        ...options,
+    });
+};
+
+/**
+ * Get Access Token
+ *
+ * Fetch access and refresh tokens using session ID.
+ */
+export const getAccessTokenApiV1AuthTokenSessionIdGet = <
+    ThrowOnError extends boolean = false,
+>(
+    options: Options<
+        GetAccessTokenApiV1AuthTokenSessionIdGetData,
+        ThrowOnError
+    >,
+) => {
+    return (options.client ?? client).get<
+        GetAccessTokenApiV1AuthTokenSessionIdGetResponses,
+        GetAccessTokenApiV1AuthTokenSessionIdGetErrors,
+        ThrowOnError
+    >({
+        requestValidator: async (data) => {
+            return await zGetAccessTokenApiV1AuthTokenSessionIdGetData.parseAsync(
                 data,
             );
         },
-        url: "/api/v1/auth/gitlab/callback",
+        responseValidator: async (data) => {
+            return await zGetAccessTokenApiV1AuthTokenSessionIdGetResponse.parseAsync(
+                data,
+            );
+        },
+        url: "/api/v1/auth/token/{session_id}",
         ...options,
     });
 };
