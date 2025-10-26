@@ -1,0 +1,378 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Gitlab Agent",
+        "version": "0.1.0"
+    },
+    "paths": {
+        "/api/v1/auth/refresh": {
+            "post": {
+                "tags": ["auth"],
+                "summary": "Refresh Token",
+                "description": "Refresh access and refresh tokens using a valid refresh token.",
+                "operationId": "refresh_token_api_v1_auth_refresh_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RefreshTokenIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RefreshTokenOut"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/logout": {
+            "post": {
+                "tags": ["auth"],
+                "summary": "Logout",
+                "description": "Log out the currently authenticated user.",
+                "operationId": "logout_api_v1_auth_logout_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RefreshTokenIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/me": {
+            "get": {
+                "tags": ["auth"],
+                "summary": "Get Current User Info",
+                "description": "Get information about the currently authenticated user.",
+                "operationId": "get_current_user_info_api_v1_auth_me_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserInfo"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/auth/gitlab/login": {
+            "get": {
+                "tags": ["auth"],
+                "summary": "Gitlab Login",
+                "description": "Redirect to GitLab for authentication.",
+                "operationId": "gitlab_login_api_v1_auth_gitlab_login_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GitlabAuthUrl"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/gitlab/callback": {
+            "get": {
+                "tags": ["auth"],
+                "summary": "Gitlab Auth",
+                "description": "Handle the callback from GitLab after user authentication.",
+                "operationId": "gitlab_auth_api_v1_auth_gitlab_callback_get",
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Code"
+                        }
+                    },
+                    {
+                        "name": "state",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "State"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RefreshTokenOut"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/gitlab/userinfo": {
+            "get": {
+                "tags": ["gitlab"],
+                "summary": "Get Gitlab Userinfo",
+                "description": "Get GitLab user information for the authenticated user.",
+                "operationId": "get_gitlab_userinfo_api_v1_gitlab_userinfo_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/gitlab/projects": {
+            "get": {
+                "tags": ["gitlab"],
+                "summary": "Get Gitlab Projects",
+                "description": "Get GitLab projects for the authenticated user.",
+                "operationId": "get_gitlab_projects_api_v1_gitlab_projects_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "GitlabAuthUrl": {
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "title": "Url"
+                    }
+                },
+                "type": "object",
+                "required": ["url"],
+                "title": "GitlabAuthUrl"
+            },
+            "HTTPValidationError": {
+                "properties": {
+                    "detail": {
+                        "items": {
+                            "$ref": "#/components/schemas/ValidationError"
+                        },
+                        "type": "array",
+                        "title": "Detail"
+                    }
+                },
+                "type": "object",
+                "title": "HTTPValidationError"
+            },
+            "RefreshTokenIn": {
+                "properties": {
+                    "refresh_token": {
+                        "type": "string",
+                        "title": "Refresh Token"
+                    }
+                },
+                "type": "object",
+                "required": ["refresh_token"],
+                "title": "RefreshTokenIn"
+            },
+            "RefreshTokenOut": {
+                "properties": {
+                    "access_token": {
+                        "type": "string",
+                        "title": "Access Token"
+                    },
+                    "refresh_token": {
+                        "type": "string",
+                        "title": "Refresh Token"
+                    },
+                    "token_type": {
+                        "type": "string",
+                        "title": "Token Type",
+                        "default": "Bearer"
+                    },
+                    "expires_in": {
+                        "type": "integer",
+                        "title": "Expires In"
+                    }
+                },
+                "type": "object",
+                "required": ["access_token", "refresh_token", "expires_in"],
+                "title": "RefreshTokenOut"
+            },
+            "UserInfo": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "title": "Id"
+                    },
+                    "email": {
+                        "type": "string",
+                        "title": "Email"
+                    },
+                    "username": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Username"
+                    },
+                    "avatar_url": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Avatar Url"
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "title": "Is Active"
+                    },
+                    "is_superuser": {
+                        "type": "boolean",
+                        "title": "Is Superuser"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "email",
+                    "username",
+                    "avatar_url",
+                    "is_active",
+                    "is_superuser"
+                ],
+                "title": "UserInfo"
+            },
+            "ValidationError": {
+                "properties": {
+                    "loc": {
+                        "items": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
+                        },
+                        "type": "array",
+                        "title": "Location"
+                    },
+                    "msg": {
+                        "type": "string",
+                        "title": "Message"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Error Type"
+                    }
+                },
+                "type": "object",
+                "required": ["loc", "msg", "type"],
+                "title": "ValidationError"
+            }
+        },
+        "securitySchemes": {
+            "HTTPBearer": {
+                "type": "http",
+                "scheme": "bearer"
+            }
+        }
+    }
+}
