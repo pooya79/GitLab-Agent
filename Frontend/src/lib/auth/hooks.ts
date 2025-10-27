@@ -7,73 +7,73 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
-  isAuthenticated,
-  getAccessToken,
-  clearAuthTokens,
-  setupTokenRefresh,
-  ensureValidToken,
+    isAuthenticated,
+    getAccessToken,
+    clearAuthTokens,
+    setupTokenRefresh,
+    ensureValidToken,
 } from "./index";
 
 /**
  * Hook to check if user is authenticated
  */
 export function useAuth() {
-  const [isAuth, setIsAuth] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
+    const [isAuth, setIsAuth] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const router = useRouter();
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const authenticated = isAuthenticated();
+    useEffect(() => {
+        const checkAuth = async () => {
+            const authenticated = isAuthenticated();
 
-      if (authenticated) {
-        // Ensure token is valid
-        const valid = await ensureValidToken();
-        setIsAuth(valid);
-      } else {
+            if (authenticated) {
+                // Ensure token is valid
+                const valid = await ensureValidToken();
+                setIsAuth(valid);
+            } else {
+                setIsAuth(false);
+            }
+
+            setIsLoading(false);
+        };
+
+        checkAuth();
+    }, []);
+
+    const logout = () => {
+        clearAuthTokens();
         setIsAuth(false);
-      }
-
-      setIsLoading(false);
+        router.push("/login");
     };
 
-    checkAuth();
-  }, []);
-
-  const logout = () => {
-    clearAuthTokens();
-    setIsAuth(false);
-    router.push("/login");
-  };
-
-  return {
-    isAuthenticated: isAuth,
-    isLoading,
-    logout,
-    token: getAccessToken(),
-  };
+    return {
+        isAuthenticated: isAuth,
+        isLoading,
+        logout,
+        token: getAccessToken(),
+    };
 }
 
 /**
  * Hook to set up automatic token refresh
  */
 export function useTokenRefresh() {
-  const router = useRouter();
+    const router = useRouter();
 
-  useEffect(() => {
-    const cleanup = setupTokenRefresh(
-      () => {
-        console.log("Token refreshed successfully");
-      },
-      () => {
-        console.error("Token refresh failed, redirecting to login");
-        clearAuthTokens();
-        router.push("/login");
-      }
-    );
+    useEffect(() => {
+        const cleanup = setupTokenRefresh(
+            () => {
+                console.log("Token refreshed successfully");
+            },
+            () => {
+                console.error("Token refresh failed, redirecting to login");
+                clearAuthTokens();
+                router.push("/login");
+            },
+        );
 
-    return cleanup;
-  }, [router]);
+        return cleanup;
+    }, [router]);
 }
 
 /**
@@ -81,27 +81,27 @@ export function useTokenRefresh() {
  * Redirects to login if not authenticated
  */
 export function useRequireAuth() {
-  const router = useRouter();
-  const [isChecking, setIsChecking] = useState(true);
+    const router = useRouter();
+    const [isChecking, setIsChecking] = useState(true);
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      if (!isAuthenticated()) {
-        router.push("/login");
-        return;
-      }
+    useEffect(() => {
+        const checkAuth = async () => {
+            if (!isAuthenticated()) {
+                router.push("/login");
+                return;
+            }
 
-      const valid = await ensureValidToken();
-      if (!valid) {
-        router.push("/login");
-        return;
-      }
+            const valid = await ensureValidToken();
+            if (!valid) {
+                router.push("/login");
+                return;
+            }
 
-      setIsChecking(false);
-    };
+            setIsChecking(false);
+        };
 
-    checkAuth();
-  }, [router]);
+        checkAuth();
+    }, [router]);
 
-  return { isChecking };
+    return { isChecking };
 }

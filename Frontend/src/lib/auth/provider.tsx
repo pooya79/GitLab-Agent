@@ -10,7 +10,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { setupTokenRefresh, clearAuthTokens } from "./index";
 
 interface AuthProviderProps {
-  children: React.ReactNode;
+    children: React.ReactNode;
 }
 
 /**
@@ -18,28 +18,30 @@ interface AuthProviderProps {
  * Add this to your root layout to enable auto-refresh across the app
  */
 export function AuthProvider({ children }: AuthProviderProps) {
-  const router = useRouter();
-  const pathname = usePathname();
+    const router = useRouter();
+    const pathname = usePathname();
 
-  useEffect(() => {
-    // Set up automatic token refresh
-    const cleanup = setupTokenRefresh(
-      () => {
-        console.log("✅ Token refreshed successfully");
-      },
-      () => {
-        console.error("❌ Token refresh failed");
-        clearAuthTokens();
+    useEffect(() => {
+        // Set up automatic token refresh
+        const cleanup = setupTokenRefresh(
+            () => {
+                console.log("✅ Token refreshed successfully");
+            },
+            () => {
+                console.error("❌ Token refresh failed");
+                clearAuthTokens();
 
-        // Don't redirect if already on login pages
-        if (!pathname.startsWith("/login")) {
-          router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
-        }
-      }
-    );
+                // Don't redirect if already on login pages
+                if (!pathname.startsWith("/login")) {
+                    router.push(
+                        `/login?redirect=${encodeURIComponent(pathname)}`,
+                    );
+                }
+            },
+        );
 
-    return cleanup;
-  }, [router, pathname]);
+        return cleanup;
+    }, [router, pathname]);
 
-  return <>{children}</>;
+    return <>{children}</>;
 }
