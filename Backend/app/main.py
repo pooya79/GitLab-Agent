@@ -27,7 +27,7 @@ async def lifespan(app: FastAPI):
     await async_engine.dispose()
 
 
-app = FastAPI(title=settings.project_name, lifespan=lifespan)
+app = FastAPI(title=settings.project_name, lifespan=lifespan, docs_url="/api/docs", openapi_url="/api/openapi.json")
 
 # Setup logfire for monitoring
 if settings.logfire_token:

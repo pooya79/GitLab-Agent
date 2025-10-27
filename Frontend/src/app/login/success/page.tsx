@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getAccessTokenApiV1AuthTokenSessionIdGet } from "@/client/sdk.gen";
 import { setAuthTokens } from "@/lib/auth";
 
-export default function LoginSuccessPage() {
+function LoginSuccessContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [isLoading, setIsLoading] = useState(true);
@@ -92,5 +92,22 @@ export default function LoginSuccessPage() {
                 )}
             </div>
         </div>
+    );
+}
+
+export default function LoginSuccessPage() {
+    return (
+        <Suspense
+            fallback={
+                <div className="flex min-h-screen items-center justify-center">
+                    <div className="text-center">
+                        <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+                        <p className="text-lg">Loading...</p>
+                    </div>
+                </div>
+            }
+        >
+            <LoginSuccessContent />
+        </Suspense>
     );
 }

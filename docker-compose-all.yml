@@ -1,0 +1,65 @@
+services:
+  traefik:
+    image: traefik:latest
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - localnet
+
+  backend:
+    # Build the image from the Dockerfile in the current directory
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+
+    develop:
+      # Create a `watch` configuration to update the app
+      # https://docs.docker.com/compose/file-watch/#compose-watch-versus-bind-mounts
+      watch:
+        # Sync the working directory with the `/app` directory in the container
+        - action: sync
+          path: ./Backend
+          target: /app
+          # Exclude the project virtual environment — it could be for a
+          # different platform in the container
+          ignore:
+            - .venv/
+
+        # Rebuild the image if dependencies change by checking uv.lock
+        - action: rebuild
+          path: ./Backend/uv.lock
+    env_file:
+      - .env
+    volumes:
+      - ./data:/data
+    networks:
+      - localnet
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.backend.rule=PathPrefix(`/api`)
+      - traefik.http.services.backend.loadbalancer.server.port=8000
+
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    networks:
+      - localnet
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.frontend.rule=PathPrefix(`/`)
+      - traefik.http.services.frontend.loadbalancer.server.port=3000
+
+volumes:
+  data:
+
+networks:
+  localnet:
+    driver: bridge

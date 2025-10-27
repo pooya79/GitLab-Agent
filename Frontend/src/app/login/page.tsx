@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { gitlabLoginApiV1AuthGitlabLoginGet } from "@/client/sdk.gen";
 import { isAuthenticated } from "@/lib/auth";
 
-export default function LoginPage() {
+function LoginContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -66,5 +66,30 @@ export default function LoginPage() {
                 </CardContent>
             </Card>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense
+            fallback={
+                <div className="flex h-screen items-center justify-center">
+                    <Card className="w-[360px] p-4 text-center shadow-md">
+                        <CardHeader>
+                            <CardTitle className="text-xl font-semibold">
+                                Sign in
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex items-center justify-center">
+                                <div className="h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            }
+        >
+            <LoginContent />
+        </Suspense>
     );
 }

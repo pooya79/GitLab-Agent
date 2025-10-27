@@ -1,5 +1,5 @@
 services:
-  ga_backend:
+  backend:
     # Build the image from the Dockerfile in the current directory
     build:
       context: ./Backend
