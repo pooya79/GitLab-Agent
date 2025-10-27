@@ -5,6 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { BotsTable } from "@/components/bots-table";
 
 export default function DashboardPage() {
   return (
@@ -23,7 +24,7 @@ export default function DashboardPage() {
             <CardDescription>Connected GitLab projects</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">0</p>
+            <p className="text-3xl font-bold">3</p>
           </CardContent>
         </Card>
 
@@ -33,7 +34,7 @@ export default function DashboardPage() {
             <CardDescription>Active webhook listeners</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">0</p>
+            <p className="text-3xl font-bold">5</p>
           </CardContent>
         </Card>
 
@@ -43,20 +44,21 @@ export default function DashboardPage() {
             <CardDescription>AI bots configured</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">0</p>
+            <p className="text-3xl font-bold">3</p>
           </CardContent>
         </Card>
       </div>
 
+      {/* Bots Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-          <CardDescription>Your latest interactions and events</CardDescription>
+          <CardTitle>Active Bots</CardTitle>
+          <CardDescription>
+            Manage your GitLab bots and their configurations
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
-            No recent activity to display
-          </p>
+          <BotsTable />
         </CardContent>
       </Card>
     </div>
