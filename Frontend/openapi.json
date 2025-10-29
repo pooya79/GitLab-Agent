@@ -7,9 +7,7 @@
     "paths": {
         "/api/v1/auth/refresh": {
             "post": {
-                "tags": [
-                    "auth"
-                ],
+                "tags": ["auth"],
                 "summary": "Refresh Token",
                 "description": "Refresh access and refresh tokens using a valid refresh token.",
                 "operationId": "refresh_token_api_v1_auth_refresh_post",
@@ -49,9 +47,7 @@
         },
         "/api/v1/auth/logout": {
             "post": {
-                "tags": [
-                    "auth"
-                ],
+                "tags": ["auth"],
                 "summary": "Logout",
                 "description": "Log out the currently authenticated user.",
                 "operationId": "logout_api_v1_auth_logout_post",
@@ -89,9 +85,7 @@
         },
         "/api/v1/auth/me": {
             "get": {
-                "tags": [
-                    "auth"
-                ],
+                "tags": ["auth"],
                 "summary": "Get Current User Info",
                 "description": "Get information about the currently authenticated user.",
                 "operationId": "get_current_user_info_api_v1_auth_me_get",
@@ -116,9 +110,7 @@
         },
         "/api/v1/auth/gitlab/login": {
             "get": {
-                "tags": [
-                    "auth"
-                ],
+                "tags": ["auth"],
                 "summary": "Gitlab Login",
                 "description": "Redirect to GitLab for authentication.",
                 "operationId": "gitlab_login_api_v1_auth_gitlab_login_get",
@@ -138,9 +130,7 @@
         },
         "/api/v1/auth/gitlab/callback": {
             "get": {
-                "tags": [
-                    "auth"
-                ],
+                "tags": ["auth"],
                 "summary": "Gitlab Auth",
                 "description": "Handle the callback from GitLab after user authentication.",
                 "operationId": "gitlab_auth_api_v1_auth_gitlab_callback_get",
@@ -188,9 +178,7 @@
         },
         "/api/v1/auth/token/{session_id}": {
             "get": {
-                "tags": [
-                    "auth"
-                ],
+                "tags": ["auth"],
                 "summary": "Get Access Token",
                 "description": "Fetch access and refresh tokens using session ID.",
                 "operationId": "get_access_token_api_v1_auth_token__session_id__get",
@@ -231,9 +219,7 @@
         },
         "/api/v1/gitlab/userinfo": {
             "get": {
-                "tags": [
-                    "gitlab"
-                ],
+                "tags": ["gitlab"],
                 "summary": "Get Gitlab Userinfo",
                 "description": "Get GitLab user information for the authenticated user.",
                 "operationId": "get_gitlab_userinfo_api_v1_gitlab_userinfo_get",
@@ -258,9 +244,7 @@
         },
         "/api/v1/gitlab/projects": {
             "get": {
-                "tags": [
-                    "gitlab"
-                ],
+                "tags": ["gitlab"],
                 "summary": "Get Gitlab Projects",
                 "description": "Get GitLab projects for the authenticated user.",
                 "operationId": "get_gitlab_projects_api_v1_gitlab_projects_get",
@@ -321,9 +305,7 @@
         },
         "/api/v1/gitlab/projects/{project_id}/access-tokens": {
             "get": {
-                "tags": [
-                    "gitlab"
-                ],
+                "tags": ["gitlab"],
                 "summary": "List Gitlab Project Access Tokens",
                 "description": "List access tokens for a GitLab project.",
                 "operationId": "list_gitlab_project_access_tokens_api_v1_gitlab_projects__project_id__access_tokens_get",
@@ -372,9 +354,7 @@
                 }
             },
             "post": {
-                "tags": [
-                    "gitlab"
-                ],
+                "tags": ["gitlab"],
                 "summary": "Create Gitlab Project Access Token",
                 "description": "Create a new access token for a GitLab project.",
                 "operationId": "create_gitlab_project_access_token_api_v1_gitlab_projects__project_id__access_tokens_post",
@@ -425,9 +405,7 @@
         },
         "/api/v1/gitlab/projects/{project_id}/access-tokens/{access_token_id}": {
             "get": {
-                "tags": [
-                    "gitlab"
-                ],
+                "tags": ["gitlab"],
                 "summary": "Get Gitlab Project Access Token",
                 "description": "Get a specific access token for a GitLab project.",
                 "operationId": "get_gitlab_project_access_token_api_v1_gitlab_projects__project_id__access_tokens__access_token_id__get",
@@ -494,9 +472,7 @@
         },
         "/api/v1/gitlab/projects/{project_id}/access-tokens/{access_token_id}/rotate": {
             "post": {
-                "tags": [
-                    "gitlab"
-                ],
+                "tags": ["gitlab"],
                 "summary": "Rotate Gitlab Project Access Token",
                 "description": "Rotate an existing access token for a GitLab project.",
                 "operationId": "rotate_gitlab_project_access_token_api_v1_gitlab_projects__project_id__access_tokens__access_token_id__rotate_post",
@@ -563,9 +539,7 @@
         },
         "/api/v1/gitlab/projects/{project_id}/access-tokens/{access_token_id}/revoke": {
             "delete": {
-                "tags": [
-                    "gitlab"
-                ],
+                "tags": ["gitlab"],
                 "summary": "Revoke Gitlab Project Access Token",
                 "description": "Revoke an existing access token for a GitLab project.",
                 "operationId": "revoke_gitlab_project_access_token_api_v1_gitlab_projects__project_id__access_tokens__access_token_id__revoke_delete",
@@ -632,9 +606,7 @@
         },
         "/api/v1/gitlab/projects/{project_id}/webhooks": {
             "get": {
-                "tags": [
-                    "gitlab"
-                ],
+                "tags": ["gitlab"],
                 "summary": "List Gitlab Project Webhooks",
                 "description": "List webhooks for a GitLab project.",
                 "operationId": "list_gitlab_project_webhooks_api_v1_gitlab_projects__project_id__webhooks_get",
@@ -683,9 +655,7 @@
                 }
             },
             "post": {
-                "tags": [
-                    "gitlab"
-                ],
+                "tags": ["gitlab"],
                 "summary": "Create Gitlab Project Webhook",
                 "description": "Create a new webhook for a GitLab project.",
                 "operationId": "create_gitlab_project_webhook_api_v1_gitlab_projects__project_id__webhooks_post",
@@ -736,9 +706,7 @@
         },
         "/api/v1/gitlab/projects/{project_id}/webhooks/{hook_id}": {
             "get": {
-                "tags": [
-                    "gitlab"
-                ],
+                "tags": ["gitlab"],
                 "summary": "Get Gitlab Project Webhook",
                 "description": "Get a specific webhook for a GitLab project.",
                 "operationId": "get_gitlab_project_webhook_api_v1_gitlab_projects__project_id__webhooks__hook_id__get",
@@ -803,9 +771,7 @@
                 }
             },
             "delete": {
-                "tags": [
-                    "gitlab"
-                ],
+                "tags": ["gitlab"],
                 "summary": "Delete Gitlab Project Webhook",
                 "description": "Delete a webhook for a GitLab project.",
                 "operationId": "delete_gitlab_project_webhook_api_v1_gitlab_projects__project_id__webhooks__hook_id__delete",
@@ -872,9 +838,7 @@
         },
         "/api/v1/bots/{bot_id}/status": {
             "get": {
-                "tags": [
-                    "bots"
-                ],
+                "tags": ["bots"],
                 "summary": "Get Bot Status",
                 "description": "Get the status of a bot by its ID.",
                 "operationId": "get_bot_status_api_v1_bots__bot_id__status_get",
@@ -920,9 +884,7 @@
         },
         "/api/v1/bots/": {
             "post": {
-                "tags": [
-                    "bots"
-                ],
+                "tags": ["bots"],
                 "summary": "Create Bot",
                 "description": "Create a new bot for a GitLab project.",
                 "operationId": "create_bot_api_v1_bots__post",
@@ -965,9 +927,7 @@
                 }
             },
             "get": {
-                "tags": [
-                    "bots"
-                ],
+                "tags": ["bots"],
                 "summary": "List Bots",
                 "description": "List all bots with pagination.",
                 "operationId": "list_bots_api_v1_bots__get",
@@ -1024,9 +984,7 @@
         },
         "/api/v1/bots/{bot_id}": {
             "delete": {
-                "tags": [
-                    "bots"
-                ],
+                "tags": ["bots"],
                 "summary": "Delete Bot",
                 "description": "Delete a bot by its ID.",
                 "operationId": "delete_bot_api_v1_bots__bot_id__delete",
@@ -1063,9 +1021,7 @@
                 }
             },
             "patch": {
-                "tags": [
-                    "bots"
-                ],
+                "tags": ["bots"],
                 "summary": "Update Bot",
                 "description": "Update a bot by its ID.",
                 "operationId": "update_bot_api_v1_bots__bot_id__patch",
@@ -1121,9 +1077,7 @@
         },
         "/api/v1/bots/{bod_id}/revoke": {
             "delete": {
-                "tags": [
-                    "bots"
-                ],
+                "tags": ["bots"],
                 "summary": "Revoke Bot Token",
                 "description": "Revoke a bot's GitLab project access token.",
                 "operationId": "revoke_bot_token_api_v1_bots__bod_id__revoke_delete",
@@ -1162,9 +1116,7 @@
         },
         "/api/v1/bots/{bot_id}/rotate-token": {
             "patch": {
-                "tags": [
-                    "bots"
-                ],
+                "tags": ["bots"],
                 "summary": "Rotate Bot Token",
                 "description": "Rotate a bot's GitLab project access token.",
                 "operationId": "rotate_bot_token_api_v1_bots__bot_id__rotate_token_patch",
@@ -1210,9 +1162,7 @@
         },
         "/api/v1/bots/available-avatars": {
             "get": {
-                "tags": [
-                    "bots"
-                ],
+                "tags": ["bots"],
                 "summary": "Get Available Avatars",
                 "description": "Get a list of available bot avatars.",
                 "operationId": "get_available_avatars_api_v1_bots_available_avatars_get",
@@ -1249,10 +1199,7 @@
                     }
                 },
                 "type": "object",
-                "required": [
-                    "name",
-                    "gitlab_project_path"
-                ],
+                "required": ["name", "gitlab_project_path"],
                 "title": "BotCreate"
             },
             "BotCreateResponse": {
@@ -1273,9 +1220,7 @@
                     }
                 },
                 "type": "object",
-                "required": [
-                    "bot"
-                ],
+                "required": ["bot"],
                 "title": "BotCreateResponse"
             },
             "BotRead": {
@@ -1392,21 +1337,14 @@
                     }
                 },
                 "type": "object",
-                "required": [
-                    "total",
-                    "items"
-                ],
+                "required": ["total", "items"],
                 "title": "BotReadList"
             },
             "BotStatusResponse": {
                 "properties": {
                     "status": {
                         "type": "string",
-                        "enum": [
-                            "ACTIVE",
-                            "STOPPED",
-                            "ERROR"
-                        ],
+                        "enum": ["ACTIVE", "STOPPED", "ERROR"],
                         "title": "Status"
                     },
                     "error_message": {
@@ -1422,9 +1360,7 @@
                     }
                 },
                 "type": "object",
-                "required": [
-                    "status"
-                ],
+                "required": ["status"],
                 "title": "BotStatusResponse"
             },
             "BotUpdate": {
@@ -1529,9 +1465,7 @@
                     }
                 },
                 "type": "object",
-                "required": [
-                    "bot"
-                ],
+                "required": ["bot"],
                 "title": "BotUpdateResponse"
             },
             "GitlabAuthUrl": {
@@ -1542,9 +1476,7 @@
                     }
                 },
                 "type": "object",
-                "required": [
-                    "url"
-                ],
+                "required": ["url"],
                 "title": "GitlabAuthUrl"
             },
             "GitlabProject": {
@@ -1634,9 +1566,7 @@
                     }
                 },
                 "type": "object",
-                "required": [
-                    "refresh_token"
-                ],
+                "required": ["refresh_token"],
                 "title": "RefreshTokenIn"
             },
             "RefreshTokenOut": {
@@ -1660,11 +1590,7 @@
                     }
                 },
                 "type": "object",
-                "required": [
-                    "access_token",
-                    "refresh_token",
-                    "expires_in"
-                ],
+                "required": ["access_token", "refresh_token", "expires_in"],
                 "title": "RefreshTokenOut"
             },
             "ValidationError": {
@@ -1693,11 +1619,7 @@
                     }
                 },
                 "type": "object",
-                "required": [
-                    "loc",
-                    "msg",
-                    "type"
-                ],
+                "required": ["loc", "msg", "type"],
                 "title": "ValidationError"
             },
             "app__schemas__auth__UserInfo": {
@@ -1790,11 +1712,7 @@
                     }
                 },
                 "type": "object",
-                "required": [
-                    "username",
-                    "email",
-                    "web_url"
-                ],
+                "required": ["username", "email", "web_url"],
                 "title": "UserInfo"
             }
         },

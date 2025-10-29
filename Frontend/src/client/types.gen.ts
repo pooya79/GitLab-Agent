@@ -106,7 +106,7 @@ export type BotStatusResponse = {
     /**
      * Status
      */
-    status: 'ACTIVE' | 'STOPPED' | 'ERROR';
+    status: "ACTIVE" | "STOPPED" | "ERROR";
     /**
      * Error Message
      */
@@ -328,7 +328,7 @@ export type RefreshTokenApiV1AuthRefreshPostData = {
     body: RefreshTokenIn;
     path?: never;
     query?: never;
-    url: '/api/v1/auth/refresh';
+    url: "/api/v1/auth/refresh";
 };
 
 export type RefreshTokenApiV1AuthRefreshPostErrors = {
@@ -338,7 +338,8 @@ export type RefreshTokenApiV1AuthRefreshPostErrors = {
     422: HttpValidationError;
 };
 
-export type RefreshTokenApiV1AuthRefreshPostError = RefreshTokenApiV1AuthRefreshPostErrors[keyof RefreshTokenApiV1AuthRefreshPostErrors];
+export type RefreshTokenApiV1AuthRefreshPostError =
+    RefreshTokenApiV1AuthRefreshPostErrors[keyof RefreshTokenApiV1AuthRefreshPostErrors];
 
 export type RefreshTokenApiV1AuthRefreshPostResponses = {
     /**
@@ -347,13 +348,14 @@ export type RefreshTokenApiV1AuthRefreshPostResponses = {
     200: RefreshTokenOut;
 };
 
-export type RefreshTokenApiV1AuthRefreshPostResponse = RefreshTokenApiV1AuthRefreshPostResponses[keyof RefreshTokenApiV1AuthRefreshPostResponses];
+export type RefreshTokenApiV1AuthRefreshPostResponse =
+    RefreshTokenApiV1AuthRefreshPostResponses[keyof RefreshTokenApiV1AuthRefreshPostResponses];
 
 export type LogoutApiV1AuthLogoutPostData = {
     body: RefreshTokenIn;
     path?: never;
     query?: never;
-    url: '/api/v1/auth/logout';
+    url: "/api/v1/auth/logout";
 };
 
 export type LogoutApiV1AuthLogoutPostErrors = {
@@ -363,7 +365,8 @@ export type LogoutApiV1AuthLogoutPostErrors = {
     422: HttpValidationError;
 };
 
-export type LogoutApiV1AuthLogoutPostError = LogoutApiV1AuthLogoutPostErrors[keyof LogoutApiV1AuthLogoutPostErrors];
+export type LogoutApiV1AuthLogoutPostError =
+    LogoutApiV1AuthLogoutPostErrors[keyof LogoutApiV1AuthLogoutPostErrors];
 
 export type LogoutApiV1AuthLogoutPostResponses = {
     /**
@@ -376,7 +379,7 @@ export type GetCurrentUserInfoApiV1AuthMeGetData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/api/v1/auth/me';
+    url: "/api/v1/auth/me";
 };
 
 export type GetCurrentUserInfoApiV1AuthMeGetResponses = {
@@ -386,13 +389,14 @@ export type GetCurrentUserInfoApiV1AuthMeGetResponses = {
     200: AppSchemasAuthUserInfo;
 };
 
-export type GetCurrentUserInfoApiV1AuthMeGetResponse = GetCurrentUserInfoApiV1AuthMeGetResponses[keyof GetCurrentUserInfoApiV1AuthMeGetResponses];
+export type GetCurrentUserInfoApiV1AuthMeGetResponse =
+    GetCurrentUserInfoApiV1AuthMeGetResponses[keyof GetCurrentUserInfoApiV1AuthMeGetResponses];
 
 export type GitlabLoginApiV1AuthGitlabLoginGetData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/api/v1/auth/gitlab/login';
+    url: "/api/v1/auth/gitlab/login";
 };
 
 export type GitlabLoginApiV1AuthGitlabLoginGetResponses = {
@@ -402,7 +406,8 @@ export type GitlabLoginApiV1AuthGitlabLoginGetResponses = {
     200: GitlabAuthUrl;
 };
 
-export type GitlabLoginApiV1AuthGitlabLoginGetResponse = GitlabLoginApiV1AuthGitlabLoginGetResponses[keyof GitlabLoginApiV1AuthGitlabLoginGetResponses];
+export type GitlabLoginApiV1AuthGitlabLoginGetResponse =
+    GitlabLoginApiV1AuthGitlabLoginGetResponses[keyof GitlabLoginApiV1AuthGitlabLoginGetResponses];
 
 export type GitlabAuthApiV1AuthGitlabCallbackGetData = {
     body?: never;
@@ -417,7 +422,7 @@ export type GitlabAuthApiV1AuthGitlabCallbackGetData = {
          */
         state: string;
     };
-    url: '/api/v1/auth/gitlab/callback';
+    url: "/api/v1/auth/gitlab/callback";
 };
 
 export type GitlabAuthApiV1AuthGitlabCallbackGetErrors = {
@@ -427,7 +432,8 @@ export type GitlabAuthApiV1AuthGitlabCallbackGetErrors = {
     422: HttpValidationError;
 };
 
-export type GitlabAuthApiV1AuthGitlabCallbackGetError = GitlabAuthApiV1AuthGitlabCallbackGetErrors[keyof GitlabAuthApiV1AuthGitlabCallbackGetErrors];
+export type GitlabAuthApiV1AuthGitlabCallbackGetError =
+    GitlabAuthApiV1AuthGitlabCallbackGetErrors[keyof GitlabAuthApiV1AuthGitlabCallbackGetErrors];
 
 export type GitlabAuthApiV1AuthGitlabCallbackGetResponses = {
     /**
@@ -445,7 +451,7 @@ export type GetAccessTokenApiV1AuthTokenSessionIdGetData = {
         session_id: string;
     };
     query?: never;
-    url: '/api/v1/auth/token/{session_id}';
+    url: "/api/v1/auth/token/{session_id}";
 };
 
 export type GetAccessTokenApiV1AuthTokenSessionIdGetErrors = {
@@ -455,7 +461,8 @@ export type GetAccessTokenApiV1AuthTokenSessionIdGetErrors = {
     422: HttpValidationError;
 };
 
-export type GetAccessTokenApiV1AuthTokenSessionIdGetError = GetAccessTokenApiV1AuthTokenSessionIdGetErrors[keyof GetAccessTokenApiV1AuthTokenSessionIdGetErrors];
+export type GetAccessTokenApiV1AuthTokenSessionIdGetError =
+    GetAccessTokenApiV1AuthTokenSessionIdGetErrors[keyof GetAccessTokenApiV1AuthTokenSessionIdGetErrors];
 
 export type GetAccessTokenApiV1AuthTokenSessionIdGetResponses = {
     /**
@@ -464,13 +471,14 @@ export type GetAccessTokenApiV1AuthTokenSessionIdGetResponses = {
     200: RefreshTokenOut;
 };
 
-export type GetAccessTokenApiV1AuthTokenSessionIdGetResponse = GetAccessTokenApiV1AuthTokenSessionIdGetResponses[keyof GetAccessTokenApiV1AuthTokenSessionIdGetResponses];
+export type GetAccessTokenApiV1AuthTokenSessionIdGetResponse =
+    GetAccessTokenApiV1AuthTokenSessionIdGetResponses[keyof GetAccessTokenApiV1AuthTokenSessionIdGetResponses];
 
 export type GetGitlabUserinfoApiV1GitlabUserinfoGetData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/api/v1/gitlab/userinfo';
+    url: "/api/v1/gitlab/userinfo";
 };
 
 export type GetGitlabUserinfoApiV1GitlabUserinfoGetResponses = {
@@ -480,7 +488,8 @@ export type GetGitlabUserinfoApiV1GitlabUserinfoGetResponses = {
     200: AppSchemasGitlabUserInfo;
 };
 
-export type GetGitlabUserinfoApiV1GitlabUserinfoGetResponse = GetGitlabUserinfoApiV1GitlabUserinfoGetResponses[keyof GetGitlabUserinfoApiV1GitlabUserinfoGetResponses];
+export type GetGitlabUserinfoApiV1GitlabUserinfoGetResponse =
+    GetGitlabUserinfoApiV1GitlabUserinfoGetResponses[keyof GetGitlabUserinfoApiV1GitlabUserinfoGetResponses];
 
 export type GetGitlabProjectsApiV1GitlabProjectsGetData = {
     body?: never;
@@ -495,7 +504,7 @@ export type GetGitlabProjectsApiV1GitlabProjectsGetData = {
          */
         per_page?: number;
     };
-    url: '/api/v1/gitlab/projects';
+    url: "/api/v1/gitlab/projects";
 };
 
 export type GetGitlabProjectsApiV1GitlabProjectsGetErrors = {
@@ -505,7 +514,8 @@ export type GetGitlabProjectsApiV1GitlabProjectsGetErrors = {
     422: HttpValidationError;
 };
 
-export type GetGitlabProjectsApiV1GitlabProjectsGetError = GetGitlabProjectsApiV1GitlabProjectsGetErrors[keyof GetGitlabProjectsApiV1GitlabProjectsGetErrors];
+export type GetGitlabProjectsApiV1GitlabProjectsGetError =
+    GetGitlabProjectsApiV1GitlabProjectsGetErrors[keyof GetGitlabProjectsApiV1GitlabProjectsGetErrors];
 
 export type GetGitlabProjectsApiV1GitlabProjectsGetResponses = {
     /**
@@ -516,279 +526,316 @@ export type GetGitlabProjectsApiV1GitlabProjectsGetResponses = {
     200: Array<GitlabProject>;
 };
 
-export type GetGitlabProjectsApiV1GitlabProjectsGetResponse = GetGitlabProjectsApiV1GitlabProjectsGetResponses[keyof GetGitlabProjectsApiV1GitlabProjectsGetResponses];
+export type GetGitlabProjectsApiV1GitlabProjectsGetResponse =
+    GetGitlabProjectsApiV1GitlabProjectsGetResponses[keyof GetGitlabProjectsApiV1GitlabProjectsGetResponses];
 
-export type ListGitlabProjectAccessTokensApiV1GitlabProjectsProjectIdAccessTokensGetData = {
-    body?: never;
-    path: {
-        /**
-         * Project Id
-         */
-        project_id: string | number;
+export type ListGitlabProjectAccessTokensApiV1GitlabProjectsProjectIdAccessTokensGetData =
+    {
+        body?: never;
+        path: {
+            /**
+             * Project Id
+             */
+            project_id: string | number;
+        };
+        query?: never;
+        url: "/api/v1/gitlab/projects/{project_id}/access-tokens";
     };
-    query?: never;
-    url: '/api/v1/gitlab/projects/{project_id}/access-tokens';
-};
 
-export type ListGitlabProjectAccessTokensApiV1GitlabProjectsProjectIdAccessTokensGetErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type ListGitlabProjectAccessTokensApiV1GitlabProjectsProjectIdAccessTokensGetError = ListGitlabProjectAccessTokensApiV1GitlabProjectsProjectIdAccessTokensGetErrors[keyof ListGitlabProjectAccessTokensApiV1GitlabProjectsProjectIdAccessTokensGetErrors];
-
-export type ListGitlabProjectAccessTokensApiV1GitlabProjectsProjectIdAccessTokensGetResponses = {
-    /**
-     * Successful Response
-     */
-    200: unknown;
-};
-
-export type CreateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensPostData = {
-    body?: never;
-    path: {
+export type ListGitlabProjectAccessTokensApiV1GitlabProjectsProjectIdAccessTokensGetErrors =
+    {
         /**
-         * Project Id
+         * Validation Error
          */
-        project_id: string | number;
+        422: HttpValidationError;
     };
-    query?: never;
-    url: '/api/v1/gitlab/projects/{project_id}/access-tokens';
-};
 
-export type CreateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensPostErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
+export type ListGitlabProjectAccessTokensApiV1GitlabProjectsProjectIdAccessTokensGetError =
+    ListGitlabProjectAccessTokensApiV1GitlabProjectsProjectIdAccessTokensGetErrors[keyof ListGitlabProjectAccessTokensApiV1GitlabProjectsProjectIdAccessTokensGetErrors];
 
-export type CreateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensPostError = CreateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensPostErrors[keyof CreateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensPostErrors];
-
-export type CreateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensPostResponses = {
-    /**
-     * Successful Response
-     */
-    200: unknown;
-};
-
-export type GetGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdGetData = {
-    body?: never;
-    path: {
+export type ListGitlabProjectAccessTokensApiV1GitlabProjectsProjectIdAccessTokensGetResponses =
+    {
         /**
-         * Project Id
+         * Successful Response
          */
-        project_id: string | number;
-        /**
-         * Access Token Id
-         */
-        access_token_id: string | number;
+        200: unknown;
     };
-    query?: never;
-    url: '/api/v1/gitlab/projects/{project_id}/access-tokens/{access_token_id}';
-};
 
-export type GetGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdGetErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type GetGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdGetError = GetGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdGetErrors[keyof GetGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdGetErrors];
-
-export type GetGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdGetResponses = {
-    /**
-     * Successful Response
-     */
-    200: unknown;
-};
-
-export type RotateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRotatePostData = {
-    body?: never;
-    path: {
-        /**
-         * Project Id
-         */
-        project_id: string | number;
-        /**
-         * Access Token Id
-         */
-        access_token_id: string | number;
+export type CreateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensPostData =
+    {
+        body?: never;
+        path: {
+            /**
+             * Project Id
+             */
+            project_id: string | number;
+        };
+        query?: never;
+        url: "/api/v1/gitlab/projects/{project_id}/access-tokens";
     };
-    query?: never;
-    url: '/api/v1/gitlab/projects/{project_id}/access-tokens/{access_token_id}/rotate';
-};
 
-export type RotateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRotatePostErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type RotateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRotatePostError = RotateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRotatePostErrors[keyof RotateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRotatePostErrors];
-
-export type RotateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRotatePostResponses = {
-    /**
-     * Successful Response
-     */
-    200: unknown;
-};
-
-export type RevokeGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRevokeDeleteData = {
-    body?: never;
-    path: {
+export type CreateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensPostErrors =
+    {
         /**
-         * Project Id
+         * Validation Error
          */
-        project_id: string | number;
-        /**
-         * Access Token Id
-         */
-        access_token_id: string | number;
+        422: HttpValidationError;
     };
-    query?: never;
-    url: '/api/v1/gitlab/projects/{project_id}/access-tokens/{access_token_id}/revoke';
-};
 
-export type RevokeGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRevokeDeleteErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
+export type CreateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensPostError =
+    CreateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensPostErrors[keyof CreateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensPostErrors];
 
-export type RevokeGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRevokeDeleteError = RevokeGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRevokeDeleteErrors[keyof RevokeGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRevokeDeleteErrors];
-
-export type RevokeGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRevokeDeleteResponses = {
-    /**
-     * Successful Response
-     */
-    200: unknown;
-};
-
-export type ListGitlabProjectWebhooksApiV1GitlabProjectsProjectIdWebhooksGetData = {
-    body?: never;
-    path: {
+export type CreateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensPostResponses =
+    {
         /**
-         * Project Id
+         * Successful Response
          */
-        project_id: string | number;
+        200: unknown;
     };
-    query?: never;
-    url: '/api/v1/gitlab/projects/{project_id}/webhooks';
-};
 
-export type ListGitlabProjectWebhooksApiV1GitlabProjectsProjectIdWebhooksGetErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type ListGitlabProjectWebhooksApiV1GitlabProjectsProjectIdWebhooksGetError = ListGitlabProjectWebhooksApiV1GitlabProjectsProjectIdWebhooksGetErrors[keyof ListGitlabProjectWebhooksApiV1GitlabProjectsProjectIdWebhooksGetErrors];
-
-export type ListGitlabProjectWebhooksApiV1GitlabProjectsProjectIdWebhooksGetResponses = {
-    /**
-     * Successful Response
-     */
-    200: unknown;
-};
-
-export type CreateGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksPostData = {
-    body?: never;
-    path: {
-        /**
-         * Project Id
-         */
-        project_id: string | number;
+export type GetGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdGetData =
+    {
+        body?: never;
+        path: {
+            /**
+             * Project Id
+             */
+            project_id: string | number;
+            /**
+             * Access Token Id
+             */
+            access_token_id: string | number;
+        };
+        query?: never;
+        url: "/api/v1/gitlab/projects/{project_id}/access-tokens/{access_token_id}";
     };
-    query?: never;
-    url: '/api/v1/gitlab/projects/{project_id}/webhooks';
-};
 
-export type CreateGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksPostErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type CreateGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksPostError = CreateGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksPostErrors[keyof CreateGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksPostErrors];
-
-export type CreateGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksPostResponses = {
-    /**
-     * Successful Response
-     */
-    200: unknown;
-};
-
-export type DeleteGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdDeleteData = {
-    body?: never;
-    path: {
+export type GetGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdGetErrors =
+    {
         /**
-         * Project Id
+         * Validation Error
          */
-        project_id: string | number;
-        /**
-         * Hook Id
-         */
-        hook_id: string | number;
+        422: HttpValidationError;
     };
-    query?: never;
-    url: '/api/v1/gitlab/projects/{project_id}/webhooks/{hook_id}';
-};
 
-export type DeleteGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdDeleteErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
+export type GetGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdGetError =
+    GetGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdGetErrors[keyof GetGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdGetErrors];
 
-export type DeleteGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdDeleteError = DeleteGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdDeleteErrors[keyof DeleteGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdDeleteErrors];
-
-export type DeleteGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdDeleteResponses = {
-    /**
-     * Successful Response
-     */
-    200: unknown;
-};
-
-export type GetGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdGetData = {
-    body?: never;
-    path: {
+export type GetGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdGetResponses =
+    {
         /**
-         * Project Id
+         * Successful Response
          */
-        project_id: string | number;
-        /**
-         * Hook Id
-         */
-        hook_id: string | number;
+        200: unknown;
     };
-    query?: never;
-    url: '/api/v1/gitlab/projects/{project_id}/webhooks/{hook_id}';
-};
 
-export type GetGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdGetErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
+export type RotateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRotatePostData =
+    {
+        body?: never;
+        path: {
+            /**
+             * Project Id
+             */
+            project_id: string | number;
+            /**
+             * Access Token Id
+             */
+            access_token_id: string | number;
+        };
+        query?: never;
+        url: "/api/v1/gitlab/projects/{project_id}/access-tokens/{access_token_id}/rotate";
+    };
 
-export type GetGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdGetError = GetGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdGetErrors[keyof GetGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdGetErrors];
+export type RotateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRotatePostErrors =
+    {
+        /**
+         * Validation Error
+         */
+        422: HttpValidationError;
+    };
 
-export type GetGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdGetResponses = {
-    /**
-     * Successful Response
-     */
-    200: unknown;
-};
+export type RotateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRotatePostError =
+    RotateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRotatePostErrors[keyof RotateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRotatePostErrors];
+
+export type RotateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRotatePostResponses =
+    {
+        /**
+         * Successful Response
+         */
+        200: unknown;
+    };
+
+export type RevokeGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRevokeDeleteData =
+    {
+        body?: never;
+        path: {
+            /**
+             * Project Id
+             */
+            project_id: string | number;
+            /**
+             * Access Token Id
+             */
+            access_token_id: string | number;
+        };
+        query?: never;
+        url: "/api/v1/gitlab/projects/{project_id}/access-tokens/{access_token_id}/revoke";
+    };
+
+export type RevokeGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRevokeDeleteErrors =
+    {
+        /**
+         * Validation Error
+         */
+        422: HttpValidationError;
+    };
+
+export type RevokeGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRevokeDeleteError =
+    RevokeGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRevokeDeleteErrors[keyof RevokeGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRevokeDeleteErrors];
+
+export type RevokeGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRevokeDeleteResponses =
+    {
+        /**
+         * Successful Response
+         */
+        200: unknown;
+    };
+
+export type ListGitlabProjectWebhooksApiV1GitlabProjectsProjectIdWebhooksGetData =
+    {
+        body?: never;
+        path: {
+            /**
+             * Project Id
+             */
+            project_id: string | number;
+        };
+        query?: never;
+        url: "/api/v1/gitlab/projects/{project_id}/webhooks";
+    };
+
+export type ListGitlabProjectWebhooksApiV1GitlabProjectsProjectIdWebhooksGetErrors =
+    {
+        /**
+         * Validation Error
+         */
+        422: HttpValidationError;
+    };
+
+export type ListGitlabProjectWebhooksApiV1GitlabProjectsProjectIdWebhooksGetError =
+    ListGitlabProjectWebhooksApiV1GitlabProjectsProjectIdWebhooksGetErrors[keyof ListGitlabProjectWebhooksApiV1GitlabProjectsProjectIdWebhooksGetErrors];
+
+export type ListGitlabProjectWebhooksApiV1GitlabProjectsProjectIdWebhooksGetResponses =
+    {
+        /**
+         * Successful Response
+         */
+        200: unknown;
+    };
+
+export type CreateGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksPostData =
+    {
+        body?: never;
+        path: {
+            /**
+             * Project Id
+             */
+            project_id: string | number;
+        };
+        query?: never;
+        url: "/api/v1/gitlab/projects/{project_id}/webhooks";
+    };
+
+export type CreateGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksPostErrors =
+    {
+        /**
+         * Validation Error
+         */
+        422: HttpValidationError;
+    };
+
+export type CreateGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksPostError =
+    CreateGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksPostErrors[keyof CreateGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksPostErrors];
+
+export type CreateGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksPostResponses =
+    {
+        /**
+         * Successful Response
+         */
+        200: unknown;
+    };
+
+export type DeleteGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdDeleteData =
+    {
+        body?: never;
+        path: {
+            /**
+             * Project Id
+             */
+            project_id: string | number;
+            /**
+             * Hook Id
+             */
+            hook_id: string | number;
+        };
+        query?: never;
+        url: "/api/v1/gitlab/projects/{project_id}/webhooks/{hook_id}";
+    };
+
+export type DeleteGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdDeleteErrors =
+    {
+        /**
+         * Validation Error
+         */
+        422: HttpValidationError;
+    };
+
+export type DeleteGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdDeleteError =
+    DeleteGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdDeleteErrors[keyof DeleteGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdDeleteErrors];
+
+export type DeleteGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdDeleteResponses =
+    {
+        /**
+         * Successful Response
+         */
+        200: unknown;
+    };
+
+export type GetGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdGetData =
+    {
+        body?: never;
+        path: {
+            /**
+             * Project Id
+             */
+            project_id: string | number;
+            /**
+             * Hook Id
+             */
+            hook_id: string | number;
+        };
+        query?: never;
+        url: "/api/v1/gitlab/projects/{project_id}/webhooks/{hook_id}";
+    };
+
+export type GetGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdGetErrors =
+    {
+        /**
+         * Validation Error
+         */
+        422: HttpValidationError;
+    };
+
+export type GetGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdGetError =
+    GetGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdGetErrors[keyof GetGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdGetErrors];
+
+export type GetGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdGetResponses =
+    {
+        /**
+         * Successful Response
+         */
+        200: unknown;
+    };
 
 export type GetBotStatusApiV1BotsBotIdStatusGetData = {
     body?: never;
@@ -799,7 +846,7 @@ export type GetBotStatusApiV1BotsBotIdStatusGetData = {
         bot_id: number;
     };
     query?: never;
-    url: '/api/v1/bots/{bot_id}/status';
+    url: "/api/v1/bots/{bot_id}/status";
 };
 
 export type GetBotStatusApiV1BotsBotIdStatusGetErrors = {
@@ -809,7 +856,8 @@ export type GetBotStatusApiV1BotsBotIdStatusGetErrors = {
     422: HttpValidationError;
 };
 
-export type GetBotStatusApiV1BotsBotIdStatusGetError = GetBotStatusApiV1BotsBotIdStatusGetErrors[keyof GetBotStatusApiV1BotsBotIdStatusGetErrors];
+export type GetBotStatusApiV1BotsBotIdStatusGetError =
+    GetBotStatusApiV1BotsBotIdStatusGetErrors[keyof GetBotStatusApiV1BotsBotIdStatusGetErrors];
 
 export type GetBotStatusApiV1BotsBotIdStatusGetResponses = {
     /**
@@ -818,7 +866,8 @@ export type GetBotStatusApiV1BotsBotIdStatusGetResponses = {
     200: BotStatusResponse;
 };
 
-export type GetBotStatusApiV1BotsBotIdStatusGetResponse = GetBotStatusApiV1BotsBotIdStatusGetResponses[keyof GetBotStatusApiV1BotsBotIdStatusGetResponses];
+export type GetBotStatusApiV1BotsBotIdStatusGetResponse =
+    GetBotStatusApiV1BotsBotIdStatusGetResponses[keyof GetBotStatusApiV1BotsBotIdStatusGetResponses];
 
 export type ListBotsApiV1BotsGetData = {
     body?: never;
@@ -833,7 +882,7 @@ export type ListBotsApiV1BotsGetData = {
          */
         per_page?: number;
     };
-    url: '/api/v1/bots/';
+    url: "/api/v1/bots/";
 };
 
 export type ListBotsApiV1BotsGetErrors = {
@@ -843,7 +892,8 @@ export type ListBotsApiV1BotsGetErrors = {
     422: HttpValidationError;
 };
 
-export type ListBotsApiV1BotsGetError = ListBotsApiV1BotsGetErrors[keyof ListBotsApiV1BotsGetErrors];
+export type ListBotsApiV1BotsGetError =
+    ListBotsApiV1BotsGetErrors[keyof ListBotsApiV1BotsGetErrors];
 
 export type ListBotsApiV1BotsGetResponses = {
     /**
@@ -852,13 +902,14 @@ export type ListBotsApiV1BotsGetResponses = {
     200: BotReadList;
 };
 
-export type ListBotsApiV1BotsGetResponse = ListBotsApiV1BotsGetResponses[keyof ListBotsApiV1BotsGetResponses];
+export type ListBotsApiV1BotsGetResponse =
+    ListBotsApiV1BotsGetResponses[keyof ListBotsApiV1BotsGetResponses];
 
 export type CreateBotApiV1BotsPostData = {
     body: BotCreate;
     path?: never;
     query?: never;
-    url: '/api/v1/bots/';
+    url: "/api/v1/bots/";
 };
 
 export type CreateBotApiV1BotsPostErrors = {
@@ -868,7 +919,8 @@ export type CreateBotApiV1BotsPostErrors = {
     422: HttpValidationError;
 };
 
-export type CreateBotApiV1BotsPostError = CreateBotApiV1BotsPostErrors[keyof CreateBotApiV1BotsPostErrors];
+export type CreateBotApiV1BotsPostError =
+    CreateBotApiV1BotsPostErrors[keyof CreateBotApiV1BotsPostErrors];
 
 export type CreateBotApiV1BotsPostResponses = {
     /**
@@ -877,7 +929,8 @@ export type CreateBotApiV1BotsPostResponses = {
     201: BotCreateResponse;
 };
 
-export type CreateBotApiV1BotsPostResponse = CreateBotApiV1BotsPostResponses[keyof CreateBotApiV1BotsPostResponses];
+export type CreateBotApiV1BotsPostResponse =
+    CreateBotApiV1BotsPostResponses[keyof CreateBotApiV1BotsPostResponses];
 
 export type DeleteBotApiV1BotsBotIdDeleteData = {
     body?: never;
@@ -888,7 +941,7 @@ export type DeleteBotApiV1BotsBotIdDeleteData = {
         bot_id: number;
     };
     query?: never;
-    url: '/api/v1/bots/{bot_id}';
+    url: "/api/v1/bots/{bot_id}";
 };
 
 export type DeleteBotApiV1BotsBotIdDeleteErrors = {
@@ -898,7 +951,8 @@ export type DeleteBotApiV1BotsBotIdDeleteErrors = {
     422: HttpValidationError;
 };
 
-export type DeleteBotApiV1BotsBotIdDeleteError = DeleteBotApiV1BotsBotIdDeleteErrors[keyof DeleteBotApiV1BotsBotIdDeleteErrors];
+export type DeleteBotApiV1BotsBotIdDeleteError =
+    DeleteBotApiV1BotsBotIdDeleteErrors[keyof DeleteBotApiV1BotsBotIdDeleteErrors];
 
 export type DeleteBotApiV1BotsBotIdDeleteResponses = {
     /**
@@ -907,7 +961,8 @@ export type DeleteBotApiV1BotsBotIdDeleteResponses = {
     204: void;
 };
 
-export type DeleteBotApiV1BotsBotIdDeleteResponse = DeleteBotApiV1BotsBotIdDeleteResponses[keyof DeleteBotApiV1BotsBotIdDeleteResponses];
+export type DeleteBotApiV1BotsBotIdDeleteResponse =
+    DeleteBotApiV1BotsBotIdDeleteResponses[keyof DeleteBotApiV1BotsBotIdDeleteResponses];
 
 export type UpdateBotApiV1BotsBotIdPatchData = {
     body: BotUpdate;
@@ -918,7 +973,7 @@ export type UpdateBotApiV1BotsBotIdPatchData = {
         bot_id: number;
     };
     query?: never;
-    url: '/api/v1/bots/{bot_id}';
+    url: "/api/v1/bots/{bot_id}";
 };
 
 export type UpdateBotApiV1BotsBotIdPatchErrors = {
@@ -928,7 +983,8 @@ export type UpdateBotApiV1BotsBotIdPatchErrors = {
     422: HttpValidationError;
 };
 
-export type UpdateBotApiV1BotsBotIdPatchError = UpdateBotApiV1BotsBotIdPatchErrors[keyof UpdateBotApiV1BotsBotIdPatchErrors];
+export type UpdateBotApiV1BotsBotIdPatchError =
+    UpdateBotApiV1BotsBotIdPatchErrors[keyof UpdateBotApiV1BotsBotIdPatchErrors];
 
 export type UpdateBotApiV1BotsBotIdPatchResponses = {
     /**
@@ -937,7 +993,8 @@ export type UpdateBotApiV1BotsBotIdPatchResponses = {
     200: BotUpdateResponse;
 };
 
-export type UpdateBotApiV1BotsBotIdPatchResponse = UpdateBotApiV1BotsBotIdPatchResponses[keyof UpdateBotApiV1BotsBotIdPatchResponses];
+export type UpdateBotApiV1BotsBotIdPatchResponse =
+    UpdateBotApiV1BotsBotIdPatchResponses[keyof UpdateBotApiV1BotsBotIdPatchResponses];
 
 export type RevokeBotTokenApiV1BotsBodIdRevokeDeleteData = {
     body?: never;
@@ -948,7 +1005,7 @@ export type RevokeBotTokenApiV1BotsBodIdRevokeDeleteData = {
          */
         bot_id: number;
     };
-    url: '/api/v1/bots/{bod_id}/revoke';
+    url: "/api/v1/bots/{bod_id}/revoke";
 };
 
 export type RevokeBotTokenApiV1BotsBodIdRevokeDeleteErrors = {
@@ -958,7 +1015,8 @@ export type RevokeBotTokenApiV1BotsBodIdRevokeDeleteErrors = {
     422: HttpValidationError;
 };
 
-export type RevokeBotTokenApiV1BotsBodIdRevokeDeleteError = RevokeBotTokenApiV1BotsBodIdRevokeDeleteErrors[keyof RevokeBotTokenApiV1BotsBodIdRevokeDeleteErrors];
+export type RevokeBotTokenApiV1BotsBodIdRevokeDeleteError =
+    RevokeBotTokenApiV1BotsBodIdRevokeDeleteErrors[keyof RevokeBotTokenApiV1BotsBodIdRevokeDeleteErrors];
 
 export type RevokeBotTokenApiV1BotsBodIdRevokeDeleteResponses = {
     /**
@@ -967,7 +1025,8 @@ export type RevokeBotTokenApiV1BotsBodIdRevokeDeleteResponses = {
     204: void;
 };
 
-export type RevokeBotTokenApiV1BotsBodIdRevokeDeleteResponse = RevokeBotTokenApiV1BotsBodIdRevokeDeleteResponses[keyof RevokeBotTokenApiV1BotsBodIdRevokeDeleteResponses];
+export type RevokeBotTokenApiV1BotsBodIdRevokeDeleteResponse =
+    RevokeBotTokenApiV1BotsBodIdRevokeDeleteResponses[keyof RevokeBotTokenApiV1BotsBodIdRevokeDeleteResponses];
 
 export type RotateBotTokenApiV1BotsBotIdRotateTokenPatchData = {
     body?: never;
@@ -978,7 +1037,7 @@ export type RotateBotTokenApiV1BotsBotIdRotateTokenPatchData = {
         bot_id: number;
     };
     query?: never;
-    url: '/api/v1/bots/{bot_id}/rotate-token';
+    url: "/api/v1/bots/{bot_id}/rotate-token";
 };
 
 export type RotateBotTokenApiV1BotsBotIdRotateTokenPatchErrors = {
@@ -988,7 +1047,8 @@ export type RotateBotTokenApiV1BotsBotIdRotateTokenPatchErrors = {
     422: HttpValidationError;
 };
 
-export type RotateBotTokenApiV1BotsBotIdRotateTokenPatchError = RotateBotTokenApiV1BotsBotIdRotateTokenPatchErrors[keyof RotateBotTokenApiV1BotsBotIdRotateTokenPatchErrors];
+export type RotateBotTokenApiV1BotsBotIdRotateTokenPatchError =
+    RotateBotTokenApiV1BotsBotIdRotateTokenPatchErrors[keyof RotateBotTokenApiV1BotsBotIdRotateTokenPatchErrors];
 
 export type RotateBotTokenApiV1BotsBotIdRotateTokenPatchResponses = {
     /**
@@ -997,13 +1057,14 @@ export type RotateBotTokenApiV1BotsBotIdRotateTokenPatchResponses = {
     200: BotRead;
 };
 
-export type RotateBotTokenApiV1BotsBotIdRotateTokenPatchResponse = RotateBotTokenApiV1BotsBotIdRotateTokenPatchResponses[keyof RotateBotTokenApiV1BotsBotIdRotateTokenPatchResponses];
+export type RotateBotTokenApiV1BotsBotIdRotateTokenPatchResponse =
+    RotateBotTokenApiV1BotsBotIdRotateTokenPatchResponses[keyof RotateBotTokenApiV1BotsBotIdRotateTokenPatchResponses];
 
 export type GetAvailableAvatarsApiV1BotsAvailableAvatarsGetData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/api/v1/bots/available-avatars';
+    url: "/api/v1/bots/available-avatars";
 };
 
 export type GetAvailableAvatarsApiV1BotsAvailableAvatarsGetResponses = {
@@ -1017,4 +1078,5 @@ export type GetAvailableAvatarsApiV1BotsAvailableAvatarsGetResponses = {
     };
 };
 
-export type GetAvailableAvatarsApiV1BotsAvailableAvatarsGetResponse = GetAvailableAvatarsApiV1BotsAvailableAvatarsGetResponses[keyof GetAvailableAvatarsApiV1BotsAvailableAvatarsGetResponses];
+export type GetAvailableAvatarsApiV1BotsAvailableAvatarsGetResponse =
+    GetAvailableAvatarsApiV1BotsAvailableAvatarsGetResponses[keyof GetAvailableAvatarsApiV1BotsAvailableAvatarsGetResponses];
