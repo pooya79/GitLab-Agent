@@ -27,14 +27,21 @@ class GitlabService:
         except gitlab.GitlabAuthenticationError:
             return None
 
-    def list_user_projects(self, page: int = 1, per_page: int = 20) -> list[Project]:
+    def list_user_projects(
+        self, page: int = 1, per_page: int = 20
+    ) -> tuple[list[Project], int]:
+        # Fetch projects with at least Maintainer access
+        # Fetch a lot so that we can count number of projects easily
         projects = self.gl.projects.list(
-            page=page,
-            per_page=per_page,
+            get_all=True,
             min_access_level=GitLabAccessLevel.MAINTAINER,
         )
 
-        return projects
+        total = len(projects)
+
+        projects = projects[page - 1 : page - 1 + per_page]
+
+        return projects, total
 
     def get_user_project(self, project_id: str | int) -> Project:
         project = self.gl.projects.get(project_id)

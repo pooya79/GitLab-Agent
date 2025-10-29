@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
     Table,
     TableBody,
@@ -64,79 +64,146 @@ export interface Bot {
     hasBot: boolean; // Indicates if project has a bot configured
 }
 
-interface BotsTableProps {
-    bots?: Bot[];
+export interface BotsFetchResult {
+    items: Bot[];
+    total: number;
 }
 
-// Mock data for demonstration
-const mockBots: Bot[] = [
-    {
-        id: "1",
-        gitlabProject: "my-awesome-project",
-        projectUrl: "https://gitlab.com/user/my-awesome-project",
-        accessLevel: "Maintainer",
-        botName: "Code Review Bot",
-        avatar: "/avatars/analyst.png",
-        status: "active",
-        hasBot: true,
-    },
-    {
-        id: "2",
-        gitlabProject: "backend-api",
-        projectUrl: "https://gitlab.com/user/backend-api",
-        accessLevel: "Owner",
-        botName: "DevOps Assistant",
-        avatar: "/avatars/cyber_samurai.png",
-        status: "active",
-        hasBot: true,
-    },
-    {
-        id: "3",
-        gitlabProject: "frontend-app",
-        projectUrl: "https://gitlab.com/user/frontend-app",
-        accessLevel: "Developer",
-        botName: "CI/CD Helper",
-        avatar: "/avatars/hacker.png",
-        status: "stopped",
-        hasBot: true,
-    },
-    {
-        id: "4",
-        gitlabProject: "data-pipeline",
-        projectUrl: "https://gitlab.com/user/data-pipeline",
-        accessLevel: "Maintainer",
-        botName: "Analytics Bot",
-        avatar: "/avatars/librarian.png",
-        status: "error",
-        errorMessage:
-            "Failed to connect to GitLab API. Please check your access token.",
-        hasBot: true,
-    },
-    {
-        id: "5",
-        gitlabProject: "mobile-app",
-        projectUrl: "https://gitlab.com/user/mobile-app",
-        accessLevel: "Owner",
-        hasBot: false,
-    },
-    {
-        id: "6",
-        gitlabProject: "infrastructure",
-        projectUrl: "https://gitlab.com/user/infrastructure",
-        accessLevel: "Developer",
-        hasBot: false,
-    },
-];
+export interface BotStatus {
+    status: "active" | "stopped" | "error";
+    errorMessage?: string;
+}
 
-export function BotsTable({ bots = mockBots }: BotsTableProps) {
+interface BotsTableProps {
+    fetchBots: (page: number, perPage: number) => Promise<BotsFetchResult>;
+    fetchBotStatus?: (botId: string) => Promise<BotStatus>;
+}
+
+export function BotsTable({ fetchBots, fetchBotStatus }: BotsTableProps) {
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [bots, setBots] = useState<Bot[]>([]);
+    const [totalBots, setTotalBots] = useState(0);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [botStatuses, setBotStatuses] = useState<Map<string, BotStatus>>(
+        new Map(),
+    );
+    const [loadingStatuses, setLoadingStatuses] = useState<Set<string>>(
+        new Set(),
+    );
+
+    // Fetch bots whenever page or rowsPerPage changes
+    useEffect(() => {
+        const loadBots = async () => {
+            setIsLoading(true);
+            setError(null);
+            try {
+                const result = await fetchBots(currentPage, rowsPerPage);
+                setBots(result.items);
+                setTotalBots(result.total);
+            } catch (err) {
+                setError(
+                    err instanceof Error ? err.message : "Failed to fetch bots",
+                );
+                console.error("Error fetching bots:", err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadBots();
+    }, [currentPage, rowsPerPage, fetchBots]);
+
+    // Fetch statuses for bots that have a bot configured
+    useEffect(() => {
+        if (!fetchBotStatus || bots.length === 0) return;
+
+        const loadBotStatuses = async () => {
+            // Mark all bot IDs as loading
+            const botsWithBots = bots.filter((bot) => bot.hasBot);
+            const loadingIds = new Set(botsWithBots.map((bot) => bot.id));
+            setLoadingStatuses(loadingIds);
+
+            // Fetch statuses for all bots that have a bot configured
+            const statusPromises = botsWithBots.map(async (bot) => {
+                try {
+                    const status = await fetchBotStatus(bot.id);
+                    // Update status immediately as it's fetched
+                    setBotStatuses((prev) => {
+                        const newMap = new Map(prev);
+                        newMap.set(bot.id, status);
+                        return newMap;
+                    });
+                    // Remove from loading set
+                    setLoadingStatuses((prev) => {
+                        const newSet = new Set(prev);
+                        newSet.delete(bot.id);
+                        return newSet;
+                    });
+                } catch (err) {
+                    console.error(
+                        `Failed to fetch status for bot ${bot.id}:`,
+                        err,
+                    );
+                    // Set error status if fetch fails
+                    setBotStatuses((prev) => {
+                        const newMap = new Map(prev);
+                        newMap.set(bot.id, {
+                            status: "error",
+                            errorMessage: "Failed to fetch bot status",
+                        });
+                        return newMap;
+                    });
+                    // Remove from loading set
+                    setLoadingStatuses((prev) => {
+                        const newSet = new Set(prev);
+                        newSet.delete(bot.id);
+                        return newSet;
+                    });
+                }
+            });
+
+            await Promise.all(statusPromises);
+        };
+
+        loadBotStatuses();
+    }, [bots, fetchBotStatus]);
 
     // Calculate pagination
-    const totalPages = Math.ceil(bots.length / rowsPerPage);
-    const startIndex = (currentPage - 1) * rowsPerPage;
-    const endIndex = startIndex + rowsPerPage;
-    const currentBots = bots.slice(startIndex, endIndex);
+    const totalPages = Math.ceil(totalBots / rowsPerPage);
+
+    // Get the current status for a bot (prioritize fetched status over initial data)
+    const getBotStatus = (
+        bot: Bot,
+    ): { status: Bot["status"]; errorMessage?: string; isLoading: boolean } => {
+        if (bot.hasBot) {
+            // Check if status is currently being loaded
+            if (fetchBotStatus && loadingStatuses.has(bot.id)) {
+                return {
+                    status: undefined,
+                    isLoading: true,
+                };
+            }
+
+            // Check if we have a fetched status
+            if (botStatuses.has(bot.id)) {
+                const fetchedStatus = botStatuses.get(bot.id)!;
+                return {
+                    status: fetchedStatus.status,
+                    errorMessage: fetchedStatus.errorMessage,
+                    isLoading: false,
+                };
+            }
+        }
+
+        // Return initial status from bot data
+        return {
+            status: bot.status,
+            errorMessage: bot.errorMessage,
+            isLoading: false,
+        };
+    };
 
     const handleRemoveBot = (botId: string, botName: string) => {
         if (confirm(`Are you sure you want to remove "${botName}"?`)) {
@@ -243,7 +310,36 @@ export function BotsTable({ bots = mockBots }: BotsTableProps) {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {currentBots.length === 0 ? (
+                            {isLoading ? (
+                                <TableRow>
+                                    <TableCell
+                                        colSpan={6}
+                                        className="text-center py-8"
+                                    >
+                                        <div className="text-muted-foreground">
+                                            <p className="text-lg font-medium">
+                                                Loading bots...
+                                            </p>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ) : error ? (
+                                <TableRow>
+                                    <TableCell
+                                        colSpan={6}
+                                        className="text-center py-8"
+                                    >
+                                        <div className="text-destructive">
+                                            <p className="text-lg font-medium">
+                                                Error loading bots
+                                            </p>
+                                            <p className="text-sm mt-1">
+                                                {error}
+                                            </p>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ) : bots.length === 0 ? (
                                 <TableRow>
                                     <TableCell
                                         colSpan={6}
@@ -261,7 +357,7 @@ export function BotsTable({ bots = mockBots }: BotsTableProps) {
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                currentBots.map((bot) => (
+                                bots.map((bot) => (
                                     <TableRow key={bot.id}>
                                         {/* Bot Name & Avatar */}
                                         <TableCell>
@@ -328,11 +424,39 @@ export function BotsTable({ bots = mockBots }: BotsTableProps) {
 
                                         {/* Status */}
                                         <TableCell>
-                                            {bot.hasBot && bot.status ? (
-                                                getStatusBadge(
-                                                    bot.status,
-                                                    bot.errorMessage,
-                                                )
+                                            {bot.hasBot ? (
+                                                (() => {
+                                                    const {
+                                                        status,
+                                                        errorMessage,
+                                                        isLoading,
+                                                    } = getBotStatus(bot);
+                                                    if (isLoading) {
+                                                        return (
+                                                            <Badge
+                                                                variant="outline"
+                                                                className="text-muted-foreground"
+                                                            >
+                                                                <AlertCircle className="h-3 w-3 animate-pulse" />
+                                                                Loading...
+                                                            </Badge>
+                                                        );
+                                                    }
+                                                    return status ? (
+                                                        getStatusBadge(
+                                                            status,
+                                                            errorMessage,
+                                                        )
+                                                    ) : (
+                                                        <Badge
+                                                            variant="outline"
+                                                            className="text-muted-foreground"
+                                                        >
+                                                            <AlertCircle className="h-3 w-3" />
+                                                            Unknown
+                                                        </Badge>
+                                                    );
+                                                })()
                                             ) : (
                                                 <Badge
                                                     variant="outline"
@@ -412,69 +536,77 @@ export function BotsTable({ bots = mockBots }: BotsTableProps) {
                                         {/* Actions */}
                                         <TableCell className="text-right">
                                             {bot.hasBot ? (
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger
-                                                        asChild
-                                                    >
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                        >
-                                                            <MoreVertical className="h-4 w-4" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end">
-                                                        <DropdownMenuItem
-                                                            onClick={() =>
-                                                                handleStopBot(
-                                                                    bot.id,
-                                                                    bot.botName!,
-                                                                )
-                                                            }
-                                                            disabled={
-                                                                bot.status ===
-                                                                "error"
-                                                            }
-                                                        >
-                                                            {bot.status ===
-                                                            "stopped" ? (
-                                                                <>
-                                                                    <Play className="mr-2 h-4 w-4" />
-                                                                    Start Bot
-                                                                </>
-                                                            ) : (
-                                                                <>
-                                                                    <StopCircle className="mr-2 h-4 w-4" />
-                                                                    Stop Bot
-                                                                </>
-                                                            )}
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem
-                                                            onClick={() =>
-                                                                handleRevokeToken(
-                                                                    bot.id,
-                                                                    bot.botName!,
-                                                                )
-                                                            }
-                                                        >
-                                                            <KeyRound className="mr-2 h-4 w-4" />
-                                                            Revoke Token
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuSeparator />
-                                                        <DropdownMenuItem
-                                                            onClick={() =>
-                                                                handleRemoveBot(
-                                                                    bot.id,
-                                                                    bot.botName!,
-                                                                )
-                                                            }
-                                                            className="text-destructive focus:text-destructive"
-                                                        >
-                                                            <Trash2 className="mr-2 h-4 w-4" />
-                                                            Remove Bot
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
+                                                (() => {
+                                                    const { status } =
+                                                        getBotStatus(bot);
+                                                    return (
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger
+                                                                asChild
+                                                            >
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                >
+                                                                    <MoreVertical className="h-4 w-4" />
+                                                                </Button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent align="end">
+                                                                <DropdownMenuItem
+                                                                    onClick={() =>
+                                                                        handleStopBot(
+                                                                            bot.id,
+                                                                            bot.botName!,
+                                                                        )
+                                                                    }
+                                                                    disabled={
+                                                                        status ===
+                                                                        "error"
+                                                                    }
+                                                                >
+                                                                    {status ===
+                                                                    "stopped" ? (
+                                                                        <>
+                                                                            <Play className="mr-2 h-4 w-4" />
+                                                                            Start
+                                                                            Bot
+                                                                        </>
+                                                                    ) : (
+                                                                        <>
+                                                                            <StopCircle className="mr-2 h-4 w-4" />
+                                                                            Stop
+                                                                            Bot
+                                                                        </>
+                                                                    )}
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem
+                                                                    onClick={() =>
+                                                                        handleRevokeToken(
+                                                                            bot.id,
+                                                                            bot.botName!,
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    <KeyRound className="mr-2 h-4 w-4" />
+                                                                    Revoke Token
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuSeparator />
+                                                                <DropdownMenuItem
+                                                                    onClick={() =>
+                                                                        handleRemoveBot(
+                                                                            bot.id,
+                                                                            bot.botName!,
+                                                                        )
+                                                                    }
+                                                                    className="text-destructive focus:text-destructive"
+                                                                >
+                                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                                    Remove Bot
+                                                                </DropdownMenuItem>
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    );
+                                                })()
                                             ) : (
                                                 <span className="text-xs text-muted-foreground">
                                                     —
@@ -513,7 +645,7 @@ export function BotsTable({ bots = mockBots }: BotsTableProps) {
       `}</style>
 
             {/* Pagination Controls */}
-            {bots.length > 0 && (
+            {totalBots > 0 && (
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <p className="text-sm text-muted-foreground">
@@ -540,7 +672,7 @@ export function BotsTable({ bots = mockBots }: BotsTableProps) {
 
                     <div className="flex items-center gap-2">
                         <p className="text-sm text-muted-foreground">
-                            Page {currentPage} of {totalPages} ({bots.length}{" "}
+                            Page {currentPage} of {totalPages} ({totalBots}{" "}
                             total)
                         </p>
                         <div className="flex gap-1">

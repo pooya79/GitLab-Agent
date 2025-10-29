@@ -6,7 +6,7 @@ from sqlalchemy import select
 from app.api.deps import get_gitlab_accout_token, SessionDep
 from app.services.gitlab_service import GitlabService
 from app.db.models import Bot
-from app.schemas.gitlab import UserInfo, GitlabProject
+from app.schemas.gitlab import UserInfo, GitlabProject, GitlabProjectsList
 from app.core.log import logger
 
 
@@ -30,7 +30,7 @@ async def get_gitlab_userinfo(
     return user_info
 
 
-@router.get("/projects", response_model=List[GitlabProject])
+@router.get("/projects", response_model=GitlabProjectsList)
 async def get_gitlab_projects(
     session: SessionDep,
     page: int = 1,
@@ -42,7 +42,7 @@ async def get_gitlab_projects(
     """
     # Fetch projects from GitLab
     gitlab_service = GitlabService(oauth_token=gitlab_oauth_token)
-    projects = gitlab_service.list_user_projects(page=page, per_page=per_page)
+    projects, total = gitlab_service.list_user_projects(page=page, per_page=per_page)
     if not projects:
         raise HTTPException(status_code=401, detail="Invalid GitLab OAuth token")
 
@@ -78,7 +78,12 @@ async def get_gitlab_projects(
         for project in projects
     ]
 
-    return project_details
+    return GitlabProjectsList(
+        projects=project_details,
+        total=total,
+        page=page,
+        per_page=per_page,
+    )
 
 
 def _extract_access_level(permissions: dict[str, dict]):
