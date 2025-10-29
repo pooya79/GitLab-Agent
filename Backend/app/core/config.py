@@ -10,6 +10,7 @@ class GitlabSettings(BaseModel):
     base: str
     client_id: str
     client_secret: str
+    webhook_ssl_verify: bool = True
 
 
 class Settings(BaseSettings):
@@ -26,6 +27,7 @@ class Settings(BaseSettings):
     port: int = 8000
     host_url: str
 
+    backend_url: str = "http://localhost:8000"
     frontend_url: str = "http://localhost:3000"
 
     log_dir: str = "logs"
@@ -53,8 +55,13 @@ class Settings(BaseSettings):
     openrouter_api_key: str | None = None
     logfire_token: str | None = None
 
-    ## Agents Configs
+    ## Default Agents Configs
     max_chat_history: int = 10
+    llm_model: str = "openai/gpt-4o-mini"
+    llm_context_window: int = 40000
+    llm_output_tokens: int = 5000
+    llm_temperature: float = 0.2
+    avatar_default_url: str = "/api/static/avatars/default.png"
 
 
 settings = Settings()

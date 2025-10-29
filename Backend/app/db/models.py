@@ -10,11 +10,15 @@ Base = declarative_base()
 
 class Bot(Base):
     __tablename__ = "bots"
+    __table_args__ = (
+        Index("ix_gitlab_project_path_name", "gitlab_project_path", "name"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, index=True)
+    name: Mapped[str] = mapped_column(nullable=False)
     is_active: Mapped[bool] = mapped_column(nullable=False, default=True)
 
-    gitlab_project_path: Mapped[str] = mapped_column(nullable=False)
+    gitlab_project_path: Mapped[str] = mapped_column(nullable=False, unique=True, index=True)
     gitlab_access_token_id: Mapped[int] = mapped_column(nullable=True)
     gitlab_access_token: Mapped[str] = mapped_column(nullable=True)
     gitlab_webhook_id: Mapped[int] = mapped_column(nullable=True)

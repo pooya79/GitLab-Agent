@@ -1,14 +1,19 @@
+from typing import List
 from fastapi import APIRouter, Request, HTTPException, Depends
 from fastapi.responses import JSONResponse
+from sqlalchemy import select
 
 from app.api.deps import get_gitlab_accout_token, SessionDep
 from app.services.gitlab_service import GitlabService
+from app.db.models import Bot
+from app.schemas.gitlab import UserInfo, GitlabProject
+from app.core.log import logger
 
 
 router = APIRouter(prefix="/gitlab", tags=["gitlab"])
 
 
-@router.get("/userinfo")
+@router.get("/userinfo", response_model=UserInfo)
 async def get_gitlab_userinfo(
     request: Request, gitlab_oauth_token: str = Depends(get_gitlab_accout_token)
 ):
@@ -20,11 +25,14 @@ async def get_gitlab_userinfo(
     if not user_info:
         raise HTTPException(status_code=401, detail="Invalid GitLab OAuth token")
 
-    return JSONResponse(content=user_info)
+    user_info = UserInfo(**user_info)
+
+    return user_info
 
 
-@router.get("/projects")
+@router.get("/projects", response_model=List[GitlabProject])
 async def get_gitlab_projects(
+    session: SessionDep,
     page: int = 1,
     per_page: int = 20,
     gitlab_oauth_token: str = Depends(get_gitlab_accout_token),
@@ -32,23 +40,54 @@ async def get_gitlab_projects(
     """
     Get GitLab projects for the authenticated user.
     """
+    # Fetch projects from GitLab
     gitlab_service = GitlabService(oauth_token=gitlab_oauth_token)
     projects = gitlab_service.list_user_projects(page=page, per_page=per_page)
     if not projects:
         raise HTTPException(status_code=401, detail="Invalid GitLab OAuth token")
 
+    # Get their bots
+    result = await session.execute(
+        select(Bot).where(
+            Bot.gitlab_project_path.in_(
+                [project.path_with_namespace for project in projects]
+            )
+        )
+    )
+    bots = result.scalars().all()
+    project_bots = {bot.gitlab_project_path: bot for bot in bots}
+
     # Get Useful details
     project_details = [
-        {
-            "id": project.id,
-            "name_with_namespace": project.name_with_namespace,
-            "path_with_namespace": project.path_with_namespace,
-            "web_url": project.web_url,
-        }
+        GitlabProject(
+            id=project.id,
+            name_with_namespace=project.name_with_namespace,
+            path_with_namespace=project.path_with_namespace,
+            web_url=project.web_url,
+            access_level=_extract_access_level(project.permissions),
+            bot_id=project_bots.get(project.path_with_namespace).id
+            if project.path_with_namespace in project_bots
+            else None,
+            bot_name=project_bots.get(project.path_with_namespace).name
+            if project.path_with_namespace in project_bots
+            else None,
+            avatar_url=project_bots.get(project.path_with_namespace).avatar_url
+            if project.path_with_namespace in project_bots
+            else None,
+        )
         for project in projects
     ]
 
     return project_details
+
+
+def _extract_access_level(permissions: dict[str, dict]):
+    access_level = 0
+    if permissions["project_access"]:
+        access_level = permissions["project_access"]["access_level"]
+    if permissions["group_access"]:
+        access_level = max(access_level, permissions["group_access"]["access_level"])
+    return access_level
 
 
 @router.get("/projects/{project_id}/access-tokens")

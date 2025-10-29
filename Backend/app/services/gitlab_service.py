@@ -35,7 +35,7 @@ class GitlabService:
         )
 
         return projects
-    
+
     def get_user_project(self, project_id: str | int) -> Project:
         project = self.gl.projects.get(project_id)
         return project
@@ -55,12 +55,12 @@ class GitlabService:
     def create_project_token(
         self,
         project_id: str | int,
-        access_token_id: str | int,
+        access_token_name: str,
         scopes: list[str],
         expires_at: str | None = None,
     ) -> ProjectAccessToken:
         token = self.gl.projects.get(project_id, lazy=True).access_tokens.create(
-            {"name": access_token_id, "scopes": scopes, "expires_at": expires_at}
+            {"name": access_token_name, "scopes": scopes, "expires_at": expires_at}
         )
         return token
 
@@ -95,10 +95,12 @@ class GitlabService:
         url: str,
         events: dict,
         enable_ssl_verification: bool = True,
+        token: str | None = None,
     ) -> ProjectHook:
         hook_data = {
             "url": url,
             "enable_ssl_verification": enable_ssl_verification,
+            "token": token,
         }
         hook_data.update(events)
         hook = self.gl.projects.get(project_id, lazy=True).hooks.create(hook_data)
