@@ -99,6 +99,16 @@ export const zGitlabProject = z.object({
 });
 
 /**
+ * GitlabProjectsList
+ */
+export const zGitlabProjectsList = z.object({
+    projects: z.array(zGitlabProject),
+    total: z.int(),
+    page: z.int(),
+    per_page: z.int(),
+});
+
+/**
  * RefreshTokenIn
  */
 export const zRefreshTokenIn = z.object({
@@ -229,7 +239,7 @@ export const zGetGitlabUserinfoApiV1GitlabUserinfoGetData = z.object({
 export const zGetGitlabUserinfoApiV1GitlabUserinfoGetResponse =
     zAppSchemasGitlabUserInfo;
 
-export const zGetGitlabProjectsApiV1GitlabProjectsGetData = z.object({
+export const zListGitlabProjectsApiV1GitlabProjectsGetData = z.object({
     body: z.optional(z.never()),
     path: z.optional(z.never()),
     query: z.optional(
@@ -241,12 +251,10 @@ export const zGetGitlabProjectsApiV1GitlabProjectsGetData = z.object({
 });
 
 /**
- * Response Get Gitlab Projects Api V1 Gitlab Projects Get
- *
  * Successful Response
  */
-export const zGetGitlabProjectsApiV1GitlabProjectsGetResponse =
-    z.array(zGitlabProject);
+export const zListGitlabProjectsApiV1GitlabProjectsGetResponse =
+    zGitlabProjectsList;
 
 export const zListGitlabProjectAccessTokensApiV1GitlabProjectsProjectIdAccessTokensGetData =
     z.object({

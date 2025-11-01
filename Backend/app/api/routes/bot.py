@@ -1,4 +1,5 @@
 import uuid
+import datetime as dt
 
 from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.responses import Response
@@ -79,8 +80,15 @@ async def get_bot_status(
                 error_message="Bot's GitLab project is invalid or has been revoked.",
             )
 
+        # Check if token is revoked
+        if project_access_token.revoked:
+            return BotStatusResponse(
+                status="ERROR",
+                error_message=f"Bot's GitLab access token ({project_access_token.name}) has been revoked.",
+            )
+
         # Check its expiry
-        if project_access_token.expires_at and project_access_token.expires_at < NOW():
+        if project_access_token.expires_at and dt.datetime.fromisoformat(project_access_token.expires_at) < NOW():
             return BotStatusResponse(
                 status="ERROR",
                 error_message=f"Bot's GitLab access token ({project_access_token.name}) has expired.",
@@ -102,7 +110,8 @@ async def get_bot_status(
                 error_message=f"Bot's GitLab access token ({project_access_token.name}) does not have required scopes: {', '.join(required_scopes)}.",
             )
 
-    except Exception:
+    except Exception as e:
+        logger.error(f"Could not get bot's GitLab access token information: {e}")
         return BotStatusResponse(
             status="ERROR",
             error_message=f"Could not get bot's GitLab access token ({bot.gitlab_access_token_id}) information (Check if gitlab is connected).",
@@ -140,7 +149,8 @@ async def get_bot_status(
                     error_message=f"Bot's GitLab webhook is missing required event: {event}.",
                 )
 
-    except Exception:
+    except Exception as e:
+        logger.error(f"Could not get bot's GitLab webhook information: {e}")
         return BotStatusResponse(
             status="ERROR",
             error_message="Bot's GitLab webhook is invalid or has been removed.",
@@ -167,22 +177,6 @@ async def create_bot(
         )
 
     gitlab_service = GitlabService(oauth_token=gitlab_oauth_token)
-    # Create project access token for the bot
-    try:
-        access_token_name = f"bot-token-{data.name}-{uuid.uuid4().hex[:8]}"
-        project_token = gitlab_service.create_project_token(
-            project.id,
-            access_token_name,
-            scopes=["api"],
-            expires_at=None,
-        )
-    except Exception as e:
-        logger.error(f"Error creating project access token for bot: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create project webhook for the bot. Check your connection with GitLab.",
-        )
-
     # Create project webhook for the bot
     try:
         webhook_url = f"{settings.backend_url}/api/v1/webhooks/{data.name}"
@@ -195,17 +189,33 @@ async def create_bot(
             project.id,
             webhook_url,
             events,
-            enable_ssl_verification=settings.webhook_ssl_verify,
+            enable_ssl_verification=settings.gitlab.webhook_ssl_verify,
             token=webhook_secret_token,
         )
     except Exception as e:
         logger.error(f"Error creating project webhook for bot: {e}")
-        # Clean up the created project token
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create project webhook for the bot. Check your connection with GitLab.",
+        )
+
+    # Create project access token for the bot
+    try:
+        access_token_name = f"bot-token-{data.name}-{uuid.uuid4().hex[:8]}"
+        project_token = gitlab_service.create_project_token(
+            project.id,
+            access_token_name,
+            scopes=["api"],
+            expires_at=None,
+        )
+    except Exception as e:
+        logger.error(f"Error creating project access token for bot: {e}")
+        # Clean up the created project webhook
         try:
-            gitlab_service.revoke_project_token(project.id, project_token.id)
+            gitlab_service.delete_webhook(project.id, webhook.id)
         except Exception as cleanup_error:
             logger.error(
-                f"Error cleaning up project token after webhook failure: {cleanup_error}"
+                f"Error cleaning up project webhook after token failure: {cleanup_error}"
             )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -219,6 +229,7 @@ async def create_bot(
         gitlab_project_path=project.path_with_namespace,
         gitlab_webhook_id=webhook.id,
         gitlab_webhook_secret=webhook_secret_token,
+        gitlab_webhook_url=webhook_url,
         llm_model=settings.llm_model,
         llm_context_window=settings.llm_context_window,
         llm_output_tokens=settings.llm_output_tokens,

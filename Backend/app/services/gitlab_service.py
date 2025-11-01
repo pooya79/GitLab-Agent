@@ -39,7 +39,7 @@ class GitlabService:
 
         total = len(projects)
 
-        projects = projects[page - 1 : page - 1 + per_page]
+        projects = projects[(page - 1) * per_page : (page - 1) * per_page + per_page]
 
         return projects, total
 

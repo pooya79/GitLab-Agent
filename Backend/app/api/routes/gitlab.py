@@ -31,14 +31,14 @@ async def get_gitlab_userinfo(
 
 
 @router.get("/projects", response_model=GitlabProjectsList)
-async def get_gitlab_projects(
+async def list_gitlab_projects(
     session: SessionDep,
     page: int = 1,
     per_page: int = 20,
     gitlab_oauth_token: str = Depends(get_gitlab_accout_token),
 ):
     """
-    Get GitLab projects for the authenticated user.
+    list GitLab projects for the authenticated user.
     """
     # Fetch projects from GitLab
     gitlab_service = GitlabService(oauth_token=gitlab_oauth_token)

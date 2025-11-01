@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useCallback } from "react";
 import {
     Card,
     CardContent,
@@ -7,124 +8,134 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
     BotsTable,
     type BotsFetchResult,
     type Bot,
     type BotStatus,
 } from "@/components/bots-table";
+import { CreateBotDialog } from "@/components/create-bot-dialog";
+import {
+    listGitlabProjectsApiV1GitlabProjectsGet,
+    getBotStatusApiV1BotsBotIdStatusGet,
+    createBotApiV1BotsPost,
+} from "@/client/sdk.gen";
 
-// Mock data for demonstration
-const mockBots: Bot[] = [
-    {
-        id: "1",
-        gitlabProject: "my-awesome-project",
-        projectUrl: "https://gitlab.com/user/my-awesome-project",
-        accessLevel: "Maintainer",
-        botName: "Code Review Bot",
-        avatar: "/avatars/analyst.png",
-        status: "active",
-        hasBot: true,
-    },
-    {
-        id: "2",
-        gitlabProject: "backend-api",
-        projectUrl: "https://gitlab.com/user/backend-api",
-        accessLevel: "Owner",
-        botName: "DevOps Assistant",
-        avatar: "/avatars/cyber_samurai.png",
-        status: "active",
-        hasBot: true,
-    },
-    {
-        id: "3",
-        gitlabProject: "frontend-app",
-        projectUrl: "https://gitlab.com/user/frontend-app",
-        accessLevel: "Developer",
-        botName: "CI/CD Helper",
-        avatar: "/avatars/hacker.png",
-        status: "stopped",
-        hasBot: true,
-    },
-    {
-        id: "4",
-        gitlabProject: "data-pipeline",
-        projectUrl: "https://gitlab.com/user/data-pipeline",
-        accessLevel: "Maintainer",
-        botName: "Analytics Bot",
-        avatar: "/avatars/librarian.png",
-        status: "error",
-        errorMessage:
-            "Failed to connect to GitLab API. Please check your access token.",
-        hasBot: true,
-    },
-    {
-        id: "5",
-        gitlabProject: "mobile-app",
-        projectUrl: "https://gitlab.com/user/mobile-app",
-        accessLevel: "Owner",
-        hasBot: false,
-    },
-    {
-        id: "6",
-        gitlabProject: "infrastructure",
-        projectUrl: "https://gitlab.com/user/infrastructure",
-        accessLevel: "Developer",
-        hasBot: false,
-    },
-];
+const ACCESS_LEVEL: Record<number, string> = {
+    10: "Guest",
+    20: "Reporter",
+    30: "Developer",
+    40: "Maintainer",
+    50: "Owner",
+};
 
 export default function DashboardPage() {
-    // Mock fetch function - replace with actual API call
-    const fetchBots = async (
-        page: number,
-        perPage: number,
-    ): Promise<BotsFetchResult> => {
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 500));
+    const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+    const [selectedProjectPathName, setSelectedProjectPathName] = useState<
+        string | null
+    >(null);
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-        // Calculate pagination
-        const startIndex = (page - 1) * perPage;
-        const endIndex = startIndex + perPage;
-        const items = mockBots.slice(startIndex, endIndex);
-
-        return {
-            items,
-            total: mockBots.length,
-        };
-
-        // Example with real API call:
-        // const response = await fetch(`/api/v1/bots?page=${page}&per_page=${perPage}`);
-        // const data = await response.json();
-        // return {
-        //     items: data.items,
-        //     total: data.total,
-        // };
+    const handleOpenCreateDialog = (projectPathName: string) => {
+        setSelectedProjectPathName(projectPathName);
+        setIsCreateDialogOpen(true);
     };
 
-    // Mock fetch bot status function - replace with actual API call
-    const fetchBotStatus = async (botId: string): Promise<BotStatus> => {
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+    const handleCreateBot = async (botName: string, projectPath: string) => {
+        const response = await createBotApiV1BotsPost({
+            body: {
+                name: botName,
+                gitlab_project_path: projectPath,
+            },
+        });
 
-        // Return mock status based on bot data
-        const bot = mockBots.find((b) => b.id === botId);
-        if (!bot || !bot.hasBot) {
-            throw new Error("Bot not found");
+        if (response.error) {
+            throw new Error("Failed to create bot");
         }
 
-        return {
-            status: bot.status || "active",
-            errorMessage: bot.errorMessage,
-        };
+        if (response.response.status !== 201) {
+            throw new Error(
+                `Failed to create bot: ${response.response.statusText}`,
+            );
+        }
 
-        // Example with real API call:
-        // const response = await fetch(`/api/v1/bots/${botId}/status`);
-        // const data = await response.json();
-        // return {
-        //     status: data.status,
-        //     errorMessage: data.error_message,
-        // };
+        // Success - refresh the table
+        setRefreshTrigger((prev) => prev + 1);
+    };
+
+    // Fetch bots from API
+    const fetchBots = useCallback(
+        async (page: number, perPage: number): Promise<BotsFetchResult> => {
+            try {
+                const response = await listGitlabProjectsApiV1GitlabProjectsGet(
+                    {
+                        query: { page, per_page: perPage },
+                    },
+                );
+
+                if (response.error) {
+                    throw new Error("Wrong input type.");
+                }
+
+                if (response.response.status !== 200) {
+                    throw new Error(
+                        `Failed to fetch bots: ${response.response.statusText}`,
+                    );
+                }
+                const total: number = response.data.total;
+                const items: Bot[] = response.data.projects.map(
+                    (project: any) => {
+                        return {
+                            gitlabProjectId: project.id,
+                            gitlabProject: project.name_with_namespace,
+                            gitlabProjectPathName: project.path_with_namespace,
+                            projectUrl: project.web_url,
+                            accessLevel: ACCESS_LEVEL[project.access_level],
+                            botId: project.bot_id ?? undefined,
+                            botName: project.bot_name ?? undefined,
+                            avatar: project.avatar_url ?? undefined,
+                            hasBot: project.bot_id ? true : false,
+                        } as Bot;
+                    },
+                );
+                return { total, items };
+            } catch (error) {
+                console.error("Error fetching bots:", error);
+                throw error instanceof Error
+                    ? error
+                    : new Error("Unknown error while fetching bots");
+            }
+        },
+        [refreshTrigger],
+    );
+
+    // Fetch bot status from API
+    const fetchBotStatus = async (botId: number): Promise<BotStatus> => {
+        try {
+            const response = await getBotStatusApiV1BotsBotIdStatusGet({
+                path: { bot_id: botId },
+            });
+
+            if (response.error) {
+                throw new Error("Wrong input type.");
+            }
+
+            if (response.response.status !== 200) {
+                throw new Error(
+                    `Failed to fetch bot status: ${response.response.statusText}`,
+                );
+            }
+            return {
+                status: response.data.status,
+                errorMessage: response.data.error_message ?? undefined,
+            };
+        } catch (error) {
+            console.error(`Error fetching status for bot ${botId}:`, error);
+            throw error instanceof Error
+                ? error
+                : new Error("Unknown error while fetching bot status");
+        }
     };
 
     return (
@@ -184,9 +195,18 @@ export default function DashboardPage() {
                     <BotsTable
                         fetchBots={fetchBots}
                         fetchBotStatus={fetchBotStatus}
+                        onCreateBot={handleOpenCreateDialog}
                     />
                 </CardContent>
             </Card>
+
+            {/* Create Bot Dialog */}
+            <CreateBotDialog
+                isOpen={isCreateDialogOpen}
+                onOpenChange={setIsCreateDialogOpen}
+                projectPathName={selectedProjectPathName}
+                onCreateBot={handleCreateBot}
+            />
         </div>
     );
 }

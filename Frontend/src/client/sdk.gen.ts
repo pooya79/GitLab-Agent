@@ -31,9 +31,6 @@ import type {
     GetGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdGetData,
     GetGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdGetErrors,
     GetGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdGetResponses,
-    GetGitlabProjectsApiV1GitlabProjectsGetData,
-    GetGitlabProjectsApiV1GitlabProjectsGetErrors,
-    GetGitlabProjectsApiV1GitlabProjectsGetResponses,
     GetGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdGetData,
     GetGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdGetErrors,
     GetGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdGetResponses,
@@ -50,6 +47,9 @@ import type {
     ListGitlabProjectAccessTokensApiV1GitlabProjectsProjectIdAccessTokensGetData,
     ListGitlabProjectAccessTokensApiV1GitlabProjectsProjectIdAccessTokensGetErrors,
     ListGitlabProjectAccessTokensApiV1GitlabProjectsProjectIdAccessTokensGetResponses,
+    ListGitlabProjectsApiV1GitlabProjectsGetData,
+    ListGitlabProjectsApiV1GitlabProjectsGetErrors,
+    ListGitlabProjectsApiV1GitlabProjectsGetResponses,
     ListGitlabProjectWebhooksApiV1GitlabProjectsProjectIdWebhooksGetData,
     ListGitlabProjectWebhooksApiV1GitlabProjectsProjectIdWebhooksGetErrors,
     ListGitlabProjectWebhooksApiV1GitlabProjectsProjectIdWebhooksGetResponses,
@@ -92,8 +92,6 @@ import {
     zGetCurrentUserInfoApiV1AuthMeGetData,
     zGetCurrentUserInfoApiV1AuthMeGetResponse,
     zGetGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdGetData,
-    zGetGitlabProjectsApiV1GitlabProjectsGetData,
-    zGetGitlabProjectsApiV1GitlabProjectsGetResponse,
     zGetGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdGetData,
     zGetGitlabUserinfoApiV1GitlabUserinfoGetData,
     zGetGitlabUserinfoApiV1GitlabUserinfoGetResponse,
@@ -103,6 +101,8 @@ import {
     zListBotsApiV1BotsGetData,
     zListBotsApiV1BotsGetResponse,
     zListGitlabProjectAccessTokensApiV1GitlabProjectsProjectIdAccessTokensGetData,
+    zListGitlabProjectsApiV1GitlabProjectsGetData,
+    zListGitlabProjectsApiV1GitlabProjectsGetResponse,
     zListGitlabProjectWebhooksApiV1GitlabProjectsProjectIdWebhooksGetData,
     zLogoutApiV1AuthLogoutPostData,
     zRefreshTokenApiV1AuthRefreshPostData,
@@ -353,30 +353,30 @@ export const getGitlabUserinfoApiV1GitlabUserinfoGet = <
 };
 
 /**
- * Get Gitlab Projects
+ * List Gitlab Projects
  *
- * Get GitLab projects for the authenticated user.
+ * list GitLab projects for the authenticated user.
  */
-export const getGitlabProjectsApiV1GitlabProjectsGet = <
+export const listGitlabProjectsApiV1GitlabProjectsGet = <
     ThrowOnError extends boolean = false,
 >(
     options?: Options<
-        GetGitlabProjectsApiV1GitlabProjectsGetData,
+        ListGitlabProjectsApiV1GitlabProjectsGetData,
         ThrowOnError
     >,
 ) => {
     return (options?.client ?? client).get<
-        GetGitlabProjectsApiV1GitlabProjectsGetResponses,
-        GetGitlabProjectsApiV1GitlabProjectsGetErrors,
+        ListGitlabProjectsApiV1GitlabProjectsGetResponses,
+        ListGitlabProjectsApiV1GitlabProjectsGetErrors,
         ThrowOnError
     >({
         requestValidator: async (data) => {
-            return await zGetGitlabProjectsApiV1GitlabProjectsGetData.parseAsync(
+            return await zListGitlabProjectsApiV1GitlabProjectsGetData.parseAsync(
                 data,
             );
         },
         responseValidator: async (data) => {
-            return await zGetGitlabProjectsApiV1GitlabProjectsGetResponse.parseAsync(
+            return await zListGitlabProjectsApiV1GitlabProjectsGetResponse.parseAsync(
                 data,
             );
         },

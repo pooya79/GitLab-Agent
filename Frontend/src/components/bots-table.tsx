@@ -51,15 +51,19 @@ import {
     AlertCircle,
 } from "lucide-react";
 
+type StatusLiterals = "ACTIVE" | "STOPPED" | "ERROR";
+
 // Types
 export interface Bot {
-    id: string;
+    gitlabProjectId: number;
     gitlabProject: string;
+    gitlabProjectPathName: string;
     projectUrl: string;
     accessLevel: "Owner" | "Maintainer" | "Developer" | "Reporter" | "Guest";
+    botId?: number; // Optional - null if no bot configured
     botName?: string; // Optional - null if no bot configured
     avatar?: string; // Optional - null if no bot configured
-    status?: "active" | "stopped" | "error"; // Optional - null if no bot configured
+    status?: StatusLiterals; // Optional - null if no bot configured
     errorMessage?: string;
     hasBot: boolean; // Indicates if project has a bot configured
 }
@@ -70,26 +74,31 @@ export interface BotsFetchResult {
 }
 
 export interface BotStatus {
-    status: "active" | "stopped" | "error";
+    status: StatusLiterals;
     errorMessage?: string;
 }
 
 interface BotsTableProps {
     fetchBots: (page: number, perPage: number) => Promise<BotsFetchResult>;
-    fetchBotStatus?: (botId: string) => Promise<BotStatus>;
+    fetchBotStatus?: (botId: number) => Promise<BotStatus>;
+    onCreateBot?: (projectPathName: string) => void;
 }
 
-export function BotsTable({ fetchBots, fetchBotStatus }: BotsTableProps) {
+export function BotsTable({
+    fetchBots,
+    fetchBotStatus,
+    onCreateBot,
+}: BotsTableProps) {
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [bots, setBots] = useState<Bot[]>([]);
     const [totalBots, setTotalBots] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [botStatuses, setBotStatuses] = useState<Map<string, BotStatus>>(
+    const [botStatuses, setBotStatuses] = useState<Map<number, BotStatus>>(
         new Map(),
     );
-    const [loadingStatuses, setLoadingStatuses] = useState<Set<string>>(
+    const [loadingStatuses, setLoadingStatuses] = useState<Set<number>>(
         new Set(),
     );
 
@@ -122,35 +131,35 @@ export function BotsTable({ fetchBots, fetchBotStatus }: BotsTableProps) {
         const loadBotStatuses = async () => {
             // Mark all bot IDs as loading
             const botsWithBots = bots.filter((bot) => bot.hasBot);
-            const loadingIds = new Set(botsWithBots.map((bot) => bot.id));
+            const loadingIds = new Set(botsWithBots.map((bot) => bot.botId!));
             setLoadingStatuses(loadingIds);
 
             // Fetch statuses for all bots that have a bot configured
             const statusPromises = botsWithBots.map(async (bot) => {
                 try {
-                    const status = await fetchBotStatus(bot.id);
+                    const status = await fetchBotStatus(bot.botId!);
                     // Update status immediately as it's fetched
                     setBotStatuses((prev) => {
                         const newMap = new Map(prev);
-                        newMap.set(bot.id, status);
+                        newMap.set(bot.botId!, status);
                         return newMap;
                     });
                     // Remove from loading set
                     setLoadingStatuses((prev) => {
                         const newSet = new Set(prev);
-                        newSet.delete(bot.id);
+                        newSet.delete(bot.botId!);
                         return newSet;
                     });
                 } catch (err) {
                     console.error(
-                        `Failed to fetch status for bot ${bot.id}:`,
+                        `Failed to fetch status for bot ID: ${bot.botId}:`,
                         err,
                     );
                     // Set error status if fetch fails
                     setBotStatuses((prev) => {
                         const newMap = new Map(prev);
-                        newMap.set(bot.id, {
-                            status: "error",
+                        newMap.set(bot.botId!, {
+                            status: "ERROR",
                             errorMessage: "Failed to fetch bot status",
                         });
                         return newMap;
@@ -158,7 +167,7 @@ export function BotsTable({ fetchBots, fetchBotStatus }: BotsTableProps) {
                     // Remove from loading set
                     setLoadingStatuses((prev) => {
                         const newSet = new Set(prev);
-                        newSet.delete(bot.id);
+                        newSet.delete(bot.botId!);
                         return newSet;
                     });
                 }
@@ -177,9 +186,9 @@ export function BotsTable({ fetchBots, fetchBotStatus }: BotsTableProps) {
     const getBotStatus = (
         bot: Bot,
     ): { status: Bot["status"]; errorMessage?: string; isLoading: boolean } => {
-        if (bot.hasBot) {
+        if (bot.hasBot && bot.botId) {
             // Check if status is currently being loaded
-            if (fetchBotStatus && loadingStatuses.has(bot.id)) {
+            if (fetchBotStatus && loadingStatuses.has(bot.botId)) {
                 return {
                     status: undefined,
                     isLoading: true,
@@ -187,8 +196,8 @@ export function BotsTable({ fetchBots, fetchBotStatus }: BotsTableProps) {
             }
 
             // Check if we have a fetched status
-            if (botStatuses.has(bot.id)) {
-                const fetchedStatus = botStatuses.get(bot.id)!;
+            if (botStatuses.has(bot.botId)) {
+                const fetchedStatus = botStatuses.get(bot.botId)!;
                 return {
                     status: fetchedStatus.status,
                     errorMessage: fetchedStatus.errorMessage,
@@ -205,19 +214,19 @@ export function BotsTable({ fetchBots, fetchBotStatus }: BotsTableProps) {
         };
     };
 
-    const handleRemoveBot = (botId: string, botName: string) => {
+    const handleRemoveBot = (botId: number, botName: string) => {
         if (confirm(`Are you sure you want to remove "${botName}"?`)) {
             console.log("Removing bot:", botId);
             // Add your remove logic here
         }
     };
 
-    const handleStopBot = (botId: string, botName: string) => {
+    const handleStopBot = (botId: number, botName: string) => {
         console.log("Stopping bot:", botId, botName);
         // Add your stop logic here
     };
 
-    const handleRevokeToken = (botId: string, botName: string) => {
+    const handleRevokeToken = (botId: number, botName: string) => {
         if (
             confirm(
                 `Are you sure you want to revoke the token for "${botName}"?`,
@@ -230,7 +239,7 @@ export function BotsTable({ fetchBots, fetchBotStatus }: BotsTableProps) {
 
     const getStatusBadge = (status: Bot["status"], errorMessage?: string) => {
         switch (status) {
-            case "active":
+            case "ACTIVE":
                 return (
                     <Badge
                         variant="default"
@@ -240,14 +249,14 @@ export function BotsTable({ fetchBots, fetchBotStatus }: BotsTableProps) {
                         Active
                     </Badge>
                 );
-            case "stopped":
+            case "STOPPED":
                 return (
                     <Badge variant="secondary">
                         <Pause className="h-3 w-3" />
                         Stopped
                     </Badge>
                 );
-            case "error":
+            case "ERROR":
                 return (
                     <TooltipProvider>
                         <Tooltip>
@@ -311,7 +320,7 @@ export function BotsTable({ fetchBots, fetchBotStatus }: BotsTableProps) {
                         </TableHeader>
                         <TableBody>
                             {isLoading ? (
-                                <TableRow>
+                                <TableRow key="loading">
                                     <TableCell
                                         colSpan={6}
                                         className="text-center py-8"
@@ -340,7 +349,7 @@ export function BotsTable({ fetchBots, fetchBotStatus }: BotsTableProps) {
                                     </TableCell>
                                 </TableRow>
                             ) : bots.length === 0 ? (
-                                <TableRow>
+                                <TableRow key={"no bots"}>
                                     <TableCell
                                         colSpan={6}
                                         className="text-center py-8"
@@ -358,7 +367,7 @@ export function BotsTable({ fetchBots, fetchBotStatus }: BotsTableProps) {
                                 </TableRow>
                             ) : (
                                 bots.map((bot) => (
-                                    <TableRow key={bot.id}>
+                                    <TableRow key={bot.gitlabProjectId}>
                                         {/* Bot Name & Avatar */}
                                         <TableCell>
                                             {bot.hasBot ? (
@@ -383,7 +392,7 @@ export function BotsTable({ fetchBots, fetchBotStatus }: BotsTableProps) {
                                                             {bot.botName}
                                                         </p>
                                                         <p className="text-xs text-muted-foreground">
-                                                            ID: {bot.id}
+                                                            ID: {bot.botId}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -478,7 +487,7 @@ export function BotsTable({ fetchBots, fetchBotStatus }: BotsTableProps) {
                                                                 asChild
                                                             >
                                                                 <Link
-                                                                    href={`/dashboard/bots/${bot.id}/stats`}
+                                                                    href={`/dashboard/bots/${bot.botId}/stats`}
                                                                 >
                                                                     <Button
                                                                         variant="outline"
@@ -502,7 +511,7 @@ export function BotsTable({ fetchBots, fetchBotStatus }: BotsTableProps) {
                                                                 asChild
                                                             >
                                                                 <Link
-                                                                    href={`/dashboard/bots/${bot.id}/config`}
+                                                                    href={`/dashboard/bots/${bot.botId}/config`}
                                                                 >
                                                                     <Button
                                                                         variant="outline"
@@ -519,17 +528,18 @@ export function BotsTable({ fetchBots, fetchBotStatus }: BotsTableProps) {
                                                     </TooltipProvider>
                                                 </div>
                                             ) : (
-                                                <Link
-                                                    href={`/dashboard/bots/create?project=${bot.id}`}
+                                                <Button
+                                                    variant="default"
+                                                    size="sm"
+                                                    onClick={() =>
+                                                        onCreateBot?.(
+                                                            bot.gitlabProjectPathName,
+                                                        )
+                                                    }
                                                 >
-                                                    <Button
-                                                        variant="default"
-                                                        size="sm"
-                                                    >
-                                                        <Play className="mr-2 h-4 w-4" />
-                                                        Create Bot
-                                                    </Button>
-                                                </Link>
+                                                    <Play className="mr-2 h-4 w-4" />
+                                                    Create Bot
+                                                </Button>
                                             )}
                                         </TableCell>
 
@@ -555,17 +565,17 @@ export function BotsTable({ fetchBots, fetchBotStatus }: BotsTableProps) {
                                                                 <DropdownMenuItem
                                                                     onClick={() =>
                                                                         handleStopBot(
-                                                                            bot.id,
+                                                                            bot.botId!,
                                                                             bot.botName!,
                                                                         )
                                                                     }
                                                                     disabled={
                                                                         status ===
-                                                                        "error"
+                                                                        "ERROR"
                                                                     }
                                                                 >
                                                                     {status ===
-                                                                    "stopped" ? (
+                                                                    "STOPPED" ? (
                                                                         <>
                                                                             <Play className="mr-2 h-4 w-4" />
                                                                             Start
@@ -582,7 +592,7 @@ export function BotsTable({ fetchBots, fetchBotStatus }: BotsTableProps) {
                                                                 <DropdownMenuItem
                                                                     onClick={() =>
                                                                         handleRevokeToken(
-                                                                            bot.id,
+                                                                            bot.botId!,
                                                                             bot.botName!,
                                                                         )
                                                                     }
@@ -594,7 +604,7 @@ export function BotsTable({ fetchBots, fetchBotStatus }: BotsTableProps) {
                                                                 <DropdownMenuItem
                                                                     onClick={() =>
                                                                         handleRemoveBot(
-                                                                            bot.id,
+                                                                            bot.botId!,
                                                                             bot.botName!,
                                                                         )
                                                                     }
@@ -623,26 +633,27 @@ export function BotsTable({ fetchBots, fetchBotStatus }: BotsTableProps) {
 
             {/* Custom Scrollbar Styles */}
             <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          height: 8px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: hsl(var(--muted));
-          border-radius: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: hsl(var(--muted-foreground) / 0.3);
-          border-radius: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: hsl(var(--muted-foreground) / 0.5);
-        }
-        /* Firefox */
-        .custom-scrollbar {
-          scrollbar-width: thin;
-          scrollbar-color: hsl(var(--muted-foreground) / 0.3) hsl(var(--muted));
-        }
-      `}</style>
+                .custom-scrollbar::-webkit-scrollbar {
+                    height: 8px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-track {
+                    background: hsl(var(--muted));
+                    border-radius: 4px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb {
+                    background: hsl(var(--muted-foreground) / 0.3);
+                    border-radius: 4px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                    background: hsl(var(--muted-foreground) / 0.5);
+                }
+                /* Firefox */
+                .custom-scrollbar {
+                    scrollbar-width: thin;
+                    scrollbar-color: hsl(var(--muted-foreground) / 0.3)
+                        hsl(var(--muted));
+                }
+            `}</style>
 
             {/* Pagination Controls */}
             {totalBots > 0 && (

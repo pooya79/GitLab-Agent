@@ -18,11 +18,14 @@ class Bot(Base):
     name: Mapped[str] = mapped_column(nullable=False)
     is_active: Mapped[bool] = mapped_column(nullable=False, default=True)
 
-    gitlab_project_path: Mapped[str] = mapped_column(nullable=False, unique=True, index=True)
+    gitlab_project_path: Mapped[str] = mapped_column(
+        nullable=False, unique=True, index=True
+    )
     gitlab_access_token_id: Mapped[int] = mapped_column(nullable=True)
     gitlab_access_token: Mapped[str] = mapped_column(nullable=True)
     gitlab_webhook_id: Mapped[int] = mapped_column(nullable=True)
     gitlab_webhook_secret: Mapped[str] = mapped_column(nullable=True)
+    gitlab_webhook_url: Mapped[str] = mapped_column(nullable=True)
 
     avatar_url: Mapped[str | None] = mapped_column(
         String(255), nullable=True, index=True

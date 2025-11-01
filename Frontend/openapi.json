@@ -245,9 +245,9 @@
         "/api/v1/gitlab/projects": {
             "get": {
                 "tags": ["gitlab"],
-                "summary": "Get Gitlab Projects",
-                "description": "Get GitLab projects for the authenticated user.",
-                "operationId": "get_gitlab_projects_api_v1_gitlab_projects_get",
+                "summary": "List Gitlab Projects",
+                "description": "list GitLab projects for the authenticated user.",
+                "operationId": "list_gitlab_projects_api_v1_gitlab_projects_get",
                 "security": [
                     {
                         "HTTPBearer": []
@@ -281,11 +281,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/GitlabProject"
-                                    },
-                                    "title": "Response Get Gitlab Projects Api V1 Gitlab Projects Get"
+                                    "$ref": "#/components/schemas/GitlabProjectsList"
                                 }
                             }
                         }
@@ -1544,6 +1540,32 @@
                     "access_level"
                 ],
                 "title": "GitlabProject"
+            },
+            "GitlabProjectsList": {
+                "properties": {
+                    "projects": {
+                        "items": {
+                            "$ref": "#/components/schemas/GitlabProject"
+                        },
+                        "type": "array",
+                        "title": "Projects"
+                    },
+                    "total": {
+                        "type": "integer",
+                        "title": "Total"
+                    },
+                    "page": {
+                        "type": "integer",
+                        "title": "Page"
+                    },
+                    "per_page": {
+                        "type": "integer",
+                        "title": "Per Page"
+                    }
+                },
+                "type": "object",
+                "required": ["projects", "total", "page", "per_page"],
+                "title": "GitlabProjectsList"
             },
             "HTTPValidationError": {
                 "properties": {

@@ -209,6 +209,28 @@ export type GitlabProject = {
 };
 
 /**
+ * GitlabProjectsList
+ */
+export type GitlabProjectsList = {
+    /**
+     * Projects
+     */
+    projects: Array<GitlabProject>;
+    /**
+     * Total
+     */
+    total: number;
+    /**
+     * Page
+     */
+    page: number;
+    /**
+     * Per Page
+     */
+    per_page: number;
+};
+
+/**
  * HTTPValidationError
  */
 export type HttpValidationError = {
@@ -491,7 +513,7 @@ export type GetGitlabUserinfoApiV1GitlabUserinfoGetResponses = {
 export type GetGitlabUserinfoApiV1GitlabUserinfoGetResponse =
     GetGitlabUserinfoApiV1GitlabUserinfoGetResponses[keyof GetGitlabUserinfoApiV1GitlabUserinfoGetResponses];
 
-export type GetGitlabProjectsApiV1GitlabProjectsGetData = {
+export type ListGitlabProjectsApiV1GitlabProjectsGetData = {
     body?: never;
     path?: never;
     query?: {
@@ -507,27 +529,25 @@ export type GetGitlabProjectsApiV1GitlabProjectsGetData = {
     url: "/api/v1/gitlab/projects";
 };
 
-export type GetGitlabProjectsApiV1GitlabProjectsGetErrors = {
+export type ListGitlabProjectsApiV1GitlabProjectsGetErrors = {
     /**
      * Validation Error
      */
     422: HttpValidationError;
 };
 
-export type GetGitlabProjectsApiV1GitlabProjectsGetError =
-    GetGitlabProjectsApiV1GitlabProjectsGetErrors[keyof GetGitlabProjectsApiV1GitlabProjectsGetErrors];
+export type ListGitlabProjectsApiV1GitlabProjectsGetError =
+    ListGitlabProjectsApiV1GitlabProjectsGetErrors[keyof ListGitlabProjectsApiV1GitlabProjectsGetErrors];
 
-export type GetGitlabProjectsApiV1GitlabProjectsGetResponses = {
+export type ListGitlabProjectsApiV1GitlabProjectsGetResponses = {
     /**
-     * Response Get Gitlab Projects Api V1 Gitlab Projects Get
-     *
      * Successful Response
      */
-    200: Array<GitlabProject>;
+    200: GitlabProjectsList;
 };
 
-export type GetGitlabProjectsApiV1GitlabProjectsGetResponse =
-    GetGitlabProjectsApiV1GitlabProjectsGetResponses[keyof GetGitlabProjectsApiV1GitlabProjectsGetResponses];
+export type ListGitlabProjectsApiV1GitlabProjectsGetResponse =
+    ListGitlabProjectsApiV1GitlabProjectsGetResponses[keyof ListGitlabProjectsApiV1GitlabProjectsGetResponses];
 
 export type ListGitlabProjectAccessTokensApiV1GitlabProjectsProjectIdAccessTokensGetData =
     {
