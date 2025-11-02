@@ -11,6 +11,13 @@ export const zBotCreate = z.object({
 });
 
 /**
+ * BotDeleteResponse
+ */
+export const zBotDeleteResponse = z.object({
+    warning: z.optional(z.union([z.string(), z.null()])),
+});
+
+/**
  * BotRead
  */
 export const zBotRead = z.object({
@@ -52,6 +59,13 @@ export const zBotReadList = z.object({
 export const zBotStatusResponse = z.object({
     status: z.enum(["ACTIVE", "STOPPED", "ERROR"]),
     error_message: z.optional(z.union([z.string(), z.null()])),
+});
+
+/**
+ * BotStatusToggleResponse
+ */
+export const zBotStatusToggleResponse = z.object({
+    is_active: z.boolean(),
 });
 
 /**
@@ -393,7 +407,7 @@ export const zDeleteBotApiV1BotsBotIdDeleteData = z.object({
 /**
  * Successful Response
  */
-export const zDeleteBotApiV1BotsBotIdDeleteResponse = z.void();
+export const zDeleteBotApiV1BotsBotIdDeleteResponse = zBotDeleteResponse;
 
 export const zUpdateBotApiV1BotsBotIdPatchData = z.object({
     body: zBotUpdate,
@@ -408,18 +422,47 @@ export const zUpdateBotApiV1BotsBotIdPatchData = z.object({
  */
 export const zUpdateBotApiV1BotsBotIdPatchResponse = zBotUpdateResponse;
 
-export const zRevokeBotTokenApiV1BotsBodIdRevokeDeleteData = z.object({
+export const zCreateNewBotAccessTokenApiV1BotsBotIdNewAccessTokenPatchData =
+    z.object({
+        body: z.optional(z.never()),
+        path: z.object({
+            bot_id: z.int(),
+        }),
+        query: z.optional(z.never()),
+    });
+
+/**
+ * Successful Response
+ */
+export const zCreateNewBotAccessTokenApiV1BotsBotIdNewAccessTokenPatchResponse =
+    zBotUpdateResponse;
+
+export const zToggleBotActiveApiV1BotsBotIdToggleActivePatchData = z.object({
     body: z.optional(z.never()),
-    path: z.optional(z.never()),
-    query: z.object({
+    path: z.object({
         bot_id: z.int(),
     }),
+    query: z.optional(z.never()),
 });
 
 /**
  * Successful Response
  */
-export const zRevokeBotTokenApiV1BotsBodIdRevokeDeleteResponse = z.void();
+export const zToggleBotActiveApiV1BotsBotIdToggleActivePatchResponse =
+    zBotStatusToggleResponse;
+
+export const zRevokeBotTokenApiV1BotsBotIdRevokeDeleteData = z.object({
+    body: z.optional(z.never()),
+    path: z.object({
+        bot_id: z.int(),
+    }),
+    query: z.optional(z.never()),
+});
+
+/**
+ * Successful Response
+ */
+export const zRevokeBotTokenApiV1BotsBotIdRevokeDeleteResponse = z.void();
 
 export const zRotateBotTokenApiV1BotsBotIdRotateTokenPatchData = z.object({
     body: z.optional(z.never()),

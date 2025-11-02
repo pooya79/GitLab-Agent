@@ -20,6 +20,9 @@ import {
     listGitlabProjectsApiV1GitlabProjectsGet,
     getBotStatusApiV1BotsBotIdStatusGet,
     createBotApiV1BotsPost,
+    toggleBotActiveApiV1BotsBotIdToggleActivePatch,
+    createNewBotAccessTokenApiV1BotsBotIdNewAccessTokenPatch,
+    deleteBotApiV1BotsBotIdDelete,
 } from "@/client/sdk.gen";
 
 const ACCESS_LEVEL: Record<number, string> = {
@@ -118,7 +121,15 @@ export default function DashboardPage() {
             });
 
             if (response.error) {
-                throw new Error("Wrong input type.");
+                // Check if it's a 404 (bot not found - likely deleted)
+                if (response.response.status === 404) {
+                    throw new Error(
+                        `Bot ${botId} not found (may have been deleted)`,
+                    );
+                }
+                throw new Error(
+                    `Failed to fetch bot status: ${response.error}`,
+                );
             }
 
             if (response.response.status !== 200) {
@@ -135,6 +146,123 @@ export default function DashboardPage() {
             throw error instanceof Error
                 ? error
                 : new Error("Unknown error while fetching bot status");
+        }
+    };
+
+    // Mock handler for stopping/starting bot
+    const handleStopBot = async (botId: number, botName: string) => {
+        try {
+            console.log(`Toggling bot status for: ${botName} (ID: ${botId})`);
+
+            const response =
+                await toggleBotActiveApiV1BotsBotIdToggleActivePatch({
+                    path: { bot_id: botId },
+                });
+
+            if (response.error) {
+                throw new Error("Wrong input type.");
+            }
+
+            if (response.response.status !== 200) {
+                throw new Error(
+                    `Failed to toggle bot status: ${response.response.statusText}`,
+                );
+            }
+
+            const isActive = response.data.is_active;
+            alert(
+                `Bot "${botName}" is now ${isActive ? "active" : "inactive"}.`,
+            );
+
+            // Refresh the table to show updated status
+            setRefreshTrigger((prev) => prev + 1);
+        } catch (error) {
+            console.error(`Error toggling bot status for ${botName}:`, error);
+            alert(
+                `Failed to toggle bot status: ${
+                    error instanceof Error ? error.message : "Unknown error"
+                }`,
+            );
+        }
+    };
+
+    // Mock handler for creating new token
+    const handleCreateNewToken = async (botId: number, botName: string) => {
+        try {
+            console.log(`Creating new token for: ${botName} (ID: ${botId})`);
+
+            const response =
+                await createNewBotAccessTokenApiV1BotsBotIdNewAccessTokenPatch({
+                    path: { bot_id: botId },
+                });
+
+            if (response.error) {
+                throw new Error("Wrong input type.");
+            }
+
+            if (response.response.status !== 200) {
+                throw new Error(
+                    `Failed to create new token: ${response.response.statusText}`,
+                );
+            }
+
+            if (response.data.warning) {
+                alert(
+                    `New token created for "${botName}"! The old token has been invalidated.\nWarning: ${response.data.warning}`,
+                );
+            } else {
+                alert(
+                    `New token created for "${botName}"! The old token has been invalidated.`,
+                );
+            }
+
+            // Refresh the table
+            setRefreshTrigger((prev) => prev + 1);
+        } catch (error) {
+            console.error(`Error creating new token for ${botName}:`, error);
+            alert(
+                `Failed to create new token: ${
+                    error instanceof Error ? error.message : "Unknown error"
+                }`,
+            );
+        }
+    };
+
+    // Mock handler for removing bot
+    const handleRemoveBot = async (botId: number, botName: string) => {
+        try {
+            console.log(`Removing bot: ${botName} (ID: ${botId})`);
+            const response = await deleteBotApiV1BotsBotIdDelete({
+                path: { bot_id: botId },
+            });
+
+            if (response.error) {
+                throw new Error(`Wrong input type.`);
+            }
+
+            if (response.response.status !== 200) {
+                throw new Error(
+                    `Failed to remove bot: ${response.response.statusText}`,
+                );
+            }
+
+            if (response.data.warning) {
+                alert(
+                    `Bot "${botName}" removed successfully! Warning: ${response.data.warning}`,
+                );
+            } else {
+                alert(`Bot "${botName}" removed successfully!`);
+            }
+
+            // Refresh the table to remove the deleted bot
+            setRefreshTrigger((prev) => prev + 1);
+        } catch (error) {
+            console.error(`Error removing bot ${botName}:`, error);
+            alert(
+                `Failed to remove bot: ${
+                    error instanceof Error ? error.message : "Unknown error"
+                }`,
+            );
         }
     };
 
@@ -162,10 +290,8 @@ export default function DashboardPage() {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Webhooks</CardTitle>
-                        <CardDescription>
-                            Active webhook listeners
-                        </CardDescription>
+                        <CardTitle>Bots</CardTitle>
+                        <CardDescription>AI bots configured</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <p className="text-3xl font-bold">5</p>
@@ -186,7 +312,7 @@ export default function DashboardPage() {
             {/* Bots Table */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Active Bots</CardTitle>
+                    <CardTitle>Bots</CardTitle>
                     <CardDescription>
                         Manage your GitLab bots and their configurations
                     </CardDescription>
@@ -196,6 +322,9 @@ export default function DashboardPage() {
                         fetchBots={fetchBots}
                         fetchBotStatus={fetchBotStatus}
                         onCreateBot={handleOpenCreateDialog}
+                        onStopBot={handleStopBot}
+                        onCreateNewToken={handleCreateNewToken}
+                        onRemoveBot={handleRemoveBot}
                     />
                 </CardContent>
             </Card>

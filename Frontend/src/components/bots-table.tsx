@@ -82,12 +82,18 @@ interface BotsTableProps {
     fetchBots: (page: number, perPage: number) => Promise<BotsFetchResult>;
     fetchBotStatus?: (botId: number) => Promise<BotStatus>;
     onCreateBot?: (projectPathName: string) => void;
+    onStopBot?: (botId: number, botName: string) => Promise<void>;
+    onCreateNewToken?: (botId: number, botName: string) => Promise<void>;
+    onRemoveBot?: (botId: number, botName: string) => Promise<void>;
 }
 
 export function BotsTable({
     fetchBots,
     fetchBotStatus,
     onCreateBot,
+    onStopBot,
+    onCreateNewToken,
+    onRemoveBot,
 }: BotsTableProps) {
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -134,6 +140,21 @@ export function BotsTable({
             const loadingIds = new Set(botsWithBots.map((bot) => bot.botId!));
             setLoadingStatuses(loadingIds);
 
+            // Clean up statuses for bots that no longer exist in the current list
+            setBotStatuses((prev) => {
+                const newMap = new Map(prev);
+                const currentBotIds = new Set(
+                    botsWithBots.map((bot) => bot.botId!),
+                );
+                // Remove statuses for bots that are no longer in the list
+                for (const botId of newMap.keys()) {
+                    if (!currentBotIds.has(botId)) {
+                        newMap.delete(botId);
+                    }
+                }
+                return newMap;
+            });
+
             // Fetch statuses for all bots that have a bot configured
             const statusPromises = botsWithBots.map(async (bot) => {
                 try {
@@ -151,19 +172,32 @@ export function BotsTable({
                         return newSet;
                     });
                 } catch (err) {
+                    const errorMessage =
+                        err instanceof Error
+                            ? err.message
+                            : "Failed to fetch bot status";
                     console.error(
                         `Failed to fetch status for bot ID: ${bot.botId}:`,
                         err,
                     );
-                    // Set error status if fetch fails
-                    setBotStatuses((prev) => {
-                        const newMap = new Map(prev);
-                        newMap.set(bot.botId!, {
-                            status: "ERROR",
-                            errorMessage: "Failed to fetch bot status",
+
+                    // Only set error status if it's not a "not found" error (deleted bot)
+                    const isNotFoundError =
+                        errorMessage.includes("not found") ||
+                        errorMessage.includes("deleted");
+
+                    if (!isNotFoundError) {
+                        // Set error status if fetch fails for reasons other than bot deletion
+                        setBotStatuses((prev) => {
+                            const newMap = new Map(prev);
+                            newMap.set(bot.botId!, {
+                                status: "ERROR",
+                                errorMessage: "Failed to fetch bot status",
+                            });
+                            return newMap;
                         });
-                        return newMap;
-                    });
+                    }
+
                     // Remove from loading set
                     setLoadingStatuses((prev) => {
                         const newSet = new Set(prev);
@@ -214,26 +248,23 @@ export function BotsTable({
         };
     };
 
-    const handleRemoveBot = (botId: number, botName: string) => {
+    const handleRemoveBot = async (botId: number, botName: string) => {
         if (confirm(`Are you sure you want to remove "${botName}"?`)) {
-            console.log("Removing bot:", botId);
-            // Add your remove logic here
+            await onRemoveBot?.(botId, botName);
         }
     };
 
-    const handleStopBot = (botId: number, botName: string) => {
-        console.log("Stopping bot:", botId, botName);
-        // Add your stop logic here
+    const handleStopBot = async (botId: number, botName: string) => {
+        await onStopBot?.(botId, botName);
     };
 
-    const handleRevokeToken = (botId: number, botName: string) => {
+    const handleCreateNewToken = async (botId: number, botName: string) => {
         if (
             confirm(
-                `Are you sure you want to revoke the token for "${botName}"?`,
+                `Are you sure you want to create a new token for "${botName}"? This will invalidate the old token.`,
             )
         ) {
-            console.log("Revoking token for bot:", botId);
-            // Add your revoke logic here
+            await onCreateNewToken?.(botId, botName);
         }
     };
 
@@ -591,14 +622,15 @@ export function BotsTable({
                                                                 </DropdownMenuItem>
                                                                 <DropdownMenuItem
                                                                     onClick={() =>
-                                                                        handleRevokeToken(
+                                                                        handleCreateNewToken(
                                                                             bot.botId!,
                                                                             bot.botName!,
                                                                         )
                                                                     }
                                                                 >
                                                                     <KeyRound className="mr-2 h-4 w-4" />
-                                                                    Revoke Token
+                                                                    Create New
+                                                                    Token
                                                                 </DropdownMenuItem>
                                                                 <DropdownMenuSeparator />
                                                                 <DropdownMenuItem

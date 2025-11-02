@@ -12,6 +12,9 @@ import type {
     CreateGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksPostData,
     CreateGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksPostErrors,
     CreateGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksPostResponses,
+    CreateNewBotAccessTokenApiV1BotsBotIdNewAccessTokenPatchData,
+    CreateNewBotAccessTokenApiV1BotsBotIdNewAccessTokenPatchErrors,
+    CreateNewBotAccessTokenApiV1BotsBotIdNewAccessTokenPatchResponses,
     DeleteBotApiV1BotsBotIdDeleteData,
     DeleteBotApiV1BotsBotIdDeleteErrors,
     DeleteBotApiV1BotsBotIdDeleteResponses,
@@ -59,9 +62,9 @@ import type {
     RefreshTokenApiV1AuthRefreshPostData,
     RefreshTokenApiV1AuthRefreshPostErrors,
     RefreshTokenApiV1AuthRefreshPostResponses,
-    RevokeBotTokenApiV1BotsBodIdRevokeDeleteData,
-    RevokeBotTokenApiV1BotsBodIdRevokeDeleteErrors,
-    RevokeBotTokenApiV1BotsBodIdRevokeDeleteResponses,
+    RevokeBotTokenApiV1BotsBotIdRevokeDeleteData,
+    RevokeBotTokenApiV1BotsBotIdRevokeDeleteErrors,
+    RevokeBotTokenApiV1BotsBotIdRevokeDeleteResponses,
     RevokeGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRevokeDeleteData,
     RevokeGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRevokeDeleteErrors,
     RevokeGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRevokeDeleteResponses,
@@ -71,6 +74,9 @@ import type {
     RotateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRotatePostData,
     RotateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRotatePostErrors,
     RotateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRotatePostResponses,
+    ToggleBotActiveApiV1BotsBotIdToggleActivePatchData,
+    ToggleBotActiveApiV1BotsBotIdToggleActivePatchErrors,
+    ToggleBotActiveApiV1BotsBotIdToggleActivePatchResponses,
     UpdateBotApiV1BotsBotIdPatchData,
     UpdateBotApiV1BotsBotIdPatchErrors,
     UpdateBotApiV1BotsBotIdPatchResponses,
@@ -80,6 +86,8 @@ import {
     zCreateBotApiV1BotsPostResponse,
     zCreateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensPostData,
     zCreateGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksPostData,
+    zCreateNewBotAccessTokenApiV1BotsBotIdNewAccessTokenPatchData,
+    zCreateNewBotAccessTokenApiV1BotsBotIdNewAccessTokenPatchResponse,
     zDeleteBotApiV1BotsBotIdDeleteData,
     zDeleteBotApiV1BotsBotIdDeleteResponse,
     zDeleteGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdDeleteData,
@@ -107,12 +115,14 @@ import {
     zLogoutApiV1AuthLogoutPostData,
     zRefreshTokenApiV1AuthRefreshPostData,
     zRefreshTokenApiV1AuthRefreshPostResponse,
-    zRevokeBotTokenApiV1BotsBodIdRevokeDeleteData,
-    zRevokeBotTokenApiV1BotsBodIdRevokeDeleteResponse,
+    zRevokeBotTokenApiV1BotsBotIdRevokeDeleteData,
+    zRevokeBotTokenApiV1BotsBotIdRevokeDeleteResponse,
     zRevokeGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRevokeDeleteData,
     zRotateBotTokenApiV1BotsBotIdRotateTokenPatchData,
     zRotateBotTokenApiV1BotsBotIdRotateTokenPatchResponse,
     zRotateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRotatePostData,
+    zToggleBotActiveApiV1BotsBotIdToggleActivePatchData,
+    zToggleBotActiveApiV1BotsBotIdToggleActivePatchResponse,
     zUpdateBotApiV1BotsBotIdPatchData,
     zUpdateBotApiV1BotsBotIdPatchResponse,
 } from "./zod.gen";
@@ -859,30 +869,30 @@ export const updateBotApiV1BotsBotIdPatch = <
 };
 
 /**
- * Revoke Bot Token
+ * Create New Bot Access Token
  *
- * Revoke a bot's GitLab project access token.
+ * Create a new access token for a bot by its ID and revoke the old one.
  */
-export const revokeBotTokenApiV1BotsBodIdRevokeDelete = <
+export const createNewBotAccessTokenApiV1BotsBotIdNewAccessTokenPatch = <
     ThrowOnError extends boolean = false,
 >(
     options: Options<
-        RevokeBotTokenApiV1BotsBodIdRevokeDeleteData,
+        CreateNewBotAccessTokenApiV1BotsBotIdNewAccessTokenPatchData,
         ThrowOnError
     >,
 ) => {
-    return (options.client ?? client).delete<
-        RevokeBotTokenApiV1BotsBodIdRevokeDeleteResponses,
-        RevokeBotTokenApiV1BotsBodIdRevokeDeleteErrors,
+    return (options.client ?? client).patch<
+        CreateNewBotAccessTokenApiV1BotsBotIdNewAccessTokenPatchResponses,
+        CreateNewBotAccessTokenApiV1BotsBotIdNewAccessTokenPatchErrors,
         ThrowOnError
     >({
         requestValidator: async (data) => {
-            return await zRevokeBotTokenApiV1BotsBodIdRevokeDeleteData.parseAsync(
+            return await zCreateNewBotAccessTokenApiV1BotsBotIdNewAccessTokenPatchData.parseAsync(
                 data,
             );
         },
         responseValidator: async (data) => {
-            return await zRevokeBotTokenApiV1BotsBodIdRevokeDeleteResponse.parseAsync(
+            return await zCreateNewBotAccessTokenApiV1BotsBotIdNewAccessTokenPatchResponse.parseAsync(
                 data,
             );
         },
@@ -892,7 +902,85 @@ export const revokeBotTokenApiV1BotsBodIdRevokeDelete = <
                 type: "http",
             },
         ],
-        url: "/api/v1/bots/{bod_id}/revoke",
+        url: "/api/v1/bots/{bot_id}/new-access-token",
+        ...options,
+    });
+};
+
+/**
+ * Toggle Bot Active
+ *
+ * Toggle a bot's active status by its ID.
+ */
+export const toggleBotActiveApiV1BotsBotIdToggleActivePatch = <
+    ThrowOnError extends boolean = false,
+>(
+    options: Options<
+        ToggleBotActiveApiV1BotsBotIdToggleActivePatchData,
+        ThrowOnError
+    >,
+) => {
+    return (options.client ?? client).patch<
+        ToggleBotActiveApiV1BotsBotIdToggleActivePatchResponses,
+        ToggleBotActiveApiV1BotsBotIdToggleActivePatchErrors,
+        ThrowOnError
+    >({
+        requestValidator: async (data) => {
+            return await zToggleBotActiveApiV1BotsBotIdToggleActivePatchData.parseAsync(
+                data,
+            );
+        },
+        responseValidator: async (data) => {
+            return await zToggleBotActiveApiV1BotsBotIdToggleActivePatchResponse.parseAsync(
+                data,
+            );
+        },
+        security: [
+            {
+                scheme: "bearer",
+                type: "http",
+            },
+        ],
+        url: "/api/v1/bots/{bot_id}/toggle-active",
+        ...options,
+    });
+};
+
+/**
+ * Revoke Bot Token
+ *
+ * Revoke a bot's GitLab project access token.
+ */
+export const revokeBotTokenApiV1BotsBotIdRevokeDelete = <
+    ThrowOnError extends boolean = false,
+>(
+    options: Options<
+        RevokeBotTokenApiV1BotsBotIdRevokeDeleteData,
+        ThrowOnError
+    >,
+) => {
+    return (options.client ?? client).delete<
+        RevokeBotTokenApiV1BotsBotIdRevokeDeleteResponses,
+        RevokeBotTokenApiV1BotsBotIdRevokeDeleteErrors,
+        ThrowOnError
+    >({
+        requestValidator: async (data) => {
+            return await zRevokeBotTokenApiV1BotsBotIdRevokeDeleteData.parseAsync(
+                data,
+            );
+        },
+        responseValidator: async (data) => {
+            return await zRevokeBotTokenApiV1BotsBotIdRevokeDeleteResponse.parseAsync(
+                data,
+            );
+        },
+        security: [
+            {
+                scheme: "bearer",
+                type: "http",
+            },
+        ],
+        url: "/api/v1/bots/{bot_id}/revoke",
         ...options,
     });
 };

@@ -30,6 +30,16 @@ export type BotCreateResponse = {
 };
 
 /**
+ * BotDeleteResponse
+ */
+export type BotDeleteResponse = {
+    /**
+     * Warning
+     */
+    warning?: string | null;
+};
+
+/**
  * BotRead
  */
 export type BotRead = {
@@ -111,6 +121,16 @@ export type BotStatusResponse = {
      * Error Message
      */
     error_message?: string | null;
+};
+
+/**
+ * BotStatusToggleResponse
+ */
+export type BotStatusToggleResponse = {
+    /**
+     * Is Active
+     */
+    is_active: boolean;
 };
 
 /**
@@ -978,7 +998,7 @@ export type DeleteBotApiV1BotsBotIdDeleteResponses = {
     /**
      * Successful Response
      */
-    204: void;
+    200: BotDeleteResponse;
 };
 
 export type DeleteBotApiV1BotsBotIdDeleteResponse =
@@ -1016,37 +1036,102 @@ export type UpdateBotApiV1BotsBotIdPatchResponses = {
 export type UpdateBotApiV1BotsBotIdPatchResponse =
     UpdateBotApiV1BotsBotIdPatchResponses[keyof UpdateBotApiV1BotsBotIdPatchResponses];
 
-export type RevokeBotTokenApiV1BotsBodIdRevokeDeleteData = {
+export type CreateNewBotAccessTokenApiV1BotsBotIdNewAccessTokenPatchData = {
     body?: never;
-    path?: never;
-    query: {
+    path: {
         /**
          * Bot Id
          */
         bot_id: number;
     };
-    url: "/api/v1/bots/{bod_id}/revoke";
+    query?: never;
+    url: "/api/v1/bots/{bot_id}/new-access-token";
 };
 
-export type RevokeBotTokenApiV1BotsBodIdRevokeDeleteErrors = {
+export type CreateNewBotAccessTokenApiV1BotsBotIdNewAccessTokenPatchErrors = {
     /**
      * Validation Error
      */
     422: HttpValidationError;
 };
 
-export type RevokeBotTokenApiV1BotsBodIdRevokeDeleteError =
-    RevokeBotTokenApiV1BotsBodIdRevokeDeleteErrors[keyof RevokeBotTokenApiV1BotsBodIdRevokeDeleteErrors];
+export type CreateNewBotAccessTokenApiV1BotsBotIdNewAccessTokenPatchError =
+    CreateNewBotAccessTokenApiV1BotsBotIdNewAccessTokenPatchErrors[keyof CreateNewBotAccessTokenApiV1BotsBotIdNewAccessTokenPatchErrors];
 
-export type RevokeBotTokenApiV1BotsBodIdRevokeDeleteResponses = {
+export type CreateNewBotAccessTokenApiV1BotsBotIdNewAccessTokenPatchResponses =
+    {
+        /**
+         * Successful Response
+         */
+        200: BotUpdateResponse;
+    };
+
+export type CreateNewBotAccessTokenApiV1BotsBotIdNewAccessTokenPatchResponse =
+    CreateNewBotAccessTokenApiV1BotsBotIdNewAccessTokenPatchResponses[keyof CreateNewBotAccessTokenApiV1BotsBotIdNewAccessTokenPatchResponses];
+
+export type ToggleBotActiveApiV1BotsBotIdToggleActivePatchData = {
+    body?: never;
+    path: {
+        /**
+         * Bot Id
+         */
+        bot_id: number;
+    };
+    query?: never;
+    url: "/api/v1/bots/{bot_id}/toggle-active";
+};
+
+export type ToggleBotActiveApiV1BotsBotIdToggleActivePatchErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ToggleBotActiveApiV1BotsBotIdToggleActivePatchError =
+    ToggleBotActiveApiV1BotsBotIdToggleActivePatchErrors[keyof ToggleBotActiveApiV1BotsBotIdToggleActivePatchErrors];
+
+export type ToggleBotActiveApiV1BotsBotIdToggleActivePatchResponses = {
+    /**
+     * Successful Response
+     */
+    200: BotStatusToggleResponse;
+};
+
+export type ToggleBotActiveApiV1BotsBotIdToggleActivePatchResponse =
+    ToggleBotActiveApiV1BotsBotIdToggleActivePatchResponses[keyof ToggleBotActiveApiV1BotsBotIdToggleActivePatchResponses];
+
+export type RevokeBotTokenApiV1BotsBotIdRevokeDeleteData = {
+    body?: never;
+    path: {
+        /**
+         * Bot Id
+         */
+        bot_id: number;
+    };
+    query?: never;
+    url: "/api/v1/bots/{bot_id}/revoke";
+};
+
+export type RevokeBotTokenApiV1BotsBotIdRevokeDeleteErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RevokeBotTokenApiV1BotsBotIdRevokeDeleteError =
+    RevokeBotTokenApiV1BotsBotIdRevokeDeleteErrors[keyof RevokeBotTokenApiV1BotsBotIdRevokeDeleteErrors];
+
+export type RevokeBotTokenApiV1BotsBotIdRevokeDeleteResponses = {
     /**
      * Successful Response
      */
     204: void;
 };
 
-export type RevokeBotTokenApiV1BotsBodIdRevokeDeleteResponse =
-    RevokeBotTokenApiV1BotsBodIdRevokeDeleteResponses[keyof RevokeBotTokenApiV1BotsBodIdRevokeDeleteResponses];
+export type RevokeBotTokenApiV1BotsBotIdRevokeDeleteResponse =
+    RevokeBotTokenApiV1BotsBotIdRevokeDeleteResponses[keyof RevokeBotTokenApiV1BotsBotIdRevokeDeleteResponses];
 
 export type RotateBotTokenApiV1BotsBotIdRotateTokenPatchData = {
     body?: never;

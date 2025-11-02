@@ -1001,8 +1001,15 @@
                     }
                 ],
                 "responses": {
-                    "204": {
-                        "description": "Successful Response"
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BotDeleteResponse"
+                                }
+                            }
+                        }
                     },
                     "422": {
                         "description": "Validation Error",
@@ -1071,12 +1078,12 @@
                 }
             }
         },
-        "/api/v1/bots/{bod_id}/revoke": {
-            "delete": {
+        "/api/v1/bots/{bot_id}/new-access-token": {
+            "patch": {
                 "tags": ["bots"],
-                "summary": "Revoke Bot Token",
-                "description": "Revoke a bot's GitLab project access token.",
-                "operationId": "revoke_bot_token_api_v1_bots__bod_id__revoke_delete",
+                "summary": "Create New Bot Access Token",
+                "description": "Create a new access token for a bot by its ID and revoke the old one.",
+                "operationId": "create_new_bot_access_token_api_v1_bots__bot_id__new_access_token_patch",
                 "security": [
                     {
                         "HTTPBearer": []
@@ -1085,7 +1092,99 @@
                 "parameters": [
                     {
                         "name": "bot_id",
-                        "in": "query",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Bot Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BotUpdateResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/bots/{bot_id}/toggle-active": {
+            "patch": {
+                "tags": ["bots"],
+                "summary": "Toggle Bot Active",
+                "description": "Toggle a bot's active status by its ID.",
+                "operationId": "toggle_bot_active_api_v1_bots__bot_id__toggle_active_patch",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "bot_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Bot Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BotStatusToggleResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/bots/{bot_id}/revoke": {
+            "delete": {
+                "tags": ["bots"],
+                "summary": "Revoke Bot Token",
+                "description": "Revoke a bot's GitLab project access token.",
+                "operationId": "revoke_bot_token_api_v1_bots__bot_id__revoke_delete",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "bot_id",
+                        "in": "path",
                         "required": true,
                         "schema": {
                             "type": "integer",
@@ -1218,6 +1317,23 @@
                 "type": "object",
                 "required": ["bot"],
                 "title": "BotCreateResponse"
+            },
+            "BotDeleteResponse": {
+                "properties": {
+                    "warning": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Warning"
+                    }
+                },
+                "type": "object",
+                "title": "BotDeleteResponse"
             },
             "BotRead": {
                 "properties": {
@@ -1358,6 +1474,17 @@
                 "type": "object",
                 "required": ["status"],
                 "title": "BotStatusResponse"
+            },
+            "BotStatusToggleResponse": {
+                "properties": {
+                    "is_active": {
+                        "type": "boolean",
+                        "title": "Is Active"
+                    }
+                },
+                "type": "object",
+                "required": ["is_active"],
+                "title": "BotStatusToggleResponse"
             },
             "BotUpdate": {
                 "properties": {

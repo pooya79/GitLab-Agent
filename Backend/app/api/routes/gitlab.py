@@ -170,36 +170,6 @@ async def create_gitlab_project_access_token(
     return JSONResponse(content=token)
 
 
-@router.post("/projects/{project_id}/access-tokens/{access_token_id}/rotate")
-async def rotate_gitlab_project_access_token(
-    project_id: str | int,
-    access_token_id: str | int,
-    gitlab_oauth_token: str = Depends(get_gitlab_accout_token),
-):
-    """
-    Rotate an existing access token for a GitLab project.
-    """
-    gitlab_service = GitlabService(oauth_token=gitlab_oauth_token)
-    new_token = gitlab_service.rotate_project_token(project_id, access_token_id)
-
-    return JSONResponse(content=new_token)
-
-
-@router.delete("/projects/{project_id}/access-tokens/{access_token_id}/revoke")
-async def revoke_gitlab_project_access_token(
-    project_id: str | int,
-    access_token_id: str | int,
-    gitlab_oauth_token: str = Depends(get_gitlab_accout_token),
-):
-    """
-    Revoke an existing access token for a GitLab project.
-    """
-    gitlab_service = GitlabService(oauth_token=gitlab_oauth_token)
-    gitlab_service.revoke_project_token(project_id, access_token_id)
-
-    return JSONResponse(content={"detail": "Access token revoked successfully"})
-
-
 @router.get("/projects/{project_id}/webhooks")
 async def list_gitlab_project_webhooks(
     project_id: str | int,

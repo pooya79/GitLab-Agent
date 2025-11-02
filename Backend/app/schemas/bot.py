@@ -58,3 +58,10 @@ class BotReadList(BaseModel):
 class BotStatusResponse(BaseModel):
     status: Literal["ACTIVE", "STOPPED", "ERROR"]
     error_message: Optional[str] = None
+
+
+class BotDeleteResponse(BaseModel):
+    warning: Optional[str] = None
+
+class BotStatusToggleResponse(BaseModel):
+    is_active: bool

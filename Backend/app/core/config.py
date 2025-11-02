@@ -61,7 +61,7 @@ class Settings(BaseSettings):
     llm_context_window: int = 40000
     llm_output_tokens: int = 5000
     llm_temperature: float = 0.2
-    avatar_default_url: str = "/api/static/avatars/default.png"
+    avatar_default_url: str = "api/static/avatars/default.png"
 
 
 settings = Settings()
