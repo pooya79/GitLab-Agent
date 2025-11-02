@@ -2,7 +2,7 @@ from typing import Any, Optional
 import datetime as dt
 from sqlalchemy.orm import Mapped, mapped_column, relationship, declarative_base
 from sqlalchemy import Text, ForeignKey, JSON, String, UniqueConstraint, Index, DateTime
-from app.prompts.smart_review_agent import SMART_REVIEW_AGENT_PROMPT
+from app.prompts.smart_agent import SMART_AGENT_SYSTEM_PROMPT
 
 # Base class for models
 Base = declarative_base()
@@ -35,6 +35,9 @@ class Bot(Base):
     llm_context_window: Mapped[int] = mapped_column(nullable=False)
     llm_output_tokens: Mapped[int] = mapped_column(nullable=False)
     llm_temperature: Mapped[float] = mapped_column(nullable=False)
+    llm_system_prompt: Mapped[str] = mapped_column(
+        Text, nullable=False, default=SMART_AGENT_SYSTEM_PROMPT
+    )
     llm_additional_kwargs: Mapped[dict[str, Any]] = mapped_column(
         JSON, default=dict, nullable=True
     )
