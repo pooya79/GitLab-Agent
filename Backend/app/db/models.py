@@ -32,14 +32,28 @@ class Bot(Base):
     )
 
     llm_model: Mapped[str] = mapped_column(nullable=False)
-    llm_context_window: Mapped[int] = mapped_column(nullable=False)
-    llm_output_tokens: Mapped[int] = mapped_column(nullable=False)
+    llm_max_output_tokens: Mapped[int] = mapped_column(nullable=False)
     llm_temperature: Mapped[float] = mapped_column(nullable=False)
     llm_system_prompt: Mapped[str] = mapped_column(
         Text, nullable=False, default=SMART_AGENT_SYSTEM_PROMPT
     )
     llm_additional_kwargs: Mapped[dict[str, Any]] = mapped_column(
         JSON, default=dict, nullable=True
+    )
+
+
+class ChatHistory(Base):
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, index=True)
+    mr_id: Mapped[int] = mapped_column(nullable=False, index=True)
+    gitlab_project_path: Mapped[str] = mapped_column(nullable=False, index=True)
+    username: Mapped[str] = mapped_column(nullable=False, index=True)
+    botname: Mapped[str] = mapped_column(nullable=False, index=True)
+
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    role: Mapped[str] = mapped_column(String(50), nullable=False)
+
+    timestamp: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
     )
 
 

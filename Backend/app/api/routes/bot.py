@@ -505,11 +505,3 @@ async def rotate_bot_token(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to rotate GitLab project token for the bot.",
         )
-
-
-@router.get("/available-avatars", response_model=dict[str, str])
-async def get_available_avatars():
-    """
-    Get a list of available bot avatars.
-    """
-    return AVAILABLE_BOT_AVATARS

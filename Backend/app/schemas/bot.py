@@ -21,6 +21,7 @@ class BotRead(BaseModel):
     llm_context_window: int
     llm_output_tokens: int
     llm_temperature: float
+    llm_system_prompt: Optional[str] = None
     llm_additional_kwargs: Optional[Dict[str, Any]] = None
 
     model_config = {"from_attributes": True}
@@ -40,6 +41,7 @@ class BotUpdate(BaseModel):
     llm_context_window: Optional[int] = None
     llm_output_tokens: Optional[int] = None
     llm_temperature: Optional[float] = None
+    llm_system_prompt: Optional[str] = None
     llm_additional_kwargs: Optional[Dict[str, Any]] = None
 
 
@@ -62,6 +64,7 @@ class BotStatusResponse(BaseModel):
 
 class BotDeleteResponse(BaseModel):
     warning: Optional[str] = None
+
 
 class BotStatusToggleResponse(BaseModel):
     is_active: bool

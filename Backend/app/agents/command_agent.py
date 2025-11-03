@@ -54,5 +54,3 @@ class CommandAgent:
             tools=[],
             system_prompt=system_prompt,
         )
-    
-    
