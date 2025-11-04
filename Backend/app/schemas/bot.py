@@ -14,12 +14,13 @@ class BotRead(BaseModel):
     is_active: bool
     gitlab_project_path: str
     gitlab_access_token_id: Optional[int] = None
+    gitlab_user_id: Optional[int] = None
+    gitlab_user_name: Optional[str] = None
     gitlab_webhook_id: Optional[int] = None
     gitlab_webhook_secret: Optional[str] = None
     avatar_url: Optional[str] = None
     llm_model: str
-    llm_context_window: int
-    llm_output_tokens: int
+    llm_max_output_tokens: int
     llm_temperature: float
     llm_system_prompt: Optional[str] = None
     llm_additional_kwargs: Optional[Dict[str, Any]] = None
@@ -38,8 +39,7 @@ class BotUpdate(BaseModel):
     is_active: Optional[bool] = None
     avatar_url: Optional[str] = None
     llm_model: Optional[str] = None
-    llm_context_window: Optional[int] = None
-    llm_output_tokens: Optional[int] = None
+    llm_max_output_tokens: Optional[int] = None
     llm_temperature: Optional[float] = None
     llm_system_prompt: Optional[str] = None
     llm_additional_kwargs: Optional[Dict[str, Any]] = None

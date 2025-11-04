@@ -18,7 +18,7 @@ class CommandAgent:
 
     def __init__(
         self,
-        api_key: str,
+        openrouter_api_key: str,
         gitlab_service: GitlabService,
         db_session: AsyncSession,
         model_name: str,
@@ -30,7 +30,7 @@ class CommandAgent:
             model_name=model_name,
             temperature=temperature,
             max_tokens=max_tokens,
-            provider=OpenRouterProvider(api_key=api_key),
+            provider=OpenRouterProvider(api_key=openrouter_api_key),
             extra_body=extra_body or {},
         )
 

@@ -15,7 +15,7 @@ class Bot(Base):
     )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, index=True)
-    name: Mapped[str] = mapped_column(nullable=False)
+    name: Mapped[str] = mapped_column(nullable=False, index=True)
     is_active: Mapped[bool] = mapped_column(nullable=False, default=True)
 
     gitlab_project_path: Mapped[str] = mapped_column(
@@ -23,6 +23,10 @@ class Bot(Base):
     )
     gitlab_access_token_id: Mapped[int] = mapped_column(nullable=True)
     gitlab_access_token: Mapped[str] = mapped_column(nullable=True)
+    gitlab_user_id: Mapped[int] = mapped_column(nullable=True, index=True, unique=True)
+    gitlab_user_name: Mapped[str] = mapped_column(
+        nullable=True, index=True, unique=True
+    )
     gitlab_webhook_id: Mapped[int] = mapped_column(nullable=True)
     gitlab_webhook_secret: Mapped[str] = mapped_column(nullable=True)
     gitlab_webhook_url: Mapped[str] = mapped_column(nullable=True)
@@ -42,17 +46,21 @@ class Bot(Base):
     )
 
 
-class ChatHistory(Base):
+class History(Base):
+    __tablename__ = "history"
+
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, index=True)
-    mr_id: Mapped[int] = mapped_column(nullable=False, index=True)
-    gitlab_project_path: Mapped[str] = mapped_column(nullable=False, index=True)
-    username: Mapped[str] = mapped_column(nullable=False, index=True)
     botname: Mapped[str] = mapped_column(nullable=False, index=True)
+    mr_id: Mapped[int] = mapped_column(nullable=False, index=True)
+    mr_title: Mapped[str] = mapped_column(nullable=False)
+    gitlab_project_path: Mapped[str] = mapped_column(nullable=False, index=True)
+    username: Mapped[str] = mapped_column(nullable=True)  # user who triggered the event
+    messages: Mapped[str] = mapped_column(Text, nullable=False)
+    request_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    status: Mapped[str] = mapped_column(String(50), nullable=False, default="pending")
+    error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
-    message: Mapped[str] = mapped_column(Text, nullable=False)
-    role: Mapped[str] = mapped_column(String(50), nullable=False)
-
-    timestamp: Mapped[dt.datetime] = mapped_column(
+    created_at: Mapped[dt.datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
 

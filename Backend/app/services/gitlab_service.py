@@ -1,5 +1,12 @@
 import gitlab
-from gitlab.v4.objects import Project, ProjectAccessToken, ProjectHook
+from gitlab.v4.objects import (
+    CurrentUser,
+    Project,
+    ProjectAccessToken,
+    ProjectHook,
+    ProjectMergeRequest,
+    ProjectMergeRequestDiff,
+)
 
 from app.core.config import settings
 
@@ -12,18 +19,11 @@ class GitlabService:
         self.oauth_token = oauth_token
         self.gl = gitlab.Gitlab(self.base_url, oauth_token=oauth_token)
 
-    def get_user_info(self):
+    def get_user_info(self) -> CurrentUser | None:
         try:
             self.gl.auth()
             user = self.gl.user
-            return {
-                "id": user.id,
-                "username": user.username,
-                "email": user.email,
-                "name": user.name,
-                "avatar_url": user.avatar_url,
-                "web_url": user.web_url,
-            }
+            return user
         except gitlab.GitlabAuthenticationError:
             return None
 
@@ -53,7 +53,7 @@ class GitlabService:
 
     def get_project_token(
         self, project_id: str | int, access_token_id: str | int
-    ) -> ProjectAccessToken:
+    ) -> ProjectAccessToken | None:
         token = self.gl.projects.get(project_id, lazy=True).access_tokens.get(
             access_token_id
         )
@@ -86,9 +86,7 @@ class GitlabService:
             access_token_id
         )
 
-    def list_webhooks(
-        self, project_id: str | int
-    ) -> list[gitlab.v4.objects.ProjectHook]:
+    def list_webhooks(self, project_id: str | int) -> list[ProjectHook]:
         hooks = self.gl.projects.get(project_id, lazy=True).hooks.list()
         return hooks
 
@@ -115,3 +113,25 @@ class GitlabService:
 
     def delete_webhook(self, project_id: str | int, hook_id: str | int) -> None:
         self.gl.projects.get(project_id, lazy=True).hooks.delete(hook_id)
+
+    def post_merge_request_comment(
+        self, project_path: str, mr_id: int, comment: str
+    ) -> None:
+        project = self.gl.projects.get(project_path)
+        mr = project.mergerequests.get(mr_id)
+        mr.notes.create({"body": comment})
+
+    def get_merge_request(
+        self, project_path: str, mr_id: int
+    ) -> ProjectMergeRequest | None:
+        project = self.gl.projects.get(project_path)
+        mr = project.mergerequests.get(mr_id)
+        return mr
+
+    def get_merge_request_diffs(
+        self, project_path: str, mr_id: int
+    ) -> list[ProjectMergeRequestDiff]:
+        project = self.gl.projects.get(project_path)
+        mr = project.mergerequests.get(mr_id)
+        diffs = mr.diffs()
+        return diffs

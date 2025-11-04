@@ -8,9 +8,11 @@ import json
 
 from app.services.gitlab_service import GitlabService
 from app.db.database import AsyncSession
-from app.db.models import ChatHistory
+from app.db.models import History
 from app.prompts.smart_agent import SMART_AGENT_SYSTEM_PROMPT, SMART_AGENT_USER_PROMPT
+from app.agents.utils import token_counter
 from app.services.cache_service import NOW
+from app.core.config import settings
 
 
 # Tools
@@ -28,7 +30,7 @@ def get_file(file_path: str) -> str:
 class SmartAgent:
     def __init__(
         self,
-        api_key: str,
+        openrouter_api_key: str,
         gitlab_service: GitlabService,
         db_session: AsyncSession,
         model_name: str,
@@ -44,7 +46,7 @@ class SmartAgent:
             model_name=model_name,
             temperature=temperature,
             max_tokens=max_tokens,
-            provider=OpenRouterProvider(api_key=api_key),
+            provider=OpenRouterProvider(api_key=openrouter_api_key),
             extra_body=extra_body,
         )
 
@@ -61,6 +63,25 @@ class SmartAgent:
             usage_limits=UsageLimits(tool_calls_limit=3),
             system_prompt=system_prompt,
         )
+
+    async def gather_context(self, mr_id: int, project_path: str) -> str:
+        # Get MR details
+        mr_details = self.gitlab_service.get_merge_request(
+            project_path=project_path, mr_id=mr_id
+        )
+        mr_diffs = mr_details.diffs
+
+        # Build context string
+        ## See which diffs are small enough
+        ignored_diffs = [diff for diff in mr_diffs if token_counter(diff.diff) > settings.max_tokens_per_diff]
+        diff_context = ""
+        for diff in mr_diffs:
+            
+
+
+
+        context = f"Merge Request Title: {mr_details['title']}\n"
+        context += f"Merge Request Description: {mr_details['description']}\n"
 
     async def run(
         self,
@@ -83,121 +104,3 @@ class SmartAgent:
             user_prompt=user_prompt, message_history=message_history or []
         )
         return response.output
-
-    async def fetch_history(
-        self, mr_id: int, botname: str, username: str, limit: int = 10
-    ) -> list[ModelMessage]:
-        """Fetch message history from the database and convert to ModelMessage format.
-
-        Args:
-            mr_id: The Merge Request ID
-            botname: The name of the bot
-            username: The username of the person interacting with the bot
-            limit: Maximum number of messages to fetch
-
-        Returns:
-            List of ModelMessage objects in chronological order (oldest first)
-        """
-        async with self.db_session() as session:
-            history = await session.execute(
-                select(ChatHistory)
-                .filter(
-                    ChatHistory.mr_id == mr_id,
-                    ChatHistory.botname == botname,
-                    ChatHistory.username == username,
-                )
-                .order_by(
-                    ChatHistory.timestamp.asc()
-                )  # oldest first for proper context
-                .limit(limit)
-            )
-
-            messages = []
-            for record in history.scalars().all():
-                # Deserialize the stored JSON message back to ModelMessage
-                message_data = json.loads(record.message)
-                validated_message = ModelMessagesTypeAdapter.validate_python(
-                    [message_data]
-                )[0]
-                messages.append(validated_message)
-
-            return messages
-
-    async def save_message_history(
-        self,
-        mr_id: int,
-        gitlab_project_path: str,
-        botname: str,
-        username: str,
-        messages: list[ModelMessage],
-    ):
-        """Save a list of ModelMessage objects to the database.
-
-        This should be called after an agent run to persist the conversation history.
-
-        Args:
-            gitlab_project_path: The GitLab project path
-            botname: The name of the bot
-            username: The username of the person interacting with the bot
-            messages: List of ModelMessage objects to save
-        """
-        async with self.db_session() as session:
-            for message in messages:
-                # Serialize the ModelMessage to JSON
-                message_json = json.dumps(to_jsonable_python(message))
-
-                # Determine the role based on the message type
-                role = message.kind  # 'request' or 'response'
-
-                chat_message = ChatHistory(
-                    mr_id=mr_id,
-                    gitlab_project_path=gitlab_project_path,
-                    botname=botname,
-                    username=username,
-                    message=message_json,
-                    role=role,
-                    timestamp=NOW(),
-                )
-                session.add(chat_message)
-
-            await session.commit()
-
-    async def run_with_history(
-        self,
-        user_prompt: str,
-        gitlab_project_path: str,
-        botname: str,
-        username: str,
-        limit: int = 10,
-    ) -> tuple[str, list[ModelMessage]]:
-        """Run the agent with automatic message history management.
-
-        This is a convenience method that:
-        1. Fetches the message history from the database
-        2. Runs the agent with the user prompt and history
-        3. Returns both the output and new messages (which can be saved later)
-
-        Args:
-            user_prompt: The user's prompt/question
-            gitlab_project_path: The GitLab project path
-            botname: The name of the bot
-            username: The username of the person interacting
-            limit: Maximum number of historical messages to load
-
-        Returns:
-            A tuple of (agent_output, new_messages)
-            - agent_output: The text response from the agent
-            - new_messages: The new messages from this run (to be saved)
-        """
-        # Fetch existing message history
-        message_history = await self.fetch_history(
-            gitlab_project_path=gitlab_project_path, botname=botname, limit=limit
-        )
-
-        # Run the agent
-        result = await self.agent.run(
-            user_prompt=user_prompt, message_history=message_history
-        )
-
-        # Return both the output and the new messages from this run
-        return result.output, result.new_messages()

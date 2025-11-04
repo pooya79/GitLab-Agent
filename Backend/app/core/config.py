@@ -134,9 +134,11 @@ class Settings(BaseSettings):
     max_chat_history: int = 10
     llm_model: str = "openai/gpt-4o-mini"
     llm_context_window: int = 40000
-    llm_output_tokens: int = 5000
+    llm_max_output_tokens: int = 5000
     llm_temperature: float = 0.2
     avatar_default_url: str = "api/static/avatars/default.png"
+    max_tokens_per_diff: int = 2000
+    max_tokens_per_context: int = 15000
 
 
 settings = Settings()

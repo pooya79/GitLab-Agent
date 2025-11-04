@@ -25,7 +25,13 @@ async def get_gitlab_userinfo(
     if not user_info:
         raise HTTPException(status_code=401, detail="Invalid GitLab OAuth token")
 
-    user_info = UserInfo(**user_info)
+    user_info = UserInfo(
+        username=user_info.username,
+        email=user_info.email,
+        name=user_info.name,
+        avatar_url=user_info.avatar_url,
+        web_url=user_info.web_url,
+    )
 
     return user_info
 
