@@ -182,9 +182,47 @@ async def create_bot(
             detail="GitLab project not found or access denied",
         )
 
+    # Create project access token for the bot
+    try:
+        access_token_name = f"{data.name}"
+        project_token = gitlab_service.create_project_token(
+            project.id,
+            access_token_name,
+            scopes=["api"],
+            expires_at=None,
+        )
+    except Exception as e:
+        logger.error(f"Error creating project access token for bot: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create project access token for the bot. Check your connection with GitLab.",
+        )
+
+    # Get username associated with the token
+    try:
+        new_gitlab_service = GitlabService(oauth_token=project_token.token)
+        user_info = new_gitlab_service.get_user_info()
+        if not user_info:
+            raise Exception("Could not fetch user info with the created token.")
+        project_token.user_name = user_info.username
+    except Exception as e:
+        # Revoke the created project token in case of failure
+        try:
+            gitlab_service.revoke_project_token(project.id, project_token.id)
+        except Exception as revoke_error:
+            logger.error(
+                f"Error revoking project token after user info fetch failure: {revoke_error}"
+            )
+
+        logger.error(f"Error fetching user info for bot token: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch user info for the bot's access token. Check your connection with GitLab.",
+        )
+
     # Create project webhook for the bot
     try:
-        webhook_url = f"{settings.backend_url}/api/v1/webhooks/{data.name}"
+        webhook_url = f"{settings.backend_url}/api/v1/webhooks/{project_token.user_id}"
         events = {
             "note_events": True,
             "merge_requests_events": True,
@@ -198,30 +236,15 @@ async def create_bot(
             token=webhook_secret_token,
         )
     except Exception as e:
-        logger.error(f"Error creating project webhook for bot: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create project webhook for the bot. Check your connection with GitLab.",
-        )
-
-    # Create project access token for the bot
-    try:
-        access_token_name = f"bot-token-{data.name}-{uuid.uuid4().hex[:8]}"
-        project_token = gitlab_service.create_project_token(
-            project.id,
-            access_token_name,
-            scopes=["api"],
-            expires_at=None,
-        )
-    except Exception as e:
-        logger.error(f"Error creating project access token for bot: {e}")
-        # Clean up the created project webhook
+        # Revoke the created project token in case of webhook creation failure
         try:
-            gitlab_service.delete_webhook(project.id, webhook.id)
-        except Exception as cleanup_error:
+            gitlab_service.revoke_project_token(project.id, project_token.id)
+        except Exception as revoke_error:
             logger.error(
-                f"Error cleaning up project webhook after token failure: {cleanup_error}"
+                f"Error revoking project token after webhook creation failure: {revoke_error}"
             )
+
+        logger.error(f"Error creating project webhook for bot: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create project webhook for the bot. Check your connection with GitLab.",
@@ -231,19 +254,41 @@ async def create_bot(
         name=data.name,
         gitlab_access_token_id=project_token.id,
         gitlab_access_token=project_token.token,
+        gitlab_user_id=project_token.user_id,
+        gitlab_user_name=project_token.user_name,
         gitlab_project_path=project.path_with_namespace,
         gitlab_webhook_id=webhook.id,
         gitlab_webhook_secret=webhook_secret_token,
         gitlab_webhook_url=webhook_url,
         llm_model=settings.llm_model,
-        llm_context_window=settings.llm_context_window,
-        llm_output_tokens=settings.llm_output_tokens,
+        llm_max_output_tokens=settings.llm_max_output_tokens,
         llm_temperature=settings.llm_temperature,
         avatar_url=f"{settings.backend_url}/{settings.avatar_default_url}",
     )
-    session.add(bot)
-    await session.commit()
-    await session.refresh(bot)
+    try:
+        session.add(bot)
+        await session.commit()
+        await session.refresh(bot)
+    except Exception as e:
+        # Clean up created GitLab resources in case of DB failure
+        try:
+            gitlab_service.delete_webhook(project.id, webhook.id)
+        except Exception as webhook_error:
+            logger.error(
+                f"Error deleting webhook after bot DB creation failure: {webhook_error}"
+            )
+        try:
+            gitlab_service.revoke_project_token(project.id, project_token.id)
+        except Exception as token_error:
+            logger.error(
+                f"Error revoking project token after bot DB creation failure: {token_error}"
+            )
+
+        logger.error(f"Error saving bot to database: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to save bot to the database.",
+        )
     return BotCreateResponse(bot=BotRead.model_validate(bot))
 
 
@@ -334,45 +379,80 @@ async def create_new_bot_access_token(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Bot not found"
         )
+    old_token_id = bot.gitlab_access_token_id
 
     gitlab_service = GitlabService(oauth_token=gitlab_oauth_token)
+    # Create new project access token
     try:
-        old_token_id = bot.gitlab_access_token_id
-
-        access_token_name = f"bot-token-{bot.name}-{uuid.uuid4().hex[:8]}"
         project_token = gitlab_service.create_project_token(
             bot.gitlab_project_path,
-            access_token_name,
+            bot.name,
             scopes=["api"],
-            expires_at=None,
         )
+    except Exception as e:
+        logger.error(f"Error creating project token for bot {bot_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create project token for the bot. Check your connection with GitLab.",
+        )
+
+    # Fetch username associated with the new token
+    try:
+        new_gitlab_service = GitlabService(oauth_token=project_token.token)
+        user_info = new_gitlab_service.get_user_info()
+        if not user_info:
+            raise Exception("Could not fetch user info with the created token.")
+        project_token.user_name = user_info.username
+    except Exception as e:
+        # Revoke the created project token in case of failure
+        try:
+            gitlab_service.revoke_project_token(
+                bot.gitlab_project_path, project_token.id
+            )
+        except Exception as revoke_error:
+            logger.error(
+                f"Error revoking project token after user info fetch failure: {revoke_error}"
+            )
+
+        logger.error(f"Error fetching user info for new bot token: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch user info for the new bot's access token. Check your connection with GitLab.",
+        )
+
+    # Revoke old token and update bot with new token info
+    try:
+        old_token = gitlab_service.get_project_token(
+            bot.gitlab_project_path, old_token_id
+        )
+        if old_token_id and old_token and old_token.revoked is False:
+            gitlab_service.revoke_project_token(bot.gitlab_project_path, old_token_id)
+
         bot.gitlab_access_token_id = project_token.id
         bot.gitlab_access_token = project_token.token
+        bot.gitlab_user_id = project_token.user_id
+        bot.gitlab_user_name = project_token.user_name
         session.add(bot)
         await session.commit()
         await session.refresh(bot)
-
-        # Fetch old token before revoking
-        try:
-            old_token = gitlab_service.get_project_token(
-                bot.gitlab_project_path, old_token_id
-            )
-            if old_token_id and old_token and old_token.revoked is False:
-                gitlab_service.revoke_project_token(
-                    bot.gitlab_project_path, old_token_id
-                )
-        except Exception as e:
-            logger.error(f"Error revoking old project token for bot {bot_id}: {e}")
-            warning = f"New access token created, but failed to revoke old token (ID: {old_token_id}, Name: {old_token.name if old_token else 'Unknown'})."
-            return BotUpdateResponse(bot=BotRead.model_validate(bot), warning=warning)
-
-        return BotUpdateResponse(bot=BotRead.model_validate(bot))
     except Exception as e:
-        logger.error(f"Error creating new project access token for bot {bot_id}: {e}")
+        logger.error(f"Error updating bot with new token for bot {bot_id}: {e}")
+        # Revoke the created project token in case of DB update failure
+        try:
+            gitlab_service.revoke_project_token(
+                bot.gitlab_project_path, project_token.id
+            )
+        except Exception as revoke_error:
+            logger.error(
+                f"Error revoking project token after bot DB update failure: {revoke_error}"
+            )
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create new project access token for the bot.",
+            detail="Failed to update bot with new access token.",
         )
+
+    return BotUpdateResponse(bot=BotRead.model_validate(bot))
 
 
 @router.patch("/{bot_id}", response_model=BotUpdateResponse)
@@ -505,11 +585,3 @@ async def rotate_bot_token(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to rotate GitLab project token for the bot.",
         )
-
-
-@router.get("/available-avatars", response_model=dict[str, str])
-async def get_available_avatars():
-    """
-    Get a list of available bot avatars.
-    """
-    return AVAILABLE_BOT_AVATARS

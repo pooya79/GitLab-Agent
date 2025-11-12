@@ -2,7 +2,7 @@ from typing import Any, Optional
 import datetime as dt
 from sqlalchemy.orm import Mapped, mapped_column, relationship, declarative_base
 from sqlalchemy import Text, ForeignKey, JSON, String, UniqueConstraint, Index, DateTime
-from app.prompts.smart_review_agent import SMART_REVIEW_AGENT_PROMPT
+from app.prompts.smart_agent import SMART_AGENT_SYSTEM_PROMPT
 
 # Base class for models
 Base = declarative_base()
@@ -15,7 +15,7 @@ class Bot(Base):
     )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, index=True)
-    name: Mapped[str] = mapped_column(nullable=False)
+    name: Mapped[str] = mapped_column(nullable=False, index=True)
     is_active: Mapped[bool] = mapped_column(nullable=False, default=True)
 
     gitlab_project_path: Mapped[str] = mapped_column(
@@ -23,6 +23,10 @@ class Bot(Base):
     )
     gitlab_access_token_id: Mapped[int] = mapped_column(nullable=True)
     gitlab_access_token: Mapped[str] = mapped_column(nullable=True)
+    gitlab_user_id: Mapped[int] = mapped_column(nullable=True, index=True, unique=True)
+    gitlab_user_name: Mapped[str] = mapped_column(
+        nullable=True, index=True, unique=True
+    )
     gitlab_webhook_id: Mapped[int] = mapped_column(nullable=True)
     gitlab_webhook_secret: Mapped[str] = mapped_column(nullable=True)
     gitlab_webhook_url: Mapped[str] = mapped_column(nullable=True)
@@ -32,11 +36,32 @@ class Bot(Base):
     )
 
     llm_model: Mapped[str] = mapped_column(nullable=False)
-    llm_context_window: Mapped[int] = mapped_column(nullable=False)
-    llm_output_tokens: Mapped[int] = mapped_column(nullable=False)
+    llm_max_output_tokens: Mapped[int] = mapped_column(nullable=False)
     llm_temperature: Mapped[float] = mapped_column(nullable=False)
+    llm_system_prompt: Mapped[str] = mapped_column(
+        Text, nullable=False, default=SMART_AGENT_SYSTEM_PROMPT
+    )
     llm_additional_kwargs: Mapped[dict[str, Any]] = mapped_column(
         JSON, default=dict, nullable=True
+    )
+
+
+class History(Base):
+    __tablename__ = "history"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, index=True)
+    botname: Mapped[str] = mapped_column(nullable=False, index=True)
+    mr_id: Mapped[int] = mapped_column(nullable=False, index=True)
+    mr_title: Mapped[str] = mapped_column(nullable=False)
+    gitlab_project_path: Mapped[str] = mapped_column(nullable=False, index=True)
+    username: Mapped[str] = mapped_column(nullable=True)  # user who triggered the event
+    messages: Mapped[str] = mapped_column(Text, nullable=False)
+    request_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    status: Mapped[str] = mapped_column(String(50), nullable=False, default="pending")
+    error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    created_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
     )
 
 

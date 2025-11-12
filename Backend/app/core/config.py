@@ -1,3 +1,5 @@
+from typing import Any
+
 from pydantic import model_validator, BaseModel
 from pydantic_settings import SettingsConfigDict, BaseSettings
 
@@ -13,13 +15,86 @@ class GitlabSettings(BaseModel):
     webhook_ssl_verify: bool = True
 
 
+class AvailableLlm(BaseModel):
+    llm_model: str
+    llm_max_output_tokens: int
+    llm_temperature: float
+    llm_additional_kwargs: dict[str, Any] | None = None
+
+
+available_llms = [
+    AvailableLlm(
+        llm_model="openai/gpt-5",
+        llm_max_output_tokens=16384,
+        llm_temperature=0.2,
+        llm_additional_kwargs={"reasoning": {"effort": "medium", "exclude": True}},
+    ),
+    AvailableLlm(
+        llm_model="openai/gpt-5-mini",
+        llm_max_output_tokens=16384,
+        llm_temperature=0.2,
+        llm_additional_kwargs={"reasoning": {"effort": "medium", "exclude": True}},
+    ),
+    AvailableLlm(
+        llm_model="openai/gpt-4o",
+        llm_max_output_tokens=16384,
+        llm_temperature=0.2,
+        llm_additional_kwargs=None,
+    ),
+    AvailableLlm(
+        llm_model="openai/gpt-4o-mini",
+        llm_max_output_tokens=16384,
+        llm_temperature=0.2,
+        llm_additional_kwargs=None,
+    ),
+    AvailableLlm(
+        llm_model="openai/gpt-4.1",
+        llm_max_output_tokens=16384,
+        llm_temperature=0.2,
+        llm_additional_kwargs=None,
+    ),
+    AvailableLlm(
+        llm_model="openai/gpt-4.1-mini",
+        llm_max_output_tokens=16384,
+        llm_temperature=0.2,
+        llm_additional_kwargs=None,
+    ),
+    AvailableLlm(
+        llm_model="google/gemini-2.5-pro",
+        llm_max_output_tokens=16384,
+        llm_temperature=0.2,
+        llm_additional_kwargs={"thinkingConfig": {"thinkingBudget": 4096}},
+    ),
+    AvailableLlm(
+        llm_model="google/gemini-2.5-flash",
+        llm_max_output_tokens=16384,
+        llm_temperature=0.2,
+        llm_additional_kwargs={"thinkingConfig": {"thinkingBudget": 4096}},
+    ),
+    AvailableLlm(
+        llm_model="anthropic/claude-sonnet-4.5",
+        llm_max_output_tokens=16384,
+        llm_temperature=0.2,
+        llm_additional_kwargs={"reasoning": {"max_tokens": 4096}},
+    ),
+    AvailableLlm(
+        llm_model="anthropic/claude-haiku-4.5",
+        llm_max_output_tokens=16384,
+        llm_temperature=0.2,
+        llm_additional_kwargs={"reasoning": {"max_tokens": 4096}},
+    ),
+]
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_nested_delimiter="_", env_nested_max_split=1)
 
     # --- grouped sub-settings ---
     sqlite: SQLDatabaseSettings
     gitlab: GitlabSettings
+    llms: list[AvailableLlm] = available_llms
 
+    # --- individual settings ---
     project_name: str = "Gitlab Agent"
     api_version: int = 1
 
@@ -59,9 +134,11 @@ class Settings(BaseSettings):
     max_chat_history: int = 10
     llm_model: str = "openai/gpt-4o-mini"
     llm_context_window: int = 40000
-    llm_output_tokens: int = 5000
+    llm_max_output_tokens: int = 5000
     llm_temperature: float = 0.2
     avatar_default_url: str = "api/static/avatars/default.png"
+    max_tokens_per_diff: int = 2000
+    max_tokens_per_context: int = 15000
 
 
 settings = Settings()

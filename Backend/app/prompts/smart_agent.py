@@ -1,4 +1,4 @@
-SMART_REVIEW_AGENT_PROMPT = """You are a Code Review Assistant responsible for analyzing code changes submitted via merge requests. You will receive:
+SMART_AGENT_SYSTEM_PROMPT = """You are a Code Review Assistant responsible for analyzing code changes submitted via merge requests. You will receive:
 
 * The **title** and **description** of the merge request
 * The **diffs** representing code changes (added or modified lines)
@@ -17,4 +17,4 @@ Your job is to:
 
 Do **not** perform style or formatting suggestions unless they affect correctness or clarity."""
 
-SMART_REVIEW_AGENT_USER_PROMPT = """Review the code. If it's correct, approve it. If it's incorrect, list the bugs and suggest improvements. If the code is correct but can be improved, provide concise suggestions without overexplaining."""
+SMART_AGENT_USER_PROMPT = """Review the code. If it's correct, approve it. If it's incorrect, list the bugs and suggest improvements. If the code is correct but can be improved, provide concise suggestions without overexplaining."""

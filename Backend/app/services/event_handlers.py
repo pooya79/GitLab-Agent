@@ -1,10 +1,16 @@
-from app.core.log import logger
 from typing import Any, Dict
 
 from app.db.models import Bot
+from app.services.gitlab_service import GitlabService
+from app.db.database import AsyncSession
+from app.agents.smart_agent import SmartAgent
+from app.core.log import logger
+from app.core.config import settings
 
 
-async def handle_merge_request_event(bot: Bot, payload: Dict[str, Any]) -> None:
+async def handle_merge_request_event(
+    bot: Bot, payload: Dict[str, Any], db_session: AsyncSession
+) -> None:
     """
     Handle a merge request event from GitLab.
 
@@ -15,29 +21,78 @@ async def handle_merge_request_event(bot: Bot, payload: Dict[str, Any]) -> None:
         f"Handling merge request event for bot {bot.id} (project {bot.gitlab_project_path})"
     )
 
+    trigger = False
+    action = payload["object_attributes"]["action"]
+
+    changes = payload.get("changes", {})
+    # Trigger only when bot is newly added as reviewer
+    if changes:
+        reviewers_change = changes.get("reviewers")
+        if reviewers_change:
+            previous_reviewers = {
+                reviewer["id"] for reviewer in reviewers_change.get("previous", [])
+            }
+            current_reviewers = {
+                reviewer["id"] for reviewer in reviewers_change.get("current", [])
+            }
+            if bot.gitlab_user_id in current_reviewers and bot.gitlab_user_id not in previous_reviewers:
+                trigger = True
+
+    # Trigger if Re-request review is made
+    if action == "update" and changes:
+        reviewers = changes.get("reviewers")
+        if reviewers and isinstance(reviewers, list):
+            for reviewer in reviewers:
+                if (
+                    reviewer.get("id") == bot.gitlab_user_id
+                    and reviewer.get("re_requested", False) is True
+                ):
+                    trigger = True
+                    break
+
+
+    if not trigger:
+        logger.info("No action required for this merge request event.")
+        return
+
+    # Extract relevant information from the payload
+    mr_id = payload.get("object_attributes", {}).get("id")
+    mr_title = payload.get("object_attributes", {}).get("title")
+    gitlab_project_path = payload.get("project", {}).get("path_with_namespace")
+    username = payload.get("user", {}).get("username") # user who triggered the event
+
+    # Create an instance of the SmartAgent
+    smart_agent = SmartAgent(
+        openrouter_api_key=settings.openrouter_api_key,
+        gitlab_service=GitlabService(bot.gitlab_access_token),
+        db_session=db_session,
+        model_name=bot.llm_model,
+        system_prompt=bot.llm_system_prompt,
+        temperature=bot.llm_temperature,
+        max_tokens=bot.llm_max_output_tokens,
+        extra_body=bot.llm_additional_kwargs,
+    )
+
+    # Fetch merge request context for llm (diffs, title, description, etc.)
+    
+
+
+    # Run the agent with the extracted information
+    response = await smart_agent.run()
+
+    # Put response as a comment on the merge request
+    await smart_agent.gitlab_service.post_merge_request_comment(
+        project_path=gitlab_project_path,
+        mr_id=mr_id,
+        comment=response,
+    )
+
     return
 
-    # changes = payload.get("changes")
 
-    # if changes:
-    #     reviewers = changes.get("reviewers")
-    #     if reviewers:
-    #         previous_reviewers_names = [r["name"] for r in reviewers.get("previous")]
-    #         current_reviewers_names = [r["name"] for r in reviewers.get("current")]
-
-    #         token_name = bot.gitlab_access_token_name
-
-    #         if (
-    #             token_name in current_reviewers_names
-    #             and token_name not in previous_reviewers_names
-    #         ):
-    #             logger.info(
-    #                 "Starting smart review for bot {bot.id} (project {bot.gitlab_project_path})"
-    #             )
-    #             await smart_review(user_msg=None, bot=bot, event_payload=payload)
-
-
-async def handle_note_event(bot: Bot, payload: Dict[str, Any]) -> None:
+async def handle_note_event(
+    bot: Bot, payload: Dict[str, Any], db_session: AsyncSession
+) -> None:
     """
     Handle a note event from GitLab.
 
@@ -49,40 +104,3 @@ async def handle_note_event(bot: Bot, payload: Dict[str, Any]) -> None:
     )
 
     return
-
-    # # Extract the note attributes
-    # attrs = payload.get("object_attributes", {})
-    # noteable_type = attrs.get("noteable_type")
-
-    # # Only reply to merge request comments
-    # if noteable_type != "MergeRequest":
-    #     logger.info(f"Ignoring note event for type: {noteable_type}")
-    #     return
-
-    # # Prepare reply details
-    # project_id = payload.get("project_id")
-    # user_name = payload.get("user", {}).get("username")
-    # original_note = attrs.get("note")
-
-    # if user_name.startswith(f"project_{project_id}_bot_"):
-    #     logger.info(f"Ignoring bot-generated comment by {user_name}")
-    #     return
-
-    # mention_command = f"@{bot.gitlab_access_token_name}/"
-    # mention_smart = f"@{bot.gitlab_access_token_name}"
-
-    # if original_note.startswith(mention_command):
-    #     full_command = original_note[len(mention_command) :]
-    #     logger.info(f"Running command: {full_command}")
-    #     try:
-    #         await command_handler(full_command, bot, payload)
-    #     except Exception as e:
-    #         logger.error(f"Error: {e}")
-    # elif original_note.startswith(mention_smart):
-    #     # remove the mention_smart prefix and any leading spacess
-    #     note_body = original_note[len(mention_smart) :].lstrip()
-    #     logger.info(f"Smart review with prompt: {note_body}")
-    #     try:
-    #         await smart_review(note_body, bot, payload)
-    #     except Exception as e:
-    #         logger.error(f"Error: {e}")
