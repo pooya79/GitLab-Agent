@@ -76,7 +76,7 @@ class SmartAgent:
         ignored_diffs = [diff for diff in mr_diffs if token_counter(diff.diff) > settings.max_tokens_per_diff]
         diff_context = ""
         for diff in mr_diffs:
-            
+            pass
 
 
 
