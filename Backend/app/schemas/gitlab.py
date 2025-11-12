@@ -19,10 +19,3 @@ class GitlabProject(BaseModel):
     bot_id: Optional[int] = None
     bot_name: Optional[str] = None
     avatar_url: Optional[str] = None
-
-
-class GitlabProjectsList(BaseModel):
-    projects: List[GitlabProject]
-    total: int
-    page: int
-    per_page: int

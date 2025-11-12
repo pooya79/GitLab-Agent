@@ -1,7 +1,7 @@
 from typing import Any, Dict
+import gitlab
 
 from app.db.models import Bot
-from app.services.gitlab_service import GitlabService
 from app.db.database import AsyncSession
 from app.agents.smart_agent import SmartAgent
 from app.core.log import logger
@@ -61,10 +61,16 @@ async def handle_merge_request_event(
     gitlab_project_path = payload.get("project", {}).get("path_with_namespace")
     username = payload.get("user", {}).get("username") # user who triggered the event
 
+    # Create GitLab client
+    gitlab_client = gitlab.Gitlab(
+        settings.gitlab_url,
+        private_token=bot.gitlab_access_token,
+    )
+
     # Create an instance of the SmartAgent
     smart_agent = SmartAgent(
         openrouter_api_key=settings.openrouter_api_key,
-        gitlab_service=GitlabService(bot.gitlab_access_token),
+        gitlab_client=gitlab_client,
         db_session=db_session,
         model_name=bot.llm_model,
         system_prompt=bot.llm_system_prompt,

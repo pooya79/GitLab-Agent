@@ -5,11 +5,13 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Annotated, AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+import gitlab
 
 from app.db.database import AsyncSessionLocal
 from app.auth.jwt import decode_token
 from app.db.models import Users, RefreshSession, OAuthAccount
 from app.auth.gitlab import GitlabAuthService
+from app.core.config import settings
 from app.core.log import logger
 
 
@@ -81,13 +83,13 @@ async def get_current_user(
     return user
 
 
-async def get_gitlab_accout_token(
+async def get_gitlab_client(
     session: SessionDep,
     current_user: Users = Depends(get_current_user),
-) -> str:
+) -> gitlab.Gitlab:
     """
-    Dependency to get the GitLab OAuth token for the current user.
-    Usage: async def endpoint(gitlab_token: str = Depends(get_gitlab_accout_token))
+    Dependency to get the GitLab client for the current user.
+    Usage: async def endpoint(gitlab_client: gitlab.Gitlab = Depends(get_gitlab_client))
     """
     result = await session.execute(
         select(OAuthAccount).where(
@@ -124,9 +126,9 @@ async def get_gitlab_accout_token(
                 oauth_account.scope = token_response.get("scope", oauth_account.scope)
                 expires_in = token_response.get("expires_in")
                 if expires_in:
-                    oauth_account.expires_at = dt.datetime.now(
-                        dt.timezone.utc
-                    ).replace(tzinfo=None) + dt.timedelta(seconds=expires_in)
+                    oauth_account.expires_at = dt.datetime.now(dt.timezone.utc).replace(
+                        tzinfo=None
+                    ) + dt.timedelta(seconds=expires_in)
                 oauth_account.last_refreshed_at = dt.datetime.now(
                     dt.timezone.utc
                 ).replace(tzinfo=None)
@@ -138,4 +140,4 @@ async def get_gitlab_accout_token(
                     detail="Failed to refresh GitLab OAuth token",
                 )
 
-    return oauth_account.access_token
+    return gitlab.Gitlab(settings.gitlab.base, oauth_account.access_token)

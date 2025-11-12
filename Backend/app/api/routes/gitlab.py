@@ -1,12 +1,12 @@
 from typing import List
-from fastapi import APIRouter, Request, HTTPException, Depends
+from fastapi import APIRouter, Request, HTTPException, Depends, Query
 from fastapi.responses import JSONResponse
 from sqlalchemy import select
+import gitlab
 
-from app.api.deps import get_gitlab_accout_token, SessionDep
-from app.services.gitlab_service import GitlabService
+from app.api.deps import get_gitlab_client, SessionDep
 from app.db.models import Bot
-from app.schemas.gitlab import UserInfo, GitlabProject, GitlabProjectsList
+from app.schemas.gitlab import UserInfo, GitlabProject, GitlabProject
 from app.core.log import logger
 
 
@@ -15,13 +15,13 @@ router = APIRouter(prefix="/gitlab", tags=["gitlab"])
 
 @router.get("/userinfo", response_model=UserInfo)
 async def get_gitlab_userinfo(
-    request: Request, gitlab_oauth_token: str = Depends(get_gitlab_accout_token)
+    request: Request, gitlab_client: gitlab.Gitlab = Depends(get_gitlab_client)
 ):
     """
     Get GitLab user information for the authenticated user.
     """
-    gitlab_service = GitlabService(oauth_token=gitlab_oauth_token)
-    user_info = gitlab_service.get_user_info()
+    gitlab_client.auth()
+    user_info = gitlab_client.user
     if not user_info:
         raise HTTPException(status_code=401, detail="Invalid GitLab OAuth token")
 
@@ -36,19 +36,19 @@ async def get_gitlab_userinfo(
     return user_info
 
 
-@router.get("/projects", response_model=GitlabProjectsList)
+@router.get("/projects", response_model=List[GitlabProject])
 async def list_gitlab_projects(
     session: SessionDep,
-    page: int = 1,
-    per_page: int = 20,
-    gitlab_oauth_token: str = Depends(get_gitlab_accout_token),
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    search: str | None = Query(None, max_length=100),
+    gitlab_client: gitlab.Gitlab = Depends(get_gitlab_client),
 ):
     """
     list GitLab projects for the authenticated user.
     """
     # Fetch projects from GitLab
-    gitlab_service = GitlabService(oauth_token=gitlab_oauth_token)
-    projects, total = gitlab_service.list_user_projects(page=page, per_page=per_page)
+    projects = gitlab_client.projects.list(page=page, per_page=per_page, search=search)
     if not projects:
         raise HTTPException(status_code=401, detail="Invalid GitLab OAuth token")
 
@@ -84,12 +84,7 @@ async def list_gitlab_projects(
         for project in projects
     ]
 
-    return GitlabProjectsList(
-        projects=project_details,
-        total=total,
-        page=page,
-        per_page=per_page,
-    )
+    return project_details
 
 
 def _extract_access_level(permissions: dict[str, dict]):
@@ -104,13 +99,12 @@ def _extract_access_level(permissions: dict[str, dict]):
 @router.get("/projects/{project_id}/access-tokens")
 async def list_gitlab_project_access_tokens(
     project_id: str | int,
-    gitlab_oauth_token: str = Depends(get_gitlab_accout_token),
+    gitlab_client: gitlab.Gitlab = Depends(get_gitlab_client),
 ):
     """
     List access tokens for a GitLab project.
     """
-    gitlab_service = GitlabService(oauth_token=gitlab_oauth_token)
-    tokens = gitlab_service.list_project_tokens(project_id)
+    tokens = gitlab_client.projects.get(project_id, lazy=True).access_tokens.list()
     if not tokens:
         raise HTTPException(status_code=404, detail="No access tokens found")
 
@@ -131,13 +125,14 @@ async def list_gitlab_project_access_tokens(
 async def get_gitlab_project_access_token(
     project_id: str | int,
     access_token_id: str | int,
-    gitlab_oauth_token: str = Depends(get_gitlab_accout_token),
+    gitlab_client: gitlab.Gitlab = Depends(get_gitlab_client),
 ):
     """
     Get a specific access token for a GitLab project.
     """
-    gitlab_service = GitlabService(oauth_token=gitlab_oauth_token)
-    token = gitlab_service.get_project_token(project_id, access_token_id)
+    token = gitlab_client.projects.get(project_id, lazy=True).access_tokens.get(
+        access_token_id
+    )
     if not token:
         raise HTTPException(status_code=404, detail="Access token not found")
 
@@ -158,7 +153,7 @@ async def get_gitlab_project_access_token(
 async def create_gitlab_project_access_token(
     project_id: str | int,
     request: Request,
-    gitlab_oauth_token: str = Depends(get_gitlab_accout_token),
+    gitlab_client: gitlab.Gitlab = Depends(get_gitlab_client),
 ):
     """
     Create a new access token for a GitLab project.
@@ -168,9 +163,12 @@ async def create_gitlab_project_access_token(
     scopes = body.get("scopes", [])
     expires_at = body.get("expires_at")
 
-    gitlab_service = GitlabService(oauth_token=gitlab_oauth_token)
-    token = gitlab_service.create_project_token(
-        project_id, access_token_id, scopes, expires_at
+    token = gitlab_client.projects.get(project_id, lazy=True).access_tokens.create(
+        {
+            "name": access_token_id,
+            "scopes": scopes,
+            "expires_at": expires_at,
+        }
     )
 
     return JSONResponse(content=token)
@@ -179,13 +177,12 @@ async def create_gitlab_project_access_token(
 @router.get("/projects/{project_id}/webhooks")
 async def list_gitlab_project_webhooks(
     project_id: str | int,
-    gitlab_oauth_token: str = Depends(get_gitlab_accout_token),
+    gitlab_client: gitlab.Gitlab = Depends(get_gitlab_client),
 ):
     """
     List webhooks for a GitLab project.
     """
-    gitlab_service = GitlabService(oauth_token=gitlab_oauth_token)
-    hooks = gitlab_service.list_webhooks(project_id)
+    hooks = gitlab_client.projects.get(project_id, lazy=True).hooks.list()
     if not hooks:
         raise HTTPException(status_code=404, detail="No webhooks found")
 
@@ -207,13 +204,12 @@ async def list_gitlab_project_webhooks(
 async def get_gitlab_project_webhook(
     project_id: str | int,
     hook_id: str | int,
-    gitlab_oauth_token: str = Depends(get_gitlab_accout_token),
+    gitlab_client: gitlab.Gitlab = Depends(get_gitlab_client),
 ):
     """
     Get a specific webhook for a GitLab project.
     """
-    gitlab_service = GitlabService(oauth_token=gitlab_oauth_token)
-    hook = gitlab_service.get_webhook(project_id, hook_id)
+    hook = gitlab_client.projects.get(project_id, lazy=True).hooks.get(hook_id)
     if not hook:
         raise HTTPException(status_code=404, detail="Webhook not found")
 
@@ -232,7 +228,7 @@ async def get_gitlab_project_webhook(
 async def create_gitlab_project_webhook(
     project_id: str | int,
     request: Request,
-    gitlab_oauth_token: str = Depends(get_gitlab_accout_token),
+    gitlab_client: gitlab.Gitlab = Depends(get_gitlab_client),
 ):
     """
     Create a new webhook for a GitLab project.
@@ -241,11 +237,11 @@ async def create_gitlab_project_webhook(
     url = body.get("url")
     events = body.get("events", {})
 
-    gitlab_service = GitlabService(oauth_token=gitlab_oauth_token)
-    hook = gitlab_service.create_webhook(
-        project_id,
-        url,
-        events,
+    hook = gitlab_client.projects.get(project_id, lazy=True).hooks.create(
+        {
+            "url": url,
+            **events,
+        }
     )
 
     hook_dict = {
@@ -263,12 +259,11 @@ async def create_gitlab_project_webhook(
 async def delete_gitlab_project_webhook(
     project_id: str | int,
     hook_id: str | int,
-    gitlab_oauth_token: str = Depends(get_gitlab_accout_token),
+    gitlab_client: gitlab.Gitlab = Depends(get_gitlab_client),
 ):
     """
     Delete a webhook for a GitLab project.
     """
-    gitlab_service = GitlabService(oauth_token=gitlab_oauth_token)
-    gitlab_service.delete_webhook(project_id, hook_id)
+    gitlab_client.projects.get(project_id, lazy=True).hooks.delete(hook_id)
 
     return JSONResponse(content={"detail": "Webhook deleted successfully"})

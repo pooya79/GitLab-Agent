@@ -1,3 +1,4 @@
+import gitlab
 from pydantic_ai import Agent, UsageLimits
 from pydantic_ai.messages import ModelMessage, ModelMessagesTypeAdapter
 from pydantic_ai.models.openai import OpenAIChatModel, OpenAIChatModelSettings
@@ -6,7 +7,6 @@ from pydantic_core import to_jsonable_python
 from sqlalchemy import select
 import json
 
-from app.services.gitlab_service import GitlabService
 from app.db.database import AsyncSession
 from app.db.models import History
 from app.prompts.smart_agent import SMART_AGENT_SYSTEM_PROMPT, SMART_AGENT_USER_PROMPT
@@ -31,7 +31,7 @@ class SmartAgent:
     def __init__(
         self,
         openrouter_api_key: str,
-        gitlab_service: GitlabService,
+        gitlab_client: gitlab.Gitlab,
         db_session: AsyncSession,
         model_name: str,
         system_prompt: str = SMART_AGENT_SYSTEM_PROMPT,
@@ -50,11 +50,11 @@ class SmartAgent:
             extra_body=extra_body,
         )
 
-        assert gitlab_service is not None or db_session is not None, (
-            "GitlabService and DB session are required."
+        assert gitlab_client is not None or db_session is not None, (
+            "GitlabClient and DB session are required."
         )
 
-        self.gitlab_service = gitlab_service
+        self.gitlab_client = gitlab_client
         self.db_session = db_session
 
         self.agent = Agent(

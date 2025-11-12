@@ -1,10 +1,10 @@
 from typing import Callable
+import gitlab
 from pydantic_ai import Agent
 from pydantic_ai.messages import ModelMessage
 from pydantic_ai.models.openai import OpenAIChatModel, OpenAIChatModelSettings
 from pydantic_ai.providers.openrouter import OpenRouterProvider
 
-from app.services.gitlab_service import GitlabService
 from app.db.database import AsyncSession
 
 
@@ -19,7 +19,7 @@ class CommandAgent:
     def __init__(
         self,
         openrouter_api_key: str,
-        gitlab_service: GitlabService,
+        gitlab_client: gitlab.Gitlab,
         db_session: AsyncSession,
         model_name: str,
         temperature: float = 0.2,
@@ -34,10 +34,10 @@ class CommandAgent:
             extra_body=extra_body or {},
         )
 
-        assert gitlab_service is not None or db_session is not None, (
-            "GitlabService and DB session are required."
+        assert gitlab_client is not None or db_session is not None, (
+            "GitlabClient and DB session are required."
         )
-        self.gitlab_service = gitlab_service
+        self.gitlab_client = gitlab_client
         self.db_session = db_session
 
         self.model = OpenAIChatModel(settings=model_settings)

@@ -4,8 +4,9 @@ import datetime as dt
 from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.responses import Response
 from sqlalchemy import select, func, and_
+import gitlab
 
-from app.api.deps import SessionDep, get_gitlab_accout_token
+from app.api.deps import SessionDep, get_current_user, get_gitlab_client
 from app.db.models import Bot
 from app.schemas.bot import (
     BotCreate,
@@ -18,9 +19,9 @@ from app.schemas.bot import (
     BotDeleteResponse,
     BotStatusToggleResponse,
 )
+from app.db.models import Users
 from app.core.config import settings
 from app.core.log import logger
-from app.services.gitlab_service import GitlabService, GitLabAccessLevel
 from app.services.cache_service import NOW
 
 router = APIRouter(
@@ -48,7 +49,7 @@ AVAILABLE_BOT_AVATARS = {
 async def get_bot_status(
     bot_id: int,
     session: SessionDep,
-    gitlab_oauth_token: str = Depends(get_gitlab_accout_token),
+    gitlab_client: gitlab.Gitlab = Depends(get_gitlab_client),
 ):
     """
     Get the status of a bot by its ID.
@@ -71,11 +72,10 @@ async def get_bot_status(
             error_message="Bot's GitLab access token is not set.",
         )
 
-    gitlab_service = GitlabService(oauth_token=bot.gitlab_access_token)
     try:
-        project_access_token = gitlab_service.get_project_token(
-            bot.gitlab_project_path, bot.gitlab_access_token_id
-        )
+        project_access_token = gitlab_client.projects.get(
+            bot.gitlab_project_path, lazy=True
+        ).access_tokens.get(bot.gitlab_access_token_id)
 
         if not project_access_token:
             return BotStatusResponse(
@@ -130,9 +130,9 @@ async def get_bot_status(
             error_message="Bot's GitLab webhook is not set up.",
         )
     try:
-        webhook = gitlab_service.get_webhook(
-            bot.gitlab_project_path, bot.gitlab_webhook_id
-        )
+        webhook = gitlab_client.projects.get(
+            bot.gitlab_project_path, lazy=True
+        ).hooks.get(bot.gitlab_webhook_id)
         if not webhook:
             return BotStatusResponse(
                 status="ERROR",
@@ -169,13 +169,12 @@ async def get_bot_status(
 async def create_bot(
     data: BotCreate,
     session: SessionDep,
-    gitlab_oauth_token: str = Depends(get_gitlab_accout_token),
+    gitlab_client: gitlab.Gitlab = Depends(get_gitlab_client),
 ):
     """
     Create a new bot for a GitLab project.
     """
-    gitlab_service = GitlabService(oauth_token=gitlab_oauth_token)
-    project = gitlab_service.get_user_project(data.gitlab_project_path)
+    project = gitlab_client.projects.get(data.gitlab_project_path)
     if not project:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -185,11 +184,12 @@ async def create_bot(
     # Create project access token for the bot
     try:
         access_token_name = f"{data.name}"
-        project_token = gitlab_service.create_project_token(
-            project.id,
-            access_token_name,
-            scopes=["api"],
-            expires_at=None,
+        project_token = project.access_tokens.create(
+            {
+                "name": access_token_name,
+                "scopes": ["api"],
+                "expires_at": None,
+            }
         )
     except Exception as e:
         logger.error(f"Error creating project access token for bot: {e}")
@@ -200,15 +200,15 @@ async def create_bot(
 
     # Get username associated with the token
     try:
-        new_gitlab_service = GitlabService(oauth_token=project_token.token)
-        user_info = new_gitlab_service.get_user_info()
+        gitlab_client.auth()
+        user_info = gitlab_client.user
         if not user_info:
             raise Exception("Could not fetch user info with the created token.")
         project_token.user_name = user_info.username
     except Exception as e:
         # Revoke the created project token in case of failure
         try:
-            gitlab_service.revoke_project_token(project.id, project_token.id)
+            project.access_tokens.delete(project_token.id)
         except Exception as revoke_error:
             logger.error(
                 f"Error revoking project token after user info fetch failure: {revoke_error}"
@@ -223,22 +223,20 @@ async def create_bot(
     # Create project webhook for the bot
     try:
         webhook_url = f"{settings.backend_url}/api/v1/webhooks/{project_token.user_id}"
-        events = {
-            "note_events": True,
-            "merge_requests_events": True,
-        }
         webhook_secret_token = uuid.uuid4().hex
-        webhook = gitlab_service.create_webhook(
-            project.id,
-            webhook_url,
-            events,
-            enable_ssl_verification=settings.gitlab.webhook_ssl_verify,
-            token=webhook_secret_token,
+        webhook = project.hooks.create(
+            {
+                "url": webhook_url,
+                "note_events": True,
+                "merge_requests_events": True,
+                "enable_ssl_verification": settings.gitlab.webhook_ssl_verify,
+                "token": webhook_secret_token,
+            }
         )
     except Exception as e:
         # Revoke the created project token in case of webhook creation failure
         try:
-            gitlab_service.revoke_project_token(project.id, project_token.id)
+            project.access_tokens.delete(project_token.id)
         except Exception as revoke_error:
             logger.error(
                 f"Error revoking project token after webhook creation failure: {revoke_error}"
@@ -272,13 +270,13 @@ async def create_bot(
     except Exception as e:
         # Clean up created GitLab resources in case of DB failure
         try:
-            gitlab_service.delete_webhook(project.id, webhook.id)
+            project.hooks.delete(webhook.id)
         except Exception as webhook_error:
             logger.error(
                 f"Error deleting webhook after bot DB creation failure: {webhook_error}"
             )
         try:
-            gitlab_service.revoke_project_token(project.id, project_token.id)
+            project.access_tokens.delete(project_token.id)
         except Exception as token_error:
             logger.error(
                 f"Error revoking project token after bot DB creation failure: {token_error}"
@@ -297,7 +295,7 @@ async def list_bots(
     session: SessionDep,
     page: int = 1,
     per_page: int = 20,
-    gitlab_oauth_token: str = Depends(get_gitlab_accout_token),
+    current_user: Users = Depends(get_current_user),
 ):
     """
     List all bots with pagination.
@@ -320,7 +318,7 @@ async def list_bots(
 async def delete_bot(
     bot_id: int,
     session: SessionDep,
-    gitlab_oauth_token: str = Depends(get_gitlab_accout_token),
+    gitlab_client: str = Depends(get_gitlab_client),
 ):
     """
     Delete a bot by its ID.
@@ -333,13 +331,12 @@ async def delete_bot(
             status_code=status.HTTP_404_NOT_FOUND, detail="Bot not found"
         )
 
-    gitlab_service = GitlabService(oauth_token=gitlab_oauth_token)
     warning_message = ""
     # Clean up GitLab resources
     try:
         if bot.gitlab_webhook_id:
-            gitlab_service.delete_webhook(
-                bot.gitlab_project_path, bot.gitlab_webhook_id
+            gitlab_client.projects.get(bot.gitlab_project_path, lazy=True).hooks.delete(
+                bot.gitlab_webhook_id
             )
     except Exception as e:
         logger.error(f"Error deleting webhook for bot {bot_id}: {e}")
@@ -347,9 +344,9 @@ async def delete_bot(
 
     try:
         if bot.gitlab_access_token_id:
-            gitlab_service.revoke_project_token(
-                bot.gitlab_project_path, bot.gitlab_access_token_id
-            )
+            gitlab_client.projects.get(
+                bot.gitlab_project_path, lazy=True
+            ).access_tokens.delete(bot.gitlab_access_token_id)
     except Exception as e:
         logger.error(f"Error deleting project token for bot {bot_id}: {e}")
         if warning_message:
@@ -367,7 +364,7 @@ async def delete_bot(
 async def create_new_bot_access_token(
     bot_id: int,
     session: SessionDep,
-    gitlab_oauth_token: str = Depends(get_gitlab_accout_token),
+    gitlab_client: str = Depends(get_gitlab_client),
 ):
     """
     Create a new access token for a bot by its ID and revoke the old one.
@@ -381,13 +378,15 @@ async def create_new_bot_access_token(
         )
     old_token_id = bot.gitlab_access_token_id
 
-    gitlab_service = GitlabService(oauth_token=gitlab_oauth_token)
     # Create new project access token
     try:
-        project_token = gitlab_service.create_project_token(
-            bot.gitlab_project_path,
-            bot.name,
-            scopes=["api"],
+        project_token = gitlab_client.projects.get(
+            bot.gitlab_project_path, lazy=True
+        ).access_tokens.create(
+            {
+                "name": bot.name,
+                "scopes": ["api"],
+            }
         )
     except Exception as e:
         logger.error(f"Error creating project token for bot {bot_id}: {e}")
@@ -398,17 +397,17 @@ async def create_new_bot_access_token(
 
     # Fetch username associated with the new token
     try:
-        new_gitlab_service = GitlabService(oauth_token=project_token.token)
-        user_info = new_gitlab_service.get_user_info()
+        gitlab_client.auth()
+        user_info = gitlab_client.user
         if not user_info:
             raise Exception("Could not fetch user info with the created token.")
         project_token.user_name = user_info.username
     except Exception as e:
         # Revoke the created project token in case of failure
         try:
-            gitlab_service.revoke_project_token(
-                bot.gitlab_project_path, project_token.id
-            )
+            gitlab_client.projects.get(
+                bot.gitlab_project_path, lazy=True
+            ).access_tokens.delete(project_token.id)
         except Exception as revoke_error:
             logger.error(
                 f"Error revoking project token after user info fetch failure: {revoke_error}"
@@ -422,12 +421,13 @@ async def create_new_bot_access_token(
 
     # Revoke old token and update bot with new token info
     try:
-        old_token = gitlab_service.get_project_token(
-            bot.gitlab_project_path, old_token_id
-        )
+        old_token = gitlab_client.projects.get(
+            bot.gitlab_project_path, lazy=True
+        ).access_tokens.get(old_token_id)
         if old_token_id and old_token and old_token.revoked is False:
-            gitlab_service.revoke_project_token(bot.gitlab_project_path, old_token_id)
-
+            gitlab_client.projects.get(
+                bot.gitlab_project_path, lazy=True
+            ).access_tokens.delete(old_token_id)
         bot.gitlab_access_token_id = project_token.id
         bot.gitlab_access_token = project_token.token
         bot.gitlab_user_id = project_token.user_id
@@ -439,9 +439,9 @@ async def create_new_bot_access_token(
         logger.error(f"Error updating bot with new token for bot {bot_id}: {e}")
         # Revoke the created project token in case of DB update failure
         try:
-            gitlab_service.revoke_project_token(
-                bot.gitlab_project_path, project_token.id
-            )
+            gitlab_client.projects.get(
+                bot.gitlab_project_path, lazy=True
+            ).access_tokens.delete(project_token.id)
         except Exception as revoke_error:
             logger.error(
                 f"Error revoking project token after bot DB update failure: {revoke_error}"
@@ -460,7 +460,7 @@ async def update_bot(
     bot_id: int,
     data: BotUpdate,
     session: SessionDep,
-    gitlab_oauth_token: str = Depends(get_gitlab_accout_token),
+    current_user: Users = Depends(get_current_user),
 ):
     """
     Update a bot by its ID.
@@ -487,7 +487,7 @@ async def update_bot(
 async def toggle_bot_active(
     bot_id: int,
     session: SessionDep,
-    gitlab_oauth_token: str = Depends(get_gitlab_accout_token),
+    current_user: Users = Depends(get_current_user),
 ):
     """
     Toggle a bot's active status by its ID.
@@ -511,7 +511,7 @@ async def toggle_bot_active(
 async def revoke_bot_token(
     bot_id: int,
     session: SessionDep,
-    gitlab_oauth_token: str = Depends(get_gitlab_accout_token),
+    gitlab_client: gitlab.Gitlab = Depends(get_gitlab_client),
 ):
     """
     Revoke a bot's GitLab project access token.
@@ -524,12 +524,11 @@ async def revoke_bot_token(
             status_code=status.HTTP_404_NOT_FOUND, detail="Bot not found"
         )
 
-    gitlab_service = GitlabService(oauth_token=gitlab_oauth_token)
     try:
         if bot.gitlab_access_token_id:
-            gitlab_service.revoke_project_token(
-                bot.gitlab_project_path, bot.gitlab_access_token_id
-            )
+            gitlab_client.projects.get(
+                bot.gitlab_project_path, lazy=True
+            ).access_tokens.delete(bot.gitlab_access_token_id)
             bot.gitlab_access_token_id = None
             bot.gitlab_access_token = None
             session.add(bot)
@@ -549,7 +548,7 @@ async def revoke_bot_token(
 async def rotate_bot_token(
     bot_id: int,
     session: SessionDep,
-    gitlab_oauth_token: str = Depends(get_gitlab_accout_token),
+    gitlab_client: gitlab.Gitlab = Depends(get_gitlab_client),
 ):
     """
     Rotate a bot's GitLab project access token.
@@ -562,12 +561,11 @@ async def rotate_bot_token(
             status_code=status.HTTP_404_NOT_FOUND, detail="Bot not found"
         )
 
-    gitlab_service = GitlabService(oauth_token=gitlab_oauth_token)
     try:
         if bot.gitlab_access_token_id:
-            new_token = gitlab_service.rotate_project_token(
-                bot.gitlab_project_path, bot.gitlab_access_token_id
-            )
+            new_token = gitlab_client.projects.get(
+                bot.gitlab_project_path, lazy=True
+            ).access_tokens.rotate(bot.gitlab_access_token_id)
             bot.gitlab_access_token_id = new_token.id
             bot.gitlab_access_token = new_token.token
             session.add(bot)
