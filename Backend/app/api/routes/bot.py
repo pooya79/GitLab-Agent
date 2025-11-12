@@ -101,7 +101,7 @@ async def get_bot_status(
             )
 
         # Check its access level
-        if project_access_token.access_level < GitLabAccessLevel.MAINTAINER:
+        if project_access_token.access_level < 40:  # Minimum MAINTAINER level
             return BotStatusResponse(
                 status="ERROR",
                 error_message=f"Bot's GitLab access token ({project_access_token.name}) does not have sufficient access level (minimum MAINTAINER).",
@@ -386,6 +386,7 @@ async def create_new_bot_access_token(
             {
                 "name": bot.name,
                 "scopes": ["api"],
+                "expires_at": None,
             }
         )
     except Exception as e:

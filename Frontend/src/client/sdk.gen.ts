@@ -24,8 +24,10 @@ import type {
     GetAccessTokenApiV1AuthTokenSessionIdGetData,
     GetAccessTokenApiV1AuthTokenSessionIdGetErrors,
     GetAccessTokenApiV1AuthTokenSessionIdGetResponses,
-    GetAvailableAvatarsApiV1BotsAvailableAvatarsGetData,
-    GetAvailableAvatarsApiV1BotsAvailableAvatarsGetResponses,
+    GetAvailableAvatarsApiV1ConfigAvailableAvatarsGetData,
+    GetAvailableAvatarsApiV1ConfigAvailableAvatarsGetResponses,
+    GetAvailableLlmsApiV1ConfigAvailableLlmsGetData,
+    GetAvailableLlmsApiV1ConfigAvailableLlmsGetResponses,
     GetBotStatusApiV1BotsBotIdStatusGetData,
     GetBotStatusApiV1BotsBotIdStatusGetErrors,
     GetBotStatusApiV1BotsBotIdStatusGetResponses,
@@ -65,15 +67,9 @@ import type {
     RevokeBotTokenApiV1BotsBotIdRevokeDeleteData,
     RevokeBotTokenApiV1BotsBotIdRevokeDeleteErrors,
     RevokeBotTokenApiV1BotsBotIdRevokeDeleteResponses,
-    RevokeGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRevokeDeleteData,
-    RevokeGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRevokeDeleteErrors,
-    RevokeGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRevokeDeleteResponses,
     RotateBotTokenApiV1BotsBotIdRotateTokenPatchData,
     RotateBotTokenApiV1BotsBotIdRotateTokenPatchErrors,
     RotateBotTokenApiV1BotsBotIdRotateTokenPatchResponses,
-    RotateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRotatePostData,
-    RotateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRotatePostErrors,
-    RotateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRotatePostResponses,
     ToggleBotActiveApiV1BotsBotIdToggleActivePatchData,
     ToggleBotActiveApiV1BotsBotIdToggleActivePatchErrors,
     ToggleBotActiveApiV1BotsBotIdToggleActivePatchResponses,
@@ -93,8 +89,10 @@ import {
     zDeleteGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdDeleteData,
     zGetAccessTokenApiV1AuthTokenSessionIdGetData,
     zGetAccessTokenApiV1AuthTokenSessionIdGetResponse,
-    zGetAvailableAvatarsApiV1BotsAvailableAvatarsGetData,
-    zGetAvailableAvatarsApiV1BotsAvailableAvatarsGetResponse,
+    zGetAvailableAvatarsApiV1ConfigAvailableAvatarsGetData,
+    zGetAvailableAvatarsApiV1ConfigAvailableAvatarsGetResponse,
+    zGetAvailableLlmsApiV1ConfigAvailableLlmsGetData,
+    zGetAvailableLlmsApiV1ConfigAvailableLlmsGetResponse,
     zGetBotStatusApiV1BotsBotIdStatusGetData,
     zGetBotStatusApiV1BotsBotIdStatusGetResponse,
     zGetCurrentUserInfoApiV1AuthMeGetData,
@@ -117,10 +115,8 @@ import {
     zRefreshTokenApiV1AuthRefreshPostResponse,
     zRevokeBotTokenApiV1BotsBotIdRevokeDeleteData,
     zRevokeBotTokenApiV1BotsBotIdRevokeDeleteResponse,
-    zRevokeGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRevokeDeleteData,
     zRotateBotTokenApiV1BotsBotIdRotateTokenPatchData,
     zRotateBotTokenApiV1BotsBotIdRotateTokenPatchResponse,
-    zRotateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRotatePostData,
     zToggleBotActiveApiV1BotsBotIdToggleActivePatchData,
     zToggleBotActiveApiV1BotsBotIdToggleActivePatchResponse,
     zUpdateBotApiV1BotsBotIdPatchData,
@@ -496,72 +492,6 @@ export const getGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokens
                 },
             ],
             url: "/api/v1/gitlab/projects/{project_id}/access-tokens/{access_token_id}",
-            ...options,
-        });
-    };
-
-/**
- * Rotate Gitlab Project Access Token
- *
- * Rotate an existing access token for a GitLab project.
- */
-export const rotateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRotatePost =
-    <ThrowOnError extends boolean = false>(
-        options: Options<
-            RotateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRotatePostData,
-            ThrowOnError
-        >,
-    ) => {
-        return (options.client ?? client).post<
-            RotateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRotatePostResponses,
-            RotateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRotatePostErrors,
-            ThrowOnError
-        >({
-            requestValidator: async (data) => {
-                return await zRotateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRotatePostData.parseAsync(
-                    data,
-                );
-            },
-            security: [
-                {
-                    scheme: "bearer",
-                    type: "http",
-                },
-            ],
-            url: "/api/v1/gitlab/projects/{project_id}/access-tokens/{access_token_id}/rotate",
-            ...options,
-        });
-    };
-
-/**
- * Revoke Gitlab Project Access Token
- *
- * Revoke an existing access token for a GitLab project.
- */
-export const revokeGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRevokeDelete =
-    <ThrowOnError extends boolean = false>(
-        options: Options<
-            RevokeGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRevokeDeleteData,
-            ThrowOnError
-        >,
-    ) => {
-        return (options.client ?? client).delete<
-            RevokeGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRevokeDeleteResponses,
-            RevokeGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRevokeDeleteErrors,
-            ThrowOnError
-        >({
-            requestValidator: async (data) => {
-                return await zRevokeGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRevokeDeleteData.parseAsync(
-                    data,
-                );
-            },
-            security: [
-                {
-                    scheme: "bearer",
-                    type: "http",
-                },
-            ],
-            url: "/api/v1/gitlab/projects/{project_id}/access-tokens/{access_token_id}/revoke",
             ...options,
         });
     };
@@ -1029,30 +959,63 @@ export const rotateBotTokenApiV1BotsBotIdRotateTokenPatch = <
  *
  * Get a list of available bot avatars.
  */
-export const getAvailableAvatarsApiV1BotsAvailableAvatarsGet = <
+export const getAvailableAvatarsApiV1ConfigAvailableAvatarsGet = <
     ThrowOnError extends boolean = false,
 >(
     options?: Options<
-        GetAvailableAvatarsApiV1BotsAvailableAvatarsGetData,
+        GetAvailableAvatarsApiV1ConfigAvailableAvatarsGetData,
         ThrowOnError
     >,
 ) => {
     return (options?.client ?? client).get<
-        GetAvailableAvatarsApiV1BotsAvailableAvatarsGetResponses,
+        GetAvailableAvatarsApiV1ConfigAvailableAvatarsGetResponses,
         unknown,
         ThrowOnError
     >({
         requestValidator: async (data) => {
-            return await zGetAvailableAvatarsApiV1BotsAvailableAvatarsGetData.parseAsync(
+            return await zGetAvailableAvatarsApiV1ConfigAvailableAvatarsGetData.parseAsync(
                 data,
             );
         },
         responseValidator: async (data) => {
-            return await zGetAvailableAvatarsApiV1BotsAvailableAvatarsGetResponse.parseAsync(
+            return await zGetAvailableAvatarsApiV1ConfigAvailableAvatarsGetResponse.parseAsync(
                 data,
             );
         },
-        url: "/api/v1/bots/available-avatars",
+        url: "/api/v1/config/available-avatars",
+        ...options,
+    });
+};
+
+/**
+ * Get Available Llms
+ *
+ * Get a list of available LLM models.
+ */
+export const getAvailableLlmsApiV1ConfigAvailableLlmsGet = <
+    ThrowOnError extends boolean = false,
+>(
+    options?: Options<
+        GetAvailableLlmsApiV1ConfigAvailableLlmsGetData,
+        ThrowOnError
+    >,
+) => {
+    return (options?.client ?? client).get<
+        GetAvailableLlmsApiV1ConfigAvailableLlmsGetResponses,
+        unknown,
+        ThrowOnError
+    >({
+        requestValidator: async (data) => {
+            return await zGetAvailableLlmsApiV1ConfigAvailableLlmsGetData.parseAsync(
+                data,
+            );
+        },
+        responseValidator: async (data) => {
+            return await zGetAvailableLlmsApiV1ConfigAvailableLlmsGetResponse.parseAsync(
+                data,
+            );
+        },
+        url: "/api/v1/config/available-llms",
         ...options,
     });
 };

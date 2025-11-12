@@ -260,6 +260,7 @@
                         "required": false,
                         "schema": {
                             "type": "integer",
+                            "minimum": 1,
                             "default": 1,
                             "title": "Page"
                         }
@@ -270,8 +271,27 @@
                         "required": false,
                         "schema": {
                             "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1,
                             "default": 20,
                             "title": "Per Page"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string",
+                                    "maxLength": 100
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Search"
                         }
                     }
                 ],
@@ -281,7 +301,11 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/GitlabProjectsList"
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/GitlabProject"
+                                    },
+                                    "title": "Response List Gitlab Projects Api V1 Gitlab Projects Get"
                                 }
                             }
                         }
@@ -405,140 +429,6 @@
                 "summary": "Get Gitlab Project Access Token",
                 "description": "Get a specific access token for a GitLab project.",
                 "operationId": "get_gitlab_project_access_token_api_v1_gitlab_projects__project_id__access_tokens__access_token_id__get",
-                "security": [
-                    {
-                        "HTTPBearer": []
-                    }
-                ],
-                "parameters": [
-                    {
-                        "name": "project_id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "anyOf": [
-                                {
-                                    "type": "string"
-                                },
-                                {
-                                    "type": "integer"
-                                }
-                            ],
-                            "title": "Project Id"
-                        }
-                    },
-                    {
-                        "name": "access_token_id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "anyOf": [
-                                {
-                                    "type": "string"
-                                },
-                                {
-                                    "type": "integer"
-                                }
-                            ],
-                            "title": "Access Token Id"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successful Response",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/HTTPValidationError"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/gitlab/projects/{project_id}/access-tokens/{access_token_id}/rotate": {
-            "post": {
-                "tags": ["gitlab"],
-                "summary": "Rotate Gitlab Project Access Token",
-                "description": "Rotate an existing access token for a GitLab project.",
-                "operationId": "rotate_gitlab_project_access_token_api_v1_gitlab_projects__project_id__access_tokens__access_token_id__rotate_post",
-                "security": [
-                    {
-                        "HTTPBearer": []
-                    }
-                ],
-                "parameters": [
-                    {
-                        "name": "project_id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "anyOf": [
-                                {
-                                    "type": "string"
-                                },
-                                {
-                                    "type": "integer"
-                                }
-                            ],
-                            "title": "Project Id"
-                        }
-                    },
-                    {
-                        "name": "access_token_id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "anyOf": [
-                                {
-                                    "type": "string"
-                                },
-                                {
-                                    "type": "integer"
-                                }
-                            ],
-                            "title": "Access Token Id"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successful Response",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation Error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/HTTPValidationError"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/gitlab/projects/{project_id}/access-tokens/{access_token_id}/revoke": {
-            "delete": {
-                "tags": ["gitlab"],
-                "summary": "Revoke Gitlab Project Access Token",
-                "description": "Revoke an existing access token for a GitLab project.",
-                "operationId": "revoke_gitlab_project_access_token_api_v1_gitlab_projects__project_id__access_tokens__access_token_id__revoke_delete",
                 "security": [
                     {
                         "HTTPBearer": []
@@ -1255,12 +1145,12 @@
                 }
             }
         },
-        "/api/v1/bots/available-avatars": {
+        "/api/v1/config/available-avatars": {
             "get": {
-                "tags": ["bots"],
+                "tags": ["config"],
                 "summary": "Get Available Avatars",
                 "description": "Get a list of available bot avatars.",
-                "operationId": "get_available_avatars_api_v1_bots_available_avatars_get",
+                "operationId": "get_available_avatars_api_v1_config_available_avatars_get",
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -1271,7 +1161,31 @@
                                         "type": "string"
                                     },
                                     "type": "object",
-                                    "title": "Response Get Available Avatars Api V1 Bots Available Avatars Get"
+                                    "title": "Response Get Available Avatars Api V1 Config Available Avatars Get"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/config/available-llms": {
+            "get": {
+                "tags": ["config"],
+                "summary": "Get Available Llms",
+                "description": "Get a list of available LLM models.",
+                "operationId": "get_available_llms_api_v1_config_available_llms_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "$ref": "#/components/schemas/AvailableLlm"
+                                    },
+                                    "type": "array",
+                                    "title": "Response Get Available Llms Api V1 Config Available Llms Get"
                                 }
                             }
                         }
@@ -1282,6 +1196,41 @@
     },
     "components": {
         "schemas": {
+            "AvailableLlm": {
+                "properties": {
+                    "llm_model": {
+                        "type": "string",
+                        "title": "Llm Model"
+                    },
+                    "llm_max_output_tokens": {
+                        "type": "integer",
+                        "title": "Llm Max Output Tokens"
+                    },
+                    "llm_temperature": {
+                        "type": "number",
+                        "title": "Llm Temperature"
+                    },
+                    "llm_additional_kwargs": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Llm Additional Kwargs"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "llm_model",
+                    "llm_max_output_tokens",
+                    "llm_temperature"
+                ],
+                "title": "AvailableLlm"
+            },
             "BotCreate": {
                 "properties": {
                     "name": {
@@ -1360,6 +1309,28 @@
                         ],
                         "title": "Gitlab Access Token Id"
                     },
+                    "gitlab_user_id": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Gitlab User Id"
+                    },
+                    "gitlab_user_name": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Gitlab User Name"
+                    },
                     "gitlab_webhook_id": {
                         "anyOf": [
                             {
@@ -1397,17 +1368,24 @@
                         "type": "string",
                         "title": "Llm Model"
                     },
-                    "llm_context_window": {
+                    "llm_max_output_tokens": {
                         "type": "integer",
-                        "title": "Llm Context Window"
-                    },
-                    "llm_output_tokens": {
-                        "type": "integer",
-                        "title": "Llm Output Tokens"
+                        "title": "Llm Max Output Tokens"
                     },
                     "llm_temperature": {
                         "type": "number",
                         "title": "Llm Temperature"
+                    },
+                    "llm_system_prompt": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Llm System Prompt"
                     },
                     "llm_additional_kwargs": {
                         "anyOf": [
@@ -1428,8 +1406,7 @@
                     "is_active",
                     "gitlab_project_path",
                     "llm_model",
-                    "llm_context_window",
-                    "llm_output_tokens",
+                    "llm_max_output_tokens",
                     "llm_temperature"
                 ],
                 "title": "BotRead"
@@ -1521,7 +1498,7 @@
                         ],
                         "title": "Llm Model"
                     },
-                    "llm_context_window": {
+                    "llm_max_output_tokens": {
                         "anyOf": [
                             {
                                 "type": "integer"
@@ -1530,18 +1507,7 @@
                                 "type": "null"
                             }
                         ],
-                        "title": "Llm Context Window"
-                    },
-                    "llm_output_tokens": {
-                        "anyOf": [
-                            {
-                                "type": "integer"
-                            },
-                            {
-                                "type": "null"
-                            }
-                        ],
-                        "title": "Llm Output Tokens"
+                        "title": "Llm Max Output Tokens"
                     },
                     "llm_temperature": {
                         "anyOf": [
@@ -1553,6 +1519,17 @@
                             }
                         ],
                         "title": "Llm Temperature"
+                    },
+                    "llm_system_prompt": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Llm System Prompt"
                     },
                     "llm_additional_kwargs": {
                         "anyOf": [
@@ -1667,32 +1644,6 @@
                     "access_level"
                 ],
                 "title": "GitlabProject"
-            },
-            "GitlabProjectsList": {
-                "properties": {
-                    "projects": {
-                        "items": {
-                            "$ref": "#/components/schemas/GitlabProject"
-                        },
-                        "type": "array",
-                        "title": "Projects"
-                    },
-                    "total": {
-                        "type": "integer",
-                        "title": "Total"
-                    },
-                    "page": {
-                        "type": "integer",
-                        "title": "Page"
-                    },
-                    "per_page": {
-                        "type": "integer",
-                        "title": "Per Page"
-                    }
-                },
-                "type": "object",
-                "required": ["projects", "total", "page", "per_page"],
-                "title": "GitlabProjectsList"
             },
             "HTTPValidationError": {
                 "properties": {

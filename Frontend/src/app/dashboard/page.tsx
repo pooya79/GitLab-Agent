@@ -8,12 +8,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import {
-    BotsTable,
-    type BotsFetchResult,
-    type Bot,
-    type BotStatus,
-} from "@/components/bots-table";
+import { BotsTable, type Bot, type BotStatus } from "@/components/bots-table";
 import { CreateBotDialog } from "@/components/create-bot-dialog";
 import {
     listGitlabProjectsApiV1GitlabProjectsGet,
@@ -68,11 +63,29 @@ export default function DashboardPage() {
 
     // Fetch bots from API
     const fetchBots = useCallback(
-        async (page: number, perPage: number): Promise<BotsFetchResult> => {
+        async (
+            page: number,
+            perPage: number,
+            search?: string,
+        ): Promise<Bot[]> => {
             try {
+                const searchTerm = search?.trim();
+                const query: {
+                    page: number;
+                    per_page: number;
+                    search?: string;
+                } = {
+                    page,
+                    per_page: perPage,
+                };
+
+                if (searchTerm) {
+                    query.search = searchTerm;
+                }
+
                 const response = await listGitlabProjectsApiV1GitlabProjectsGet(
                     {
-                        query: { page, per_page: perPage },
+                        query,
                     },
                 );
 
@@ -85,23 +98,28 @@ export default function DashboardPage() {
                         `Failed to fetch bots: ${response.response.statusText}`,
                     );
                 }
-                const total: number = response.data.total;
-                const items: Bot[] = response.data.projects.map(
-                    (project: any) => {
-                        return {
-                            gitlabProjectId: project.id,
-                            gitlabProject: project.name_with_namespace,
-                            gitlabProjectPathName: project.path_with_namespace,
-                            projectUrl: project.web_url,
-                            accessLevel: ACCESS_LEVEL[project.access_level],
-                            botId: project.bot_id ?? undefined,
-                            botName: project.bot_name ?? undefined,
-                            avatar: project.avatar_url ?? undefined,
-                            hasBot: project.bot_id ? true : false,
-                        } as Bot;
-                    },
-                );
-                return { total, items };
+
+                const rawProjects = Array.isArray(response.data)
+                    ? response.data
+                    : (response.data?.projects ?? response.data?.items ?? []);
+
+                if (!Array.isArray(rawProjects)) {
+                    return [];
+                }
+
+                return rawProjects.map((project: any) => {
+                    return {
+                        gitlabProjectId: project.id,
+                        gitlabProject: project.name_with_namespace,
+                        gitlabProjectPathName: project.path_with_namespace,
+                        projectUrl: project.web_url,
+                        accessLevel: ACCESS_LEVEL[project.access_level],
+                        botId: project.bot_id ?? undefined,
+                        botName: project.bot_name ?? undefined,
+                        avatar: project.avatar_url ?? undefined,
+                        hasBot: Boolean(project.bot_id),
+                    } as Bot;
+                });
             } catch (error) {
                 console.error("Error fetching bots:", error);
                 throw error instanceof Error

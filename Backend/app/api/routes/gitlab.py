@@ -48,9 +48,14 @@ async def list_gitlab_projects(
     list GitLab projects for the authenticated user.
     """
     # Fetch projects from GitLab
-    projects = gitlab_client.projects.list(page=page, per_page=per_page, search=search)
-    if not projects:
-        raise HTTPException(status_code=401, detail="Invalid GitLab OAuth token")
+    projects = gitlab_client.projects.list(
+        page=page,
+        per_page=per_page,
+        search=search,
+        order_by="last_activity_at",
+        sort="desc",
+        min_access_level=40,
+    )
 
     # Get their bots
     result = await session.execute(

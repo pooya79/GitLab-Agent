@@ -3,6 +3,18 @@
 import { z } from "zod";
 
 /**
+ * AvailableLlm
+ */
+export const zAvailableLlm = z.object({
+    llm_model: z.string(),
+    llm_max_output_tokens: z.int(),
+    llm_temperature: z.number(),
+    llm_additional_kwargs: z.optional(
+        z.union([z.record(z.string(), z.unknown()), z.null()]),
+    ),
+});
+
+/**
  * BotCreate
  */
 export const zBotCreate = z.object({
@@ -25,13 +37,15 @@ export const zBotRead = z.object({
     is_active: z.boolean(),
     gitlab_project_path: z.string(),
     gitlab_access_token_id: z.optional(z.union([z.int(), z.null()])),
+    gitlab_user_id: z.optional(z.union([z.int(), z.null()])),
+    gitlab_user_name: z.optional(z.union([z.string(), z.null()])),
     gitlab_webhook_id: z.optional(z.union([z.int(), z.null()])),
     gitlab_webhook_secret: z.optional(z.union([z.string(), z.null()])),
     avatar_url: z.optional(z.union([z.string(), z.null()])),
     llm_model: z.string(),
-    llm_context_window: z.int(),
-    llm_output_tokens: z.int(),
+    llm_max_output_tokens: z.int(),
     llm_temperature: z.number(),
+    llm_system_prompt: z.optional(z.union([z.string(), z.null()])),
     llm_additional_kwargs: z.optional(
         z.union([z.record(z.string(), z.unknown()), z.null()]),
     ),
@@ -75,9 +89,9 @@ export const zBotUpdate = z.object({
     is_active: z.optional(z.union([z.boolean(), z.null()])),
     avatar_url: z.optional(z.union([z.string(), z.null()])),
     llm_model: z.optional(z.union([z.string(), z.null()])),
-    llm_context_window: z.optional(z.union([z.int(), z.null()])),
-    llm_output_tokens: z.optional(z.union([z.int(), z.null()])),
+    llm_max_output_tokens: z.optional(z.union([z.int(), z.null()])),
     llm_temperature: z.optional(z.union([z.number(), z.null()])),
+    llm_system_prompt: z.optional(z.union([z.string(), z.null()])),
     llm_additional_kwargs: z.optional(
         z.union([z.record(z.string(), z.unknown()), z.null()]),
     ),
@@ -110,16 +124,6 @@ export const zGitlabProject = z.object({
     bot_id: z.optional(z.union([z.int(), z.null()])),
     bot_name: z.optional(z.union([z.string(), z.null()])),
     avatar_url: z.optional(z.union([z.string(), z.null()])),
-});
-
-/**
- * GitlabProjectsList
- */
-export const zGitlabProjectsList = z.object({
-    projects: z.array(zGitlabProject),
-    total: z.int(),
-    page: z.int(),
-    per_page: z.int(),
 });
 
 /**
@@ -258,17 +262,20 @@ export const zListGitlabProjectsApiV1GitlabProjectsGetData = z.object({
     path: z.optional(z.never()),
     query: z.optional(
         z.object({
-            page: z.optional(z.int()).default(1),
-            per_page: z.optional(z.int()).default(20),
+            page: z.optional(z.int().gte(1)).default(1),
+            per_page: z.optional(z.int().gte(1).lte(100)).default(20),
+            search: z.optional(z.union([z.string().max(100), z.null()])),
         }),
     ),
 });
 
 /**
+ * Response List Gitlab Projects Api V1 Gitlab Projects Get
+ *
  * Successful Response
  */
 export const zListGitlabProjectsApiV1GitlabProjectsGetResponse =
-    zGitlabProjectsList;
+    z.array(zGitlabProject);
 
 export const zListGitlabProjectAccessTokensApiV1GitlabProjectsProjectIdAccessTokensGetData =
     z.object({
@@ -289,26 +296,6 @@ export const zCreateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTo
     });
 
 export const zGetGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdGetData =
-    z.object({
-        body: z.optional(z.never()),
-        path: z.object({
-            project_id: z.union([z.string(), z.int()]),
-            access_token_id: z.union([z.string(), z.int()]),
-        }),
-        query: z.optional(z.never()),
-    });
-
-export const zRotateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRotatePostData =
-    z.object({
-        body: z.optional(z.never()),
-        path: z.object({
-            project_id: z.union([z.string(), z.int()]),
-            access_token_id: z.union([z.string(), z.int()]),
-        }),
-        query: z.optional(z.never()),
-    });
-
-export const zRevokeGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRevokeDeleteData =
     z.object({
         body: z.optional(z.never()),
         path: z.object({
@@ -477,16 +464,30 @@ export const zRotateBotTokenApiV1BotsBotIdRotateTokenPatchData = z.object({
  */
 export const zRotateBotTokenApiV1BotsBotIdRotateTokenPatchResponse = zBotRead;
 
-export const zGetAvailableAvatarsApiV1BotsAvailableAvatarsGetData = z.object({
+export const zGetAvailableAvatarsApiV1ConfigAvailableAvatarsGetData = z.object({
     body: z.optional(z.never()),
     path: z.optional(z.never()),
     query: z.optional(z.never()),
 });
 
 /**
- * Response Get Available Avatars Api V1 Bots Available Avatars Get
+ * Response Get Available Avatars Api V1 Config Available Avatars Get
  *
  * Successful Response
  */
-export const zGetAvailableAvatarsApiV1BotsAvailableAvatarsGetResponse =
+export const zGetAvailableAvatarsApiV1ConfigAvailableAvatarsGetResponse =
     z.record(z.string(), z.string());
+
+export const zGetAvailableLlmsApiV1ConfigAvailableLlmsGetData = z.object({
+    body: z.optional(z.never()),
+    path: z.optional(z.never()),
+    query: z.optional(z.never()),
+});
+
+/**
+ * Response Get Available Llms Api V1 Config Available Llms Get
+ *
+ * Successful Response
+ */
+export const zGetAvailableLlmsApiV1ConfigAvailableLlmsGetResponse =
+    z.array(zAvailableLlm);

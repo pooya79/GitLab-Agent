@@ -5,6 +5,30 @@ export type ClientOptions = {
 };
 
 /**
+ * AvailableLlm
+ */
+export type AvailableLlm = {
+    /**
+     * Llm Model
+     */
+    llm_model: string;
+    /**
+     * Llm Max Output Tokens
+     */
+    llm_max_output_tokens: number;
+    /**
+     * Llm Temperature
+     */
+    llm_temperature: number;
+    /**
+     * Llm Additional Kwargs
+     */
+    llm_additional_kwargs?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+/**
  * BotCreate
  */
 export type BotCreate = {
@@ -60,6 +84,14 @@ export type BotRead = {
      */
     gitlab_access_token_id?: number | null;
     /**
+     * Gitlab User Id
+     */
+    gitlab_user_id?: number | null;
+    /**
+     * Gitlab User Name
+     */
+    gitlab_user_name?: string | null;
+    /**
      * Gitlab Webhook Id
      */
     gitlab_webhook_id?: number | null;
@@ -76,17 +108,17 @@ export type BotRead = {
      */
     llm_model: string;
     /**
-     * Llm Context Window
+     * Llm Max Output Tokens
      */
-    llm_context_window: number;
-    /**
-     * Llm Output Tokens
-     */
-    llm_output_tokens: number;
+    llm_max_output_tokens: number;
     /**
      * Llm Temperature
      */
     llm_temperature: number;
+    /**
+     * Llm System Prompt
+     */
+    llm_system_prompt?: string | null;
     /**
      * Llm Additional Kwargs
      */
@@ -150,17 +182,17 @@ export type BotUpdate = {
      */
     llm_model?: string | null;
     /**
-     * Llm Context Window
+     * Llm Max Output Tokens
      */
-    llm_context_window?: number | null;
-    /**
-     * Llm Output Tokens
-     */
-    llm_output_tokens?: number | null;
+    llm_max_output_tokens?: number | null;
     /**
      * Llm Temperature
      */
     llm_temperature?: number | null;
+    /**
+     * Llm System Prompt
+     */
+    llm_system_prompt?: string | null;
     /**
      * Llm Additional Kwargs
      */
@@ -226,28 +258,6 @@ export type GitlabProject = {
      * Avatar Url
      */
     avatar_url?: string | null;
-};
-
-/**
- * GitlabProjectsList
- */
-export type GitlabProjectsList = {
-    /**
-     * Projects
-     */
-    projects: Array<GitlabProject>;
-    /**
-     * Total
-     */
-    total: number;
-    /**
-     * Page
-     */
-    page: number;
-    /**
-     * Per Page
-     */
-    per_page: number;
 };
 
 /**
@@ -545,6 +555,10 @@ export type ListGitlabProjectsApiV1GitlabProjectsGetData = {
          * Per Page
          */
         per_page?: number;
+        /**
+         * Search
+         */
+        search?: string | null;
     };
     url: "/api/v1/gitlab/projects";
 };
@@ -561,9 +575,11 @@ export type ListGitlabProjectsApiV1GitlabProjectsGetError =
 
 export type ListGitlabProjectsApiV1GitlabProjectsGetResponses = {
     /**
+     * Response List Gitlab Projects Api V1 Gitlab Projects Get
+     *
      * Successful Response
      */
-    200: GitlabProjectsList;
+    200: Array<GitlabProject>;
 };
 
 export type ListGitlabProjectsApiV1GitlabProjectsGetResponse =
@@ -662,78 +678,6 @@ export type GetGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensA
     GetGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdGetErrors[keyof GetGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdGetErrors];
 
 export type GetGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdGetResponses =
-    {
-        /**
-         * Successful Response
-         */
-        200: unknown;
-    };
-
-export type RotateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRotatePostData =
-    {
-        body?: never;
-        path: {
-            /**
-             * Project Id
-             */
-            project_id: string | number;
-            /**
-             * Access Token Id
-             */
-            access_token_id: string | number;
-        };
-        query?: never;
-        url: "/api/v1/gitlab/projects/{project_id}/access-tokens/{access_token_id}/rotate";
-    };
-
-export type RotateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRotatePostErrors =
-    {
-        /**
-         * Validation Error
-         */
-        422: HttpValidationError;
-    };
-
-export type RotateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRotatePostError =
-    RotateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRotatePostErrors[keyof RotateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRotatePostErrors];
-
-export type RotateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRotatePostResponses =
-    {
-        /**
-         * Successful Response
-         */
-        200: unknown;
-    };
-
-export type RevokeGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRevokeDeleteData =
-    {
-        body?: never;
-        path: {
-            /**
-             * Project Id
-             */
-            project_id: string | number;
-            /**
-             * Access Token Id
-             */
-            access_token_id: string | number;
-        };
-        query?: never;
-        url: "/api/v1/gitlab/projects/{project_id}/access-tokens/{access_token_id}/revoke";
-    };
-
-export type RevokeGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRevokeDeleteErrors =
-    {
-        /**
-         * Validation Error
-         */
-        422: HttpValidationError;
-    };
-
-export type RevokeGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRevokeDeleteError =
-    RevokeGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRevokeDeleteErrors[keyof RevokeGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRevokeDeleteErrors];
-
-export type RevokeGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdRevokeDeleteResponses =
     {
         /**
          * Successful Response
@@ -1165,16 +1109,16 @@ export type RotateBotTokenApiV1BotsBotIdRotateTokenPatchResponses = {
 export type RotateBotTokenApiV1BotsBotIdRotateTokenPatchResponse =
     RotateBotTokenApiV1BotsBotIdRotateTokenPatchResponses[keyof RotateBotTokenApiV1BotsBotIdRotateTokenPatchResponses];
 
-export type GetAvailableAvatarsApiV1BotsAvailableAvatarsGetData = {
+export type GetAvailableAvatarsApiV1ConfigAvailableAvatarsGetData = {
     body?: never;
     path?: never;
     query?: never;
-    url: "/api/v1/bots/available-avatars";
+    url: "/api/v1/config/available-avatars";
 };
 
-export type GetAvailableAvatarsApiV1BotsAvailableAvatarsGetResponses = {
+export type GetAvailableAvatarsApiV1ConfigAvailableAvatarsGetResponses = {
     /**
-     * Response Get Available Avatars Api V1 Bots Available Avatars Get
+     * Response Get Available Avatars Api V1 Config Available Avatars Get
      *
      * Successful Response
      */
@@ -1183,5 +1127,24 @@ export type GetAvailableAvatarsApiV1BotsAvailableAvatarsGetResponses = {
     };
 };
 
-export type GetAvailableAvatarsApiV1BotsAvailableAvatarsGetResponse =
-    GetAvailableAvatarsApiV1BotsAvailableAvatarsGetResponses[keyof GetAvailableAvatarsApiV1BotsAvailableAvatarsGetResponses];
+export type GetAvailableAvatarsApiV1ConfigAvailableAvatarsGetResponse =
+    GetAvailableAvatarsApiV1ConfigAvailableAvatarsGetResponses[keyof GetAvailableAvatarsApiV1ConfigAvailableAvatarsGetResponses];
+
+export type GetAvailableLlmsApiV1ConfigAvailableLlmsGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: "/api/v1/config/available-llms";
+};
+
+export type GetAvailableLlmsApiV1ConfigAvailableLlmsGetResponses = {
+    /**
+     * Response Get Available Llms Api V1 Config Available Llms Get
+     *
+     * Successful Response
+     */
+    200: Array<AvailableLlm>;
+};
+
+export type GetAvailableLlmsApiV1ConfigAvailableLlmsGetResponse =
+    GetAvailableLlmsApiV1ConfigAvailableLlmsGetResponses[keyof GetAvailableLlmsApiV1ConfigAvailableLlmsGetResponses];

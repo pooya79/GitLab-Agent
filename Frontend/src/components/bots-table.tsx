@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
     Table,
     TableBody,
@@ -19,13 +19,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import {
     Tooltip,
     TooltipContent,
@@ -37,10 +31,6 @@ import {
     MoreVertical,
     BarChart3,
     Settings,
-    ChevronFirst,
-    ChevronLast,
-    ChevronLeft,
-    ChevronRight,
     CheckCircle2,
     XCircle,
     Pause,
@@ -49,9 +39,13 @@ import {
     KeyRound,
     Trash2,
     AlertCircle,
+    Loader2,
+    Search,
 } from "lucide-react";
 
 type StatusLiterals = "ACTIVE" | "STOPPED" | "ERROR";
+
+const PAGE_SIZE = 20;
 
 // Types
 export interface Bot {
@@ -68,18 +62,17 @@ export interface Bot {
     hasBot: boolean; // Indicates if project has a bot configured
 }
 
-export interface BotsFetchResult {
-    items: Bot[];
-    total: number;
-}
-
 export interface BotStatus {
     status: StatusLiterals;
     errorMessage?: string;
 }
 
 interface BotsTableProps {
-    fetchBots: (page: number, perPage: number) => Promise<BotsFetchResult>;
+    fetchBots: (
+        page: number,
+        perPage: number,
+        search?: string,
+    ) => Promise<Bot[]>;
     fetchBotStatus?: (botId: number) => Promise<BotStatus>;
     onCreateBot?: (projectPathName: string) => void;
     onStopBot?: (botId: number, botName: string) => Promise<void>;
@@ -95,40 +88,147 @@ export function BotsTable({
     onCreateNewToken,
     onRemoveBot,
 }: BotsTableProps) {
-    const [currentPage, setCurrentPage] = useState(1);
-    const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [page, setPage] = useState(1);
     const [bots, setBots] = useState<Bot[]>([]);
-    const [totalBots, setTotalBots] = useState(0);
-    const [isLoading, setIsLoading] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
+    const [loadingState, setLoadingState] = useState<
+        "idle" | "initial" | "more"
+    >("initial");
     const [error, setError] = useState<string | null>(null);
+    const [searchInput, setSearchInput] = useState("");
+    const [searchQuery, setSearchQuery] = useState("");
+    const [loadedPages, setLoadedPages] = useState(0);
+    const [requestVersion, setRequestVersion] = useState(0);
+    const [failedPage, setFailedPage] = useState<number | null>(null);
     const [botStatuses, setBotStatuses] = useState<Map<number, BotStatus>>(
         new Map(),
     );
     const [loadingStatuses, setLoadingStatuses] = useState<Set<number>>(
         new Set(),
     );
+    const isLoading = loadingState !== "idle";
+    const isInitialLoading = loadingState === "initial";
+    const isFetchingMore = loadingState === "more";
+    const observerRef = useRef<IntersectionObserver | null>(null);
 
-    // Fetch bots whenever page or rowsPerPage changes
+    const handleLoadMore = useCallback(() => {
+        if (!hasMore || isLoading) {
+            return;
+        }
+
+        const nextPage = failedPage ?? loadedPages + 1;
+
+        if (nextPage <= 0) {
+            return;
+        }
+
+        if (page === nextPage) {
+            if (failedPage !== null) {
+                setRequestVersion((prev) => prev + 1);
+            }
+            return;
+        }
+
+        setPage(nextPage);
+    }, [failedPage, hasMore, isLoading, loadedPages, page]);
+
+    const loadMoreRef = useCallback(
+        (node: HTMLDivElement | null) => {
+            if (observerRef.current) {
+                observerRef.current.disconnect();
+            }
+
+            if (!node) {
+                return;
+            }
+
+            observerRef.current = new IntersectionObserver(
+                (entries) => {
+                    if (entries[0]?.isIntersecting) {
+                        handleLoadMore();
+                    }
+                },
+                {
+                    root: null,
+                    rootMargin: "200px",
+                    threshold: 0,
+                },
+            );
+
+            observerRef.current.observe(node);
+        },
+        [handleLoadMore],
+    );
+
     useEffect(() => {
+        return () => {
+            observerRef.current?.disconnect();
+        };
+    }, []);
+
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setSearchQuery(searchInput.trim());
+        }, 400);
+
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [searchInput]);
+
+    useEffect(() => {
+        setBots([]);
+        setHasMore(true);
+        setPage(1);
+        setLoadedPages(0);
+        setFailedPage(null);
+    }, [searchQuery, fetchBots]);
+
+    useEffect(() => {
+        let isCancelled = false;
+
         const loadBots = async () => {
-            setIsLoading(true);
             setError(null);
+            setFailedPage(null);
+            setLoadingState(page === 1 ? "initial" : "more");
+
             try {
-                const result = await fetchBots(currentPage, rowsPerPage);
-                setBots(result.items);
-                setTotalBots(result.total);
-            } catch (err) {
-                setError(
-                    err instanceof Error ? err.message : "Failed to fetch bots",
+                const result = await fetchBots(page, PAGE_SIZE, searchQuery);
+                if (isCancelled) {
+                    return;
+                }
+
+                const nextBots = Array.isArray(result) ? result : [];
+
+                setBots((prev) =>
+                    page === 1 ? nextBots : [...prev, ...nextBots],
                 );
-                console.error("Error fetching bots:", err);
+                setHasMore(nextBots.length === PAGE_SIZE);
+                setLoadedPages(page);
+                setFailedPage(null);
+            } catch (err) {
+                if (!isCancelled) {
+                    const message =
+                        err instanceof Error
+                            ? err.message
+                            : "Failed to fetch bots";
+                    setError(message);
+                    setFailedPage(page);
+                    console.error("Error fetching bots:", err);
+                }
             } finally {
-                setIsLoading(false);
+                if (!isCancelled) {
+                    setLoadingState("idle");
+                }
             }
         };
 
         loadBots();
-    }, [currentPage, rowsPerPage, fetchBots]);
+
+        return () => {
+            isCancelled = true;
+        };
+    }, [page, fetchBots, searchQuery, requestVersion]);
 
     // Fetch statuses for bots that have a bot configured
     useEffect(() => {
@@ -213,9 +313,6 @@ export function BotsTable({
         loadBotStatuses();
     }, [bots, fetchBotStatus]);
 
-    // Calculate pagination
-    const totalPages = Math.ceil(totalBots / rowsPerPage);
-
     // Get the current status for a bot (prioritize fetched status over initial data)
     const getBotStatus = (
         bot: Bot,
@@ -266,6 +363,10 @@ export function BotsTable({
         ) {
             await onCreateNewToken?.(botId, botName);
         }
+    };
+
+    const handleRetry = () => {
+        setRequestVersion((prev) => prev + 1);
     };
 
     const getStatusBadge = (status: Bot["status"], errorMessage?: string) => {
@@ -331,8 +432,41 @@ export function BotsTable({
         return <Badge variant={variants[level]}>{level}</Badge>;
     };
 
+    const isSearching = searchQuery.length > 0;
+    const emptyState = isSearching
+        ? {
+              title: "No matching projects",
+              description: "Try a different search term.",
+          }
+        : {
+              title: "No bots configured",
+              description: "Add your first bot to get started",
+          };
+    const showErrorState = Boolean(error) && bots.length === 0;
+    const showInlineError = Boolean(error) && bots.length > 0;
+
     return (
         <div className="space-y-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="relative w-full sm:max-w-sm">
+                    <Search
+                        className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                        aria-hidden="true"
+                    />
+                    <Input
+                        type="search"
+                        value={searchInput}
+                        onChange={(event) => setSearchInput(event.target.value)}
+                        placeholder="Search projects"
+                        className="pl-9"
+                        aria-label="Search projects"
+                    />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                    Showing {bots.length} project{bots.length === 1 ? "" : "s"}
+                </p>
+            </div>
+
             {/* Table */}
             <div className="rounded-md border overflow-hidden">
                 <div className="overflow-x-auto custom-scrollbar">
@@ -350,318 +484,361 @@ export function BotsTable({
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {isLoading ? (
+                            {isInitialLoading ? (
                                 <TableRow key="loading">
                                     <TableCell
                                         colSpan={6}
-                                        className="text-center py-8"
+                                        className="py-8 text-center"
                                     >
-                                        <div className="text-muted-foreground">
-                                            <p className="text-lg font-medium">
-                                                Loading bots...
-                                            </p>
+                                        <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            <span>Loading bots...</span>
                                         </div>
                                     </TableCell>
                                 </TableRow>
-                            ) : error ? (
-                                <TableRow>
+                            ) : showErrorState ? (
+                                <TableRow key="error">
                                     <TableCell
                                         colSpan={6}
-                                        className="text-center py-8"
+                                        className="py-8 text-center"
                                     >
                                         <div className="text-destructive">
                                             <p className="text-lg font-medium">
                                                 Error loading bots
                                             </p>
-                                            <p className="text-sm mt-1">
+                                            <p className="mt-1 text-sm">
                                                 {error}
                                             </p>
                                         </div>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="mt-4"
+                                            onClick={handleRetry}
+                                        >
+                                            Try again
+                                        </Button>
                                     </TableCell>
                                 </TableRow>
                             ) : bots.length === 0 ? (
-                                <TableRow key={"no bots"}>
+                                <TableRow key="no-bots">
                                     <TableCell
                                         colSpan={6}
-                                        className="text-center py-8"
+                                        className="py-8 text-center"
                                     >
                                         <div className="text-muted-foreground">
                                             <p className="text-lg font-medium">
-                                                No bots configured
+                                                {emptyState.title}
                                             </p>
-                                            <p className="text-sm mt-1">
-                                                Add your first bot to get
-                                                started
+                                            <p className="mt-1 text-sm">
+                                                {emptyState.description}
                                             </p>
                                         </div>
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                bots.map((bot) => (
-                                    <TableRow key={bot.gitlabProjectId}>
-                                        {/* Bot Name & Avatar */}
-                                        <TableCell>
-                                            {bot.hasBot ? (
-                                                <div className="flex items-center gap-3">
-                                                    <Avatar>
-                                                        <AvatarImage
-                                                            src={bot.avatar}
-                                                            alt={bot.botName}
-                                                        />
-                                                        <AvatarFallback>
-                                                            {bot.botName
-                                                                ?.split(" ")
-                                                                .map(
-                                                                    (n) => n[0],
-                                                                )
-                                                                .join("")
-                                                                .toUpperCase()}
-                                                        </AvatarFallback>
-                                                    </Avatar>
-                                                    <div>
-                                                        <p className="font-medium">
-                                                            {bot.botName}
-                                                        </p>
-                                                        <p className="text-xs text-muted-foreground">
-                                                            ID: {bot.botId}
-                                                        </p>
+                                <>
+                                    {bots.map((bot) => (
+                                        <TableRow key={bot.gitlabProjectId}>
+                                            {/* Bot Name & Avatar */}
+                                            <TableCell>
+                                                {bot.hasBot ? (
+                                                    <div className="flex items-center gap-3">
+                                                        <Avatar>
+                                                            <AvatarImage
+                                                                src={bot.avatar}
+                                                                alt={
+                                                                    bot.botName
+                                                                }
+                                                            />
+                                                            <AvatarFallback>
+                                                                {bot.botName
+                                                                    ?.split(" ")
+                                                                    .map(
+                                                                        (n) =>
+                                                                            n[0],
+                                                                    )
+                                                                    .join("")
+                                                                    .toUpperCase()}
+                                                            </AvatarFallback>
+                                                        </Avatar>
+                                                        <div>
+                                                            <p className="font-medium">
+                                                                {bot.botName}
+                                                            </p>
+                                                            <p className="text-xs text-muted-foreground">
+                                                                ID: {bot.botId}
+                                                            </p>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            ) : (
-                                                <div className="flex items-center gap-3">
-                                                    <Avatar>
-                                                        <AvatarFallback>
-                                                            <Settings className="h-4 w-4 text-muted-foreground" />
-                                                        </AvatarFallback>
-                                                    </Avatar>
-                                                    <div>
-                                                        <p className="text-sm text-muted-foreground italic">
-                                                            No bot configured
-                                                        </p>
+                                                ) : (
+                                                    <div className="flex items-center gap-3">
+                                                        <Avatar>
+                                                            <AvatarFallback>
+                                                                <Settings className="h-4 w-4 text-muted-foreground" />
+                                                            </AvatarFallback>
+                                                        </Avatar>
+                                                        <div>
+                                                            <p className="text-sm text-muted-foreground italic">
+                                                                No bot
+                                                                configured
+                                                            </p>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            )}
-                                        </TableCell>
+                                                )}
+                                            </TableCell>
 
-                                        {/* GitLab Project */}
-                                        <TableCell>
-                                            <a
-                                                href={bot.projectUrl}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-primary hover:underline"
-                                            >
-                                                {bot.gitlabProject}
-                                            </a>
-                                        </TableCell>
+                                            {/* GitLab Project */}
+                                            <TableCell>
+                                                <a
+                                                    href={bot.projectUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-primary hover:underline"
+                                                >
+                                                    {bot.gitlabProject}
+                                                </a>
+                                            </TableCell>
 
-                                        {/* Access Level */}
-                                        <TableCell>
-                                            {getAccessLevelBadge(
-                                                bot.accessLevel,
-                                            )}
-                                        </TableCell>
+                                            {/* Access Level */}
+                                            <TableCell>
+                                                {getAccessLevelBadge(
+                                                    bot.accessLevel,
+                                                )}
+                                            </TableCell>
 
-                                        {/* Status */}
-                                        <TableCell>
-                                            {bot.hasBot ? (
-                                                (() => {
-                                                    const {
-                                                        status,
-                                                        errorMessage,
-                                                        isLoading,
-                                                    } = getBotStatus(bot);
-                                                    if (isLoading) {
-                                                        return (
+                                            {/* Status */}
+                                            <TableCell>
+                                                {bot.hasBot ? (
+                                                    (() => {
+                                                        const {
+                                                            status,
+                                                            errorMessage,
+                                                            isLoading,
+                                                        } = getBotStatus(bot);
+                                                        if (isLoading) {
+                                                            return (
+                                                                <Badge
+                                                                    variant="outline"
+                                                                    className="text-muted-foreground"
+                                                                >
+                                                                    <AlertCircle className="h-3 w-3 animate-pulse" />
+                                                                    Loading...
+                                                                </Badge>
+                                                            );
+                                                        }
+                                                        return status ? (
+                                                            getStatusBadge(
+                                                                status,
+                                                                errorMessage,
+                                                            )
+                                                        ) : (
                                                             <Badge
                                                                 variant="outline"
                                                                 className="text-muted-foreground"
                                                             >
-                                                                <AlertCircle className="h-3 w-3 animate-pulse" />
-                                                                Loading...
+                                                                <AlertCircle className="h-3 w-3" />
+                                                                Unknown
                                                             </Badge>
                                                         );
-                                                    }
-                                                    return status ? (
-                                                        getStatusBadge(
-                                                            status,
-                                                            errorMessage,
-                                                        )
-                                                    ) : (
-                                                        <Badge
-                                                            variant="outline"
-                                                            className="text-muted-foreground"
-                                                        >
-                                                            <AlertCircle className="h-3 w-3" />
-                                                            Unknown
-                                                        </Badge>
-                                                    );
-                                                })()
-                                            ) : (
-                                                <Badge
-                                                    variant="outline"
-                                                    className="text-muted-foreground"
-                                                >
-                                                    <AlertCircle className="h-3 w-3" />
-                                                    Not Active
-                                                </Badge>
-                                            )}
-                                        </TableCell>
+                                                    })()
+                                                ) : (
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="text-muted-foreground"
+                                                    >
+                                                        <AlertCircle className="h-3 w-3" />
+                                                        Not Active
+                                                    </Badge>
+                                                )}
+                                            </TableCell>
 
-                                        {/* Links */}
-                                        <TableCell>
-                                            {bot.hasBot ? (
-                                                <div className="flex gap-1">
-                                                    <TooltipProvider>
-                                                        <Tooltip>
-                                                            <TooltipTrigger
-                                                                asChild
-                                                            >
-                                                                <Link
-                                                                    href={`/dashboard/bots/${bot.botId}/stats`}
+                                            {/* Links */}
+                                            <TableCell>
+                                                {bot.hasBot ? (
+                                                    <div className="flex gap-1">
+                                                        <TooltipProvider>
+                                                            <Tooltip>
+                                                                <TooltipTrigger
+                                                                    asChild
+                                                                >
+                                                                    <Link
+                                                                        href={`/dashboard/bots/${bot.botId}/stats`}
+                                                                    >
+                                                                        <Button
+                                                                            variant="outline"
+                                                                            size="sm"
+                                                                        >
+                                                                            <BarChart3 className="h-4 w-4" />
+                                                                        </Button>
+                                                                    </Link>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent>
+                                                                    <p>
+                                                                        View
+                                                                        Stats
+                                                                    </p>
+                                                                </TooltipContent>
+                                                            </Tooltip>
+                                                        </TooltipProvider>
+
+                                                        <TooltipProvider>
+                                                            <Tooltip>
+                                                                <TooltipTrigger
+                                                                    asChild
+                                                                >
+                                                                    <Link
+                                                                        href={`/dashboard/bots/${bot.botId}/config`}
+                                                                    >
+                                                                        <Button
+                                                                            variant="outline"
+                                                                            size="sm"
+                                                                        >
+                                                                            <Settings className="h-4 w-4" />
+                                                                        </Button>
+                                                                    </Link>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent>
+                                                                    <p>
+                                                                        Configure
+                                                                    </p>
+                                                                </TooltipContent>
+                                                            </Tooltip>
+                                                        </TooltipProvider>
+                                                    </div>
+                                                ) : (
+                                                    <Button
+                                                        variant="default"
+                                                        size="sm"
+                                                        onClick={() =>
+                                                            onCreateBot?.(
+                                                                bot.gitlabProjectPathName,
+                                                            )
+                                                        }
+                                                    >
+                                                        <Play className="mr-2 h-4 w-4" />
+                                                        Create Bot
+                                                    </Button>
+                                                )}
+                                            </TableCell>
+
+                                            {/* Actions */}
+                                            <TableCell className="text-right">
+                                                {bot.hasBot ? (
+                                                    (() => {
+                                                        const { status } =
+                                                            getBotStatus(bot);
+                                                        return (
+                                                            <DropdownMenu>
+                                                                <DropdownMenuTrigger
+                                                                    asChild
                                                                 >
                                                                     <Button
                                                                         variant="outline"
                                                                         size="sm"
                                                                     >
-                                                                        <BarChart3 className="h-4 w-4" />
+                                                                        <MoreVertical className="h-4 w-4" />
                                                                     </Button>
-                                                                </Link>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent>
-                                                                <p>
-                                                                    View Stats
-                                                                </p>
-                                                            </TooltipContent>
-                                                        </Tooltip>
-                                                    </TooltipProvider>
-
-                                                    <TooltipProvider>
-                                                        <Tooltip>
-                                                            <TooltipTrigger
-                                                                asChild
-                                                            >
-                                                                <Link
-                                                                    href={`/dashboard/bots/${bot.botId}/config`}
-                                                                >
-                                                                    <Button
-                                                                        variant="outline"
-                                                                        size="sm"
+                                                                </DropdownMenuTrigger>
+                                                                <DropdownMenuContent align="end">
+                                                                    <DropdownMenuItem
+                                                                        onClick={() =>
+                                                                            handleStopBot(
+                                                                                bot.botId!,
+                                                                                bot.botName!,
+                                                                            )
+                                                                        }
+                                                                        disabled={
+                                                                            status ===
+                                                                            "ERROR"
+                                                                        }
                                                                     >
-                                                                        <Settings className="h-4 w-4" />
-                                                                    </Button>
-                                                                </Link>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent>
-                                                                <p>Configure</p>
-                                                            </TooltipContent>
-                                                        </Tooltip>
-                                                    </TooltipProvider>
+                                                                        {status ===
+                                                                        "STOPPED" ? (
+                                                                            <>
+                                                                                <Play className="mr-2 h-4 w-4" />
+                                                                                Start
+                                                                                Bot
+                                                                            </>
+                                                                        ) : (
+                                                                            <>
+                                                                                <StopCircle className="mr-2 h-4 w-4" />
+                                                                                Stop
+                                                                                Bot
+                                                                            </>
+                                                                        )}
+                                                                    </DropdownMenuItem>
+                                                                    <DropdownMenuItem
+                                                                        onClick={() =>
+                                                                            handleCreateNewToken(
+                                                                                bot.botId!,
+                                                                                bot.botName!,
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        <KeyRound className="mr-2 h-4 w-4" />
+                                                                        Create
+                                                                        New
+                                                                        Token
+                                                                    </DropdownMenuItem>
+                                                                    <DropdownMenuSeparator />
+                                                                    <DropdownMenuItem
+                                                                        onClick={() =>
+                                                                            handleRemoveBot(
+                                                                                bot.botId!,
+                                                                                bot.botName!,
+                                                                            )
+                                                                        }
+                                                                        className="text-destructive focus:text-destructive"
+                                                                    >
+                                                                        <Trash2 className="mr-2 h-4 w-4" />
+                                                                        Remove
+                                                                        Bot
+                                                                    </DropdownMenuItem>
+                                                                </DropdownMenuContent>
+                                                            </DropdownMenu>
+                                                        );
+                                                    })()
+                                                ) : (
+                                                    <span className="text-xs text-muted-foreground">
+                                                        —
+                                                    </span>
+                                                )}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                    {isFetchingMore && (
+                                        <TableRow key="loading-more">
+                                            <TableCell
+                                                colSpan={6}
+                                                className="py-6 text-center"
+                                            >
+                                                <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                    <span>
+                                                        Loading more bots...
+                                                    </span>
                                                 </div>
-                                            ) : (
-                                                <Button
-                                                    variant="default"
-                                                    size="sm"
-                                                    onClick={() =>
-                                                        onCreateBot?.(
-                                                            bot.gitlabProjectPathName,
-                                                        )
-                                                    }
-                                                >
-                                                    <Play className="mr-2 h-4 w-4" />
-                                                    Create Bot
-                                                </Button>
-                                            )}
-                                        </TableCell>
-
-                                        {/* Actions */}
-                                        <TableCell className="text-right">
-                                            {bot.hasBot ? (
-                                                (() => {
-                                                    const { status } =
-                                                        getBotStatus(bot);
-                                                    return (
-                                                        <DropdownMenu>
-                                                            <DropdownMenuTrigger
-                                                                asChild
-                                                            >
-                                                                <Button
-                                                                    variant="outline"
-                                                                    size="sm"
-                                                                >
-                                                                    <MoreVertical className="h-4 w-4" />
-                                                                </Button>
-                                                            </DropdownMenuTrigger>
-                                                            <DropdownMenuContent align="end">
-                                                                <DropdownMenuItem
-                                                                    onClick={() =>
-                                                                        handleStopBot(
-                                                                            bot.botId!,
-                                                                            bot.botName!,
-                                                                        )
-                                                                    }
-                                                                    disabled={
-                                                                        status ===
-                                                                        "ERROR"
-                                                                    }
-                                                                >
-                                                                    {status ===
-                                                                    "STOPPED" ? (
-                                                                        <>
-                                                                            <Play className="mr-2 h-4 w-4" />
-                                                                            Start
-                                                                            Bot
-                                                                        </>
-                                                                    ) : (
-                                                                        <>
-                                                                            <StopCircle className="mr-2 h-4 w-4" />
-                                                                            Stop
-                                                                            Bot
-                                                                        </>
-                                                                    )}
-                                                                </DropdownMenuItem>
-                                                                <DropdownMenuItem
-                                                                    onClick={() =>
-                                                                        handleCreateNewToken(
-                                                                            bot.botId!,
-                                                                            bot.botName!,
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <KeyRound className="mr-2 h-4 w-4" />
-                                                                    Create New
-                                                                    Token
-                                                                </DropdownMenuItem>
-                                                                <DropdownMenuSeparator />
-                                                                <DropdownMenuItem
-                                                                    onClick={() =>
-                                                                        handleRemoveBot(
-                                                                            bot.botId!,
-                                                                            bot.botName!,
-                                                                        )
-                                                                    }
-                                                                    className="text-destructive focus:text-destructive"
-                                                                >
-                                                                    <Trash2 className="mr-2 h-4 w-4" />
-                                                                    Remove Bot
-                                                                </DropdownMenuItem>
-                                                            </DropdownMenuContent>
-                                                        </DropdownMenu>
-                                                    );
-                                                })()
-                                            ) : (
-                                                <span className="text-xs text-muted-foreground">
-                                                    —
-                                                </span>
-                                            )}
-                                        </TableCell>
-                                    </TableRow>
-                                ))
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </>
                             )}
                         </TableBody>
                     </Table>
                 </div>
             </div>
+
+            {showInlineError && (
+                <div className="flex flex-col items-center justify-center gap-2 text-sm text-destructive sm:flex-row">
+                    <span>Failed to load more bots: {error}</span>
+                    <Button variant="outline" size="sm" onClick={handleRetry}>
+                        Try again
+                    </Button>
+                </div>
+            )}
+
+            <div ref={loadMoreRef} aria-hidden="true" className="h-px w-full" />
 
             {/* Custom Scrollbar Styles */}
             <style jsx global>{`
@@ -686,124 +863,6 @@ export function BotsTable({
                         hsl(var(--muted));
                 }
             `}</style>
-
-            {/* Pagination Controls */}
-            {totalBots > 0 && (
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <p className="text-sm text-muted-foreground">
-                            Rows per page:
-                        </p>
-                        <Select
-                            value={rowsPerPage.toString()}
-                            onValueChange={(value) => {
-                                setRowsPerPage(Number(value));
-                                setCurrentPage(1);
-                            }}
-                        >
-                            <SelectTrigger className="w-[70px]">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="5">5</SelectItem>
-                                <SelectItem value="10">10</SelectItem>
-                                <SelectItem value="20">20</SelectItem>
-                                <SelectItem value="50">50</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        <p className="text-sm text-muted-foreground">
-                            Page {currentPage} of {totalPages} ({totalBots}{" "}
-                            total)
-                        </p>
-                        <div className="flex gap-1">
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => setCurrentPage(1)}
-                                            disabled={currentPage === 1}
-                                        >
-                                            <ChevronFirst className="h-4 w-4" />
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>First Page</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() =>
-                                                setCurrentPage(currentPage - 1)
-                                            }
-                                            disabled={currentPage === 1}
-                                        >
-                                            <ChevronLeft className="h-4 w-4" />
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Previous Page</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() =>
-                                                setCurrentPage(currentPage + 1)
-                                            }
-                                            disabled={
-                                                currentPage === totalPages
-                                            }
-                                        >
-                                            <ChevronRight className="h-4 w-4" />
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Next Page</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() =>
-                                                setCurrentPage(totalPages)
-                                            }
-                                            disabled={
-                                                currentPage === totalPages
-                                            }
-                                        >
-                                            <ChevronLast className="h-4 w-4" />
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Last Page</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

@@ -140,4 +140,4 @@ async def get_gitlab_client(
                     detail="Failed to refresh GitLab OAuth token",
                 )
 
-    return gitlab.Gitlab(settings.gitlab.base, oauth_account.access_token)
+    return gitlab.Gitlab(settings.gitlab.base, oauth_token=oauth_account.access_token)
