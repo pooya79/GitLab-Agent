@@ -1,19 +1,14 @@
 import gitlab
 import requests
 from pydantic_ai import Agent, UsageLimits
-from pydantic_ai.messages import ModelMessage, ModelMessagesTypeAdapter
+from pydantic_ai.messages import ModelMessage
 from pydantic_ai.models.openai import OpenAIChatModel, OpenAIChatModelSettings
 from pydantic_ai.providers.openrouter import OpenRouterProvider
-from sqlalchemy import select
-import json
 
-from app.db.database import AsyncSession
-from app.db.models import History
-from app.prompts.smart_agent import SMART_AGENT_SYSTEM_PROMPT, SMART_AGENT_USER_PROMPT
 from app.agents.utils import token_counter
-from app.services.cache_service import NOW
 from app.core.config import settings
 from app.core.log import logger
+from app.prompts.smart_agent import SMART_AGENT_SYSTEM_PROMPT, SMART_AGENT_USER_PROMPT
 
 
 # Tools
@@ -69,7 +64,6 @@ class SmartAgent:
         self,
         openrouter_api_key: str,
         gitlab_client: gitlab.Gitlab,
-        db_session: AsyncSession,
         model_name: str,
         temperature: float = 0.2,
         max_tokens: int = 5000,
@@ -89,12 +83,7 @@ class SmartAgent:
             settings=self.model_settings,
             provider=OpenRouterProvider(api_key=openrouter_api_key),
         )
-        assert gitlab_client is not None or db_session is not None, (
-            "GitlabClient and DB session are required."
-        )
-
         self.gitlab_client = gitlab_client
-        self.db_session = db_session
 
     def gather_context(self, mr: "gitlab.v4.objects.ProjectMergeRequest") -> str:
         """Gather context for the merge request including diffs, title, and description."""
@@ -205,11 +194,6 @@ class SmartAgent:
             message_history=message_history or [],
             usage_limits=UsageLimits(tool_calls_limit=3),
         )
-
-        logger.info(f"SmartAgent response: {response.output}")
-        logger.info(f"SmartAgent id: {response.provider_response_id}")
-        self._get_openrouter_cost(response.provider_response_id)
-        logger.info(f"SmartAgent usage: {response.usage()}")
 
         # Post the response as a comment on the MR
         mr.notes.create({"body": response.output})

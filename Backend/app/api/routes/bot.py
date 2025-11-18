@@ -1,13 +1,16 @@
 import uuid
-import datetime as dt
 
-from fastapi import APIRouter, HTTPException, status, Depends
-from fastapi.responses import Response
-from sqlalchemy import select, func, and_
 import gitlab
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import Response
+from pymongo.database import Database
 
-from app.api.deps import SessionDep, get_current_user, get_gitlab_client
-from app.db.models import Bot
+from app.api.deps import get_current_user, get_gitlab_client, get_mongo_database
+from app.core.config import settings
+from app.core.log import logger
+from app.db.database import get_next_sequence
+from app.db.models import Bot, Users
+from app.core.time import parse_iso_datetime, utc_now
 from app.schemas.bot import (
     BotCreate,
     BotRead,
@@ -19,10 +22,6 @@ from app.schemas.bot import (
     BotDeleteResponse,
     BotStatusToggleResponse,
 )
-from app.db.models import Users
-from app.core.config import settings
-from app.core.log import logger
-from app.services.cache_service import NOW
 
 router = APIRouter(
     prefix="/bots",
@@ -45,17 +44,27 @@ AVAILABLE_BOT_AVATARS = {
 }
 
 
+def _get_bot(mongo_db: Database, bot_id: int) -> Bot | None:
+    return Bot.from_document(mongo_db["bots"].find_one({"id": bot_id}))
+
+
+def _save_bot(mongo_db: Database, bot: Bot) -> Bot:
+    if bot.id is None:
+        bot.id = get_next_sequence("bots")
+    mongo_db["bots"].replace_one({"id": bot.id}, bot.to_document(), upsert=True)
+    return bot
+
+
 @router.get("/{bot_id}/status", response_model=BotStatusResponse)
 async def get_bot_status(
     bot_id: int,
-    session: SessionDep,
+    mongo_db: Database = Depends(get_mongo_database),
     gitlab_client: gitlab.Gitlab = Depends(get_gitlab_client),
 ):
     """
     Get the status of a bot by its ID.
     """
-    result = await session.execute(select(Bot).where(and_(Bot.id == bot_id)))
-    bot = result.scalars().first()
+    bot = _get_bot(mongo_db, bot_id)
 
     if not bot:
         raise HTTPException(
@@ -91,10 +100,8 @@ async def get_bot_status(
             )
 
         # Check its expiry
-        if (
-            project_access_token.expires_at
-            and dt.datetime.fromisoformat(project_access_token.expires_at) < NOW()
-        ):
+        token_expiry = parse_iso_datetime(project_access_token.expires_at)
+        if token_expiry and token_expiry < utc_now():
             return BotStatusResponse(
                 status="ERROR",
                 error_message=f"Bot's GitLab access token ({project_access_token.name}) has expired.",
@@ -168,7 +175,7 @@ async def get_bot_status(
 @router.post("/", response_model=BotCreateResponse, status_code=status.HTTP_201_CREATED)
 async def create_bot(
     data: BotCreate,
-    session: SessionDep,
+    mongo_db: Database = Depends(get_mongo_database),
     gitlab_client: gitlab.Gitlab = Depends(get_gitlab_client),
 ):
     """
@@ -253,6 +260,7 @@ async def create_bot(
         )
 
     bot = Bot(
+        id=get_next_sequence("bots"),
         name=data.name,
         gitlab_access_token_id=project_token.id,
         gitlab_access_token=project_token.token,
@@ -268,9 +276,7 @@ async def create_bot(
         avatar_url=f"{settings.backend_url}/{settings.avatar_default_url}",
     )
     try:
-        session.add(bot)
-        await session.commit()
-        await session.refresh(bot)
+        _save_bot(mongo_db, bot)
     except Exception as e:
         # Clean up created GitLab resources in case of DB failure
         try:
@@ -296,7 +302,7 @@ async def create_bot(
 
 @router.get("/", response_model=BotReadList)
 async def list_bots(
-    session: SessionDep,
+    mongo_db: Database = Depends(get_mongo_database),
     page: int = 1,
     per_page: int = 20,
     current_user: Users = Depends(get_current_user),
@@ -304,31 +310,27 @@ async def list_bots(
     """
     List all bots with pagination.
     """
-    result = await session.execute(select(func.count(Bot.id)))
-    total = result.scalar_one()
-
-    result = await session.execute(
-        select(Bot).offset((page - 1) * per_page).limit(per_page)
-    )
-    bots = result.scalars().all()
+    total = mongo_db["bots"].count_documents({})
+    cursor = mongo_db["bots"].find().skip((page - 1) * per_page).limit(per_page)
+    docs = list(cursor)
+    bots = [Bot.from_document(doc) for doc in docs if doc]
 
     return BotReadList(
         total=total,
-        items=[BotRead.model_validate(bot) for bot in bots],
+        items=[BotRead.model_validate(bot) for bot in bots if bot],
     )
 
 
 @router.delete("/{bot_id}", response_model=BotDeleteResponse)
 async def delete_bot(
     bot_id: int,
-    session: SessionDep,
+    mongo_db: Database = Depends(get_mongo_database),
     gitlab_client: str = Depends(get_gitlab_client),
 ):
     """
     Delete a bot by its ID.
     """
-    result = await session.execute(select(Bot).where(Bot.id == bot_id))
-    bot = result.scalars().first()
+    bot = _get_bot(mongo_db, bot_id)
 
     if not bot:
         raise HTTPException(
@@ -357,8 +359,7 @@ async def delete_bot(
             warning_message += "\n"
         warning_message += f"Failed to revoke GitLab project token for bot {bot.name}."
 
-    await session.delete(bot)
-    await session.commit()
+    mongo_db["bots"].delete_one({"id": bot.id})
     if not warning_message:
         return BotDeleteResponse()
     return BotDeleteResponse(warning=warning_message)
@@ -367,14 +368,13 @@ async def delete_bot(
 @router.patch("/{bot_id}/new-access-token", response_model=BotUpdateResponse)
 async def create_new_bot_access_token(
     bot_id: int,
-    session: SessionDep,
+    mongo_db: Database = Depends(get_mongo_database),
     gitlab_client: str = Depends(get_gitlab_client),
 ):
     """
     Create a new access token for a bot by its ID and revoke the old one.
     """
-    result = await session.execute(select(Bot).where(Bot.id == bot_id))
-    bot = result.scalars().first()
+    bot = _get_bot(mongo_db, bot_id)
 
     if not bot:
         raise HTTPException(
@@ -437,9 +437,7 @@ async def create_new_bot_access_token(
         bot.gitlab_access_token = project_token.token
         bot.gitlab_user_id = project_token.user_id
         bot.gitlab_user_name = project_token.user_name
-        session.add(bot)
-        await session.commit()
-        await session.refresh(bot)
+        _save_bot(mongo_db, bot)
     except Exception as e:
         logger.error(f"Error updating bot with new token for bot {bot_id}: {e}")
         # Revoke the created project token in case of DB update failure
@@ -464,14 +462,13 @@ async def create_new_bot_access_token(
 async def update_bot(
     bot_id: int,
     data: BotUpdate,
-    session: SessionDep,
+    mongo_db: Database = Depends(get_mongo_database),
     current_user: Users = Depends(get_current_user),
 ):
     """
     Update a bot by its ID.
     """
-    result = await session.execute(select(Bot).where(Bot.id == bot_id))
-    bot = result.scalars().first()
+    bot = _get_bot(mongo_db, bot_id)
 
     if not bot:
         raise HTTPException(
@@ -482,23 +479,20 @@ async def update_bot(
     for key, value in update_data.items():
         setattr(bot, key, value)
 
-    session.add(bot)
-    await session.commit()
-    await session.refresh(bot)
+    _save_bot(mongo_db, bot)
     return BotUpdateResponse(bot=BotRead.model_validate(bot))
 
 
 @router.patch("/{bot_id}/toggle-active", response_model=BotStatusToggleResponse)
 async def toggle_bot_active(
     bot_id: int,
-    session: SessionDep,
+    mongo_db: Database = Depends(get_mongo_database),
     current_user: Users = Depends(get_current_user),
 ):
     """
     Toggle a bot's active status by its ID.
     """
-    result = await session.execute(select(Bot).where(Bot.id == bot_id))
-    bot = result.scalars().first()
+    bot = _get_bot(mongo_db, bot_id)
 
     if not bot:
         raise HTTPException(
@@ -506,23 +500,20 @@ async def toggle_bot_active(
         )
 
     bot.is_active = not bot.is_active
-    session.add(bot)
-    await session.commit()
-    await session.refresh(bot)
+    _save_bot(mongo_db, bot)
     return BotStatusToggleResponse(is_active=bot.is_active)
 
 
 @router.delete("/{bot_id}/revoke", status_code=status.HTTP_204_NO_CONTENT)
 async def revoke_bot_token(
     bot_id: int,
-    session: SessionDep,
+    mongo_db: Database = Depends(get_mongo_database),
     gitlab_client: gitlab.Gitlab = Depends(get_gitlab_client),
 ):
     """
     Revoke a bot's GitLab project access token.
     """
-    result = await session.execute(select(Bot).where(Bot.id == bot_id))
-    bot = result.scalars().first()
+    bot = _get_bot(mongo_db, bot_id)
 
     if not bot:
         raise HTTPException(
@@ -536,9 +527,7 @@ async def revoke_bot_token(
             ).access_tokens.delete(bot.gitlab_access_token_id)
             bot.gitlab_access_token_id = None
             bot.gitlab_access_token = None
-            session.add(bot)
-            await session.commit()
-            await session.refresh(bot)
+            _save_bot(mongo_db, bot)
     except Exception as e:
         logger.error(f"Error revoking project token for bot {bot_id}: {e}")
         raise HTTPException(
@@ -552,14 +541,13 @@ async def revoke_bot_token(
 @router.patch("/{bot_id}/rotate-token", response_model=BotRead)
 async def rotate_bot_token(
     bot_id: int,
-    session: SessionDep,
+    mongo_db: Database = Depends(get_mongo_database),
     gitlab_client: gitlab.Gitlab = Depends(get_gitlab_client),
 ):
     """
     Rotate a bot's GitLab project access token.
     """
-    result = await session.execute(select(Bot).where(Bot.id == bot_id))
-    bot = result.scalars().first()
+    bot = _get_bot(mongo_db, bot_id)
 
     if not bot:
         raise HTTPException(
@@ -573,9 +561,7 @@ async def rotate_bot_token(
             ).access_tokens.rotate(bot.gitlab_access_token_id)
             bot.gitlab_access_token_id = new_token.id
             bot.gitlab_access_token = new_token.token
-            session.add(bot)
-            await session.commit()
-            await session.refresh(bot)
+            _save_bot(mongo_db, bot)
             return BotRead.model_validate(bot)
         else:
             raise HTTPException(

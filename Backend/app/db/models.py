@@ -1,184 +1,133 @@
-from typing import Any, Optional
+"""Lightweight data models used by the MongoDB layer."""
+
+from __future__ import annotations
+
+from dataclasses import asdict, dataclass, field
 import datetime as dt
-from decimal import Decimal
-from sqlalchemy.orm import Mapped, mapped_column, relationship, declarative_base
-from sqlalchemy import (
-    Text,
-    ForeignKey,
-    JSON,
-    String,
-    UniqueConstraint,
-    Index,
-    DateTime,
-    Numeric,
-)
+from typing import Any, Mapping, Type, TypeVar
+from bson import ObjectId
+
 from app.prompts.smart_agent import SMART_AGENT_SYSTEM_PROMPT
 
-# Base class for models
-Base = declarative_base()
+T = TypeVar("T", bound="MongoModel")
 
 
-class Bot(Base):
-    __tablename__ = "bots"
-    __table_args__ = (
-        Index("ix_gitlab_project_path_name", "gitlab_project_path", "name"),
-    )
+@dataclass
+class MongoModel:
+    """Base class for MongoDB models with both _id (ObjectId) and numeric id."""
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, index=True)
-    name: Mapped[str] = mapped_column(nullable=False, index=True)
-    is_active: Mapped[bool] = mapped_column(nullable=False, default=True)
+    _id: ObjectId | None = None  # MongoDB primary key
+    id: int | None = None  # Your readable numeric ID
 
-    gitlab_project_path: Mapped[str] = mapped_column(
-        nullable=False, unique=True, index=True
-    )
-    gitlab_access_token_id: Mapped[int] = mapped_column(nullable=True)
-    gitlab_access_token: Mapped[str] = mapped_column(nullable=True)
-    gitlab_user_id: Mapped[int] = mapped_column(nullable=True, index=True, unique=True)
-    gitlab_user_name: Mapped[str] = mapped_column(
-        nullable=True, index=True, unique=True
-    )
-    gitlab_webhook_id: Mapped[int] = mapped_column(nullable=True)
-    gitlab_webhook_secret: Mapped[str] = mapped_column(nullable=True)
-    gitlab_webhook_url: Mapped[str] = mapped_column(nullable=True)
+    def to_document(self) -> dict[str, Any]:
+        data = asdict(self)
 
-    avatar_url: Mapped[str | None] = mapped_column(
-        String(255), nullable=True, index=True
-    )
+        mongo_id = data.pop("_id", None)
+        if mongo_id is None:
+            data["_id"] = ObjectId()
+        else:
+            data["_id"] = mongo_id
 
-    llm_model: Mapped[str] = mapped_column(nullable=False)
-    llm_max_output_tokens: Mapped[int] = mapped_column(nullable=False)
-    llm_temperature: Mapped[float] = mapped_column(nullable=False)
-    llm_system_prompt: Mapped[str] = mapped_column(
-        Text, nullable=False, default=SMART_AGENT_SYSTEM_PROMPT
-    )
-    llm_additional_kwargs: Mapped[dict[str, Any]] = mapped_column(
-        JSON, default=dict, nullable=True
-    )
+        return data
+
+    @classmethod
+    def from_document(cls: Type[T], doc: Mapping[str, Any] | None) -> T | None:
+        if doc is None:
+            return None
+
+        data = dict(doc)
+
+        if "_id" in data:
+            data["_id"] = data["_id"]  # keep ObjectId
+        return cls(**data)
 
 
-class History(Base):
-    __tablename__ = "history"
+@dataclass
+class Bot(MongoModel):
+    name: str = ""
+    is_active: bool = True
+    gitlab_project_path: str = ""
+    gitlab_access_token_id: int | None = None
+    gitlab_access_token: str | None = None
+    gitlab_user_id: int | None = None
+    gitlab_user_name: str | None = None
+    gitlab_webhook_id: int | None = None
+    gitlab_webhook_secret: str | None = None
+    gitlab_webhook_url: str | None = None
+    avatar_url: str | None = None
+    llm_model: str = ""
+    llm_max_output_tokens: int = 0
+    llm_temperature: float = 0.0
+    llm_system_prompt: str = SMART_AGENT_SYSTEM_PROMPT
+    llm_additional_kwargs: dict[str, Any] = field(default_factory=dict)
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, index=True)
-    botname: Mapped[str] = mapped_column(nullable=False, index=True)
-    mr_id: Mapped[int] = mapped_column(nullable=False, index=True)
-    mr_title: Mapped[str] = mapped_column(nullable=False)
-    gitlab_project_path: Mapped[str] = mapped_column(nullable=False, index=True)
-    username: Mapped[str] = mapped_column(nullable=True)  # user who triggered the event
 
-    messages: Mapped[str] = mapped_column(Text, nullable=False)
-
-    request_type: Mapped[str] = mapped_column(String(50), nullable=False)
-
-    input_tokens: Mapped[int] = mapped_column(nullable=False, default=0)
-    cached_tokens: Mapped[int] = mapped_column(nullable=False, default=0)
-    output_tokens: Mapped[int] = mapped_column(nullable=False, default=0)
-
-    input_price: Mapped[Decimal] = mapped_column(
-        Numeric(20, 10), nullable=True, default=Decimal("0.0")
-    )
-    output_price: Mapped[Decimal] = mapped_column(
-        Numeric(20, 10), nullable=True, default=Decimal("0.0")
-    )
-    total_price: Mapped[Decimal] = mapped_column(
-        Numeric(20, 10), nullable=True, default=Decimal("0.0")
-    )
-    status: Mapped[str] = mapped_column(String(50), nullable=False, default="pending")
-
-    error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-
-    created_at: Mapped[dt.datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
+@dataclass
+class History(MongoModel):
+    botname: str = ""
+    mr_id: int = 0
+    mr_title: str = ""
+    gitlab_project_path: str = ""
+    username: str | None = None
+    messages: str = ""
+    request_type: str = ""
+    input_tokens: int = 0
+    cached_tokens: int = 0
+    output_tokens: int = 0
+    input_price: float | None = None
+    output_price: float | None = None
+    total_price: float | None = None
+    status: str = "pending"
+    error_message: str | None = None
+    created_at: dt.datetime = field(
+        default_factory=lambda: dt.datetime.now(dt.timezone.utc)
     )
 
 
-class OAuthAccount(Base):
-    __tablename__ = "oauth_accounts"
-    __table_args__ = (
-        UniqueConstraint("user_id", "provider", name="uq_user_provider"),
-        Index("ix_user_provider", "user_id", "provider"),
-    )
-
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, index=True)
-    user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
-    )
-
-    provider: Mapped[str] = mapped_column(String(50), nullable=False)
-    provider_account_id: Mapped[str] = mapped_column(
-        String(255), nullable=False, unique=True
-    )
-
-    access_token: Mapped[str] = mapped_column(Text, nullable=False)
-    refresh_token: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    token_type: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    scope: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    expires_at: Mapped[Optional[dt.datetime]] = mapped_column(nullable=True)
-
-    profile_json: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON, nullable=True)
-    last_refreshed_at: Mapped[Optional[dt.datetime]] = mapped_column(
-        DateTime(timezone=True)
-    )
-
-    user: Mapped["Users"] = relationship(
-        "Users", back_populates="oauth_accounts", lazy="joined"
-    )
+@dataclass
+class OAuthAccount(MongoModel):
+    user_id: int | None = None
+    provider: str = ""
+    provider_account_id: str = ""
+    access_token: str = ""
+    refresh_token: str | None = None
+    token_type: str | None = None
+    scope: str | None = None
+    expires_at: dt.datetime | None = None
+    profile_json: dict[str, Any] | None = None
+    last_refreshed_at: dt.datetime | None = None
 
 
-class RefreshSession(Base):
-    __tablename__ = "refresh_sessions"
-
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, index=True)
-    user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
-    )
-
-    jti: Mapped[str] = mapped_column(
-        String(36), nullable=False, unique=True, index=True
-    )
-    refresh_token_hash: Mapped[str] = mapped_column(
-        Text, nullable=False, unique=True, index=True
-    )
-    expires_at: Mapped[dt.datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
-
-    user: Mapped["Users"] = relationship(
-        "Users", back_populates="sessions", lazy="joined"
-    )
+@dataclass
+class RefreshSession(MongoModel):
+    user_id: int | None = None
+    jti: str = ""
+    refresh_token_hash: str = ""
+    expires_at: dt.datetime | None = None
 
 
-class Users(Base):
-    __tablename__ = "users"
-
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, index=True)
-    email: Mapped[str] = mapped_column(
-        String(255), unique=True, index=True, nullable=False
-    )
-    username: Mapped[Optional[str]] = mapped_column(
-        String(255), unique=True, index=True, nullable=False
-    )
-    name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    avatar_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    is_active: Mapped[bool] = mapped_column(nullable=False, default=True)
-    is_superuser: Mapped[bool] = mapped_column(nullable=False, default=False)
-
-    oauth_accounts: Mapped[list[OAuthAccount]] = relationship(
-        back_populates="user", cascade="all, delete-orphan"
-    )
-    sessions: Mapped[list[RefreshSession]] = relationship(
-        back_populates="user", cascade="all, delete-orphan"
-    )
+@dataclass
+class Users(MongoModel):
+    email: str = ""
+    username: str | None = None
+    name: str | None = None
+    avatar_url: str | None = None
+    is_active: bool = True
+    is_superuser: bool = False
 
 
-class Cache(Base):
-    __tablename__ = "cache"
+@dataclass
+class CacheEntry:
+    key: str
+    value: str
+    expires_at: dt.datetime | None = None
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, index=True)
-    key: Mapped[str] = mapped_column(
-        String(255), unique=True, index=True, nullable=False
-    )
-    value: Mapped[str] = mapped_column(Text, nullable=False)
-    expires_at: Mapped[Optional[dt.datetime]] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    def to_document(self) -> dict[str, Any]:
+        doc = {
+            "_id": self.key,
+            "key": self.key,
+            "value": self.value,
+        }
+        if self.expires_at:
+            doc["expires_at"] = self.expires_at
+        return doc

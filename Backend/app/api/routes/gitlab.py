@@ -1,13 +1,13 @@
 from typing import List
-from fastapi import APIRouter, Request, HTTPException, Depends, Query
-from fastapi.responses import JSONResponse
-from sqlalchemy import select
-import gitlab
 
-from app.api.deps import get_gitlab_client, SessionDep
+import gitlab
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi.responses import JSONResponse
+from pymongo.database import Database
+
+from app.api.deps import get_gitlab_client, get_mongo_database
 from app.db.models import Bot
-from app.schemas.gitlab import UserInfo, GitlabProject, GitlabProject
-from app.core.log import logger
+from app.schemas.gitlab import GitlabProject, UserInfo
 
 
 router = APIRouter(prefix="/gitlab", tags=["gitlab"])
@@ -38,7 +38,7 @@ async def get_gitlab_userinfo(
 
 @router.get("/projects", response_model=List[GitlabProject])
 async def list_gitlab_projects(
-    session: SessionDep,
+    mongo_db: Database = Depends(get_mongo_database),
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     search: str | None = Query(None, max_length=100),
@@ -58,15 +58,15 @@ async def list_gitlab_projects(
     )
 
     # Get their bots
-    result = await session.execute(
-        select(Bot).where(
-            Bot.gitlab_project_path.in_(
-                [project.path_with_namespace for project in projects]
-            )
-        )
+    project_paths = [project.path_with_namespace for project in projects]
+    bots_cursor = mongo_db["bots"].find(
+        {"gitlab_project_path": {"$in": project_paths}}
     )
-    bots = result.scalars().all()
-    project_bots = {bot.gitlab_project_path: bot for bot in bots}
+    bot_docs = list(bots_cursor)
+    bots = [Bot.from_document(doc) for doc in bot_docs if doc]
+    project_bots = {
+        bot.gitlab_project_path: bot for bot in bots if bot is not None
+    }
 
     # Get Useful details
     project_details = [

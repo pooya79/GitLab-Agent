@@ -1,16 +1,14 @@
 from typing import Any, Dict
+
 import gitlab
 
-from app.db.models import Bot
-from app.db.database import AsyncSession
 from app.agents.smart_agent import SmartAgent
-from app.core.log import logger
 from app.core.config import settings
+from app.core.log import logger
+from app.db.models import Bot
 
 
-async def handle_merge_request_event(
-    bot: Bot, payload: Dict[str, Any], db_session: AsyncSession
-) -> None:
+async def handle_merge_request_event(bot: Bot, payload: Dict[str, Any]) -> None:
     """
     Handle a merge request event from GitLab.
 
@@ -71,7 +69,6 @@ async def handle_merge_request_event(
     smart_agent = SmartAgent(
         openrouter_api_key=settings.openrouter_api_key,
         gitlab_client=gitlab_client,
-        db_session=db_session,
         model_name=bot.llm_model,
         temperature=bot.llm_temperature,
         max_tokens=bot.llm_max_output_tokens,
@@ -88,9 +85,7 @@ async def handle_merge_request_event(
     return
 
 
-async def handle_note_event(
-    bot: Bot, payload: Dict[str, Any], db_session: AsyncSession
-) -> None:
+async def handle_note_event(bot: Bot, payload: Dict[str, Any]) -> None:
     """
     Handle a note event from GitLab.
 

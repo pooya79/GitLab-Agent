@@ -1,15 +1,12 @@
 import logging
 
-from fastapi import APIRouter, Request, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import Response
-from sqlalchemy import select
+from pymongo.database import Database
 
-from app.api.deps import SessionDep
+from app.api.deps import get_mongo_database
 from app.db.models import Bot
-from app.services.event_handlers import (
-    handle_merge_request_event,
-    handle_note_event,
-)
+from app.services.event_handlers import handle_merge_request_event, handle_note_event
 
 logger = logging.getLogger(__name__)
 
@@ -23,9 +20,11 @@ EVENT_HANDLERS = {
 
 
 @router.post("/webhooks/{bot_user_id}")
-async def webhook(bot_user_id: int, request: Request, session: SessionDep) -> Response:
+async def webhook(
+    bot_user_id: int, request: Request, mongo_db: Database = Depends(get_mongo_database)
+) -> Response:
     # load bot (based on the user_id attribute)
-    bot = await session.scalar(select(Bot).where(Bot.gitlab_user_id == bot_user_id))
+    bot = Bot.from_document(mongo_db["bots"].find_one({"gitlab_user_id": bot_user_id}))
     if not bot:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -49,7 +48,7 @@ async def webhook(bot_user_id: int, request: Request, session: SessionDep) -> Re
     handler = EVENT_HANDLERS.get(event_type)
     if handler:
         try:
-            await handler(bot, payload, session)
+            await handler(bot, payload)
         except HTTPException:
             # let handler-raised HTTPExceptions propagate
             raise

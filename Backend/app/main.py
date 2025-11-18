@@ -8,8 +8,7 @@ from pathlib import Path
 
 from app.core.log import logger  # noqa: F401
 from app.core.config import settings
-from app.db.database import async_engine
-from app.db.models import Base
+from app.db.database import init_db, close_client
 from app.api.main import api_router
 
 
@@ -18,13 +17,12 @@ async def lifespan(app: FastAPI):
     # Create data dir if does not exist
     os.makedirs(settings.data_dir, exist_ok=True)
 
-    # Startup: create all tables
-    async with async_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    # Startup: ensure indexes exist
+    init_db()
     yield
 
-    # Shutdown: dispose the async engine
-    await async_engine.dispose()
+    # Shutdown: close the Mongo client
+    close_client()
 
 
 app = FastAPI(title=settings.project_name, lifespan=lifespan, docs_url="/api/docs", openapi_url="/api/openapi.json")

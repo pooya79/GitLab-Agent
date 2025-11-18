@@ -1,49 +1,39 @@
 import datetime as dt
 from typing import Optional
-from sqlalchemy import select, delete, or_
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import Cache
+from pymongo.collection import Collection
+from pymongo.database import Database
 
-
-def NOW():
-    return dt.datetime.now(dt.timezone.utc).replace(tzinfo=None)
+from app.core.time import ensure_utc, utc_now
 
 
 class CacheService:
-    def __init__(self, session: AsyncSession):
-        self.session = session
+    def __init__(self, db: Database):
+        self.collection: Collection = db["cache"]
 
-    async def get(self, key: str) -> Optional[str]:
-        result = await self.session.execute(
-            select(Cache).where(
-                Cache.key == key,
-                or_(Cache.expires_at is None, Cache.expires_at > NOW()),
-            )
+    def get(self, key: str) -> Optional[str]:
+        cache_entry = self.collection.find_one({"key": key})
+        if not cache_entry:
+            return None
+
+        expires_at = ensure_utc(cache_entry.get("expires_at"))
+        if expires_at and expires_at <= utc_now():
+            self.collection.delete_one({"_id": cache_entry["_id"]})
+            return None
+        return cache_entry.get("value")
+
+    def set(self, key: str, value: str, ttl_seconds: Optional[int] = None) -> None:
+        expires_at = (
+            utc_now() + dt.timedelta(seconds=ttl_seconds) if ttl_seconds else None
         )
-        cache_entry = result.scalar_one_or_none()
-        if cache_entry:
-            return cache_entry.value
-        return None
+        set_doc: dict[str, object] = {"key": key, "value": value}
+        update_ops: dict[str, dict[str, object]] = {"$set": set_doc}
+        if expires_at:
+            set_doc["expires_at"] = expires_at
+        else:
+            update_ops["$unset"] = {"expires_at": ""}
 
-    async def set(self, key: str, value: str, ttl_seconds: Optional[int] = None):
-        expires_at = NOW() + dt.timedelta(seconds=ttl_seconds) if ttl_seconds else None
+        self.collection.update_one({"key": key}, update_ops, upsert=True)
 
-        # Delete existing cache entry if it exists
-        await self.session.execute(delete(Cache).where(Cache.key == key))
-
-        new_cache_entry = Cache(key=key, value=value, expires_at=expires_at)
-        self.session.add(new_cache_entry)
-        await self.session.commit()
-
-    async def delete(self, key: str):
-        await self.session.execute(delete(Cache).where(Cache.key == key))
-        await self.session.commit()
-
-    async def clear_expired(self):
-        await self.session.execute(
-            delete(Cache).where(
-                (Cache.expires_at is not None) & (Cache.expires_at <= NOW())
-            )
-        )
-        await self.session.commit()
+    def delete(self, key: str) -> None:
+        self.collection.delete_one({"key": key})

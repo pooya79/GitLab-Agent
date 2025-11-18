@@ -30,5 +30,22 @@ services:
     volumes:
       - ./data:/data
 
+
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    restart: unless-stopped
+    ports:
+      - "${MONGODB_PORT:-27017}:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_ROOT_USERNAME:-root}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_ROOT_PASSWORD:-example}
+      MONGO_INITDB_DATABASE: ${MONGODB_DATABASE:-appdb}
+    volumes:
+      - mongo_data:/data/db
+      - mongo_config:/data/configdb
+
 volumes:
-  data:
+  mongo_data:
+  mongo_config:

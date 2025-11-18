@@ -4,8 +4,14 @@ from pydantic import model_validator, BaseModel
 from pydantic_settings import SettingsConfigDict, BaseSettings
 
 
-class SQLDatabaseSettings(BaseModel):
-    url: str
+class MongoDBSettings(BaseModel):
+    """MongoDB connection settings."""
+
+    host: str = "127.0.0.1"
+    port: int = 27017
+    database: str = "gitlab_agent"
+    root_username: str | None = None
+    root_password: str | None = None
 
 
 class GitlabSettings(BaseModel):
@@ -90,7 +96,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_nested_delimiter="_", env_nested_max_split=1)
 
     # --- grouped sub-settings ---
-    sqlite: SQLDatabaseSettings
+    mongodb: MongoDBSettings
     gitlab: GitlabSettings
     llms: list[AvailableLlm] = available_llms
 

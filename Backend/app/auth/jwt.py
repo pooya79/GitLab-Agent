@@ -1,15 +1,16 @@
+import datetime as dt
 import secrets
 import hashlib
 import uuid
-import datetime as dt
 import jwt
 
 from app.core.config import settings
+from app.core.time import utc_now
 
 
 def create_access_token(user_id: str, jti: str) -> str:
     """Create a JWT access token."""
-    now = dt.datetime.now(dt.timezone.utc).replace(tzinfo=None)
+    now = utc_now()
     payload = {
         "sub": user_id,
         "jti": jti,
