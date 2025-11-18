@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.routes import auth, gitlab, bot, config
+from app.api.routes import auth, gitlab, bot, config, webhooks
 from app.core.config import settings
 
 api_router = APIRouter(prefix=f"/api/v{settings.api_version}")
@@ -8,6 +8,6 @@ api_router.include_router(auth.router)
 api_router.include_router(gitlab.router)
 api_router.include_router(bot.router)
 api_router.include_router(config.router)
+api_router.include_router(webhooks.router)
 # api_router.include_router(avatar.router)
 # api_router.include_router(llm.router)
-# api_router.include_router(webhooks.router)

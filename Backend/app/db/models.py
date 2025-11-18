@@ -1,7 +1,17 @@
 from typing import Any, Optional
 import datetime as dt
+from decimal import Decimal
 from sqlalchemy.orm import Mapped, mapped_column, relationship, declarative_base
-from sqlalchemy import Text, ForeignKey, JSON, String, UniqueConstraint, Index, DateTime
+from sqlalchemy import (
+    Text,
+    ForeignKey,
+    JSON,
+    String,
+    UniqueConstraint,
+    Index,
+    DateTime,
+    Numeric,
+)
 from app.prompts.smart_agent import SMART_AGENT_SYSTEM_PROMPT
 
 # Base class for models
@@ -55,9 +65,26 @@ class History(Base):
     mr_title: Mapped[str] = mapped_column(nullable=False)
     gitlab_project_path: Mapped[str] = mapped_column(nullable=False, index=True)
     username: Mapped[str] = mapped_column(nullable=True)  # user who triggered the event
+
     messages: Mapped[str] = mapped_column(Text, nullable=False)
+
     request_type: Mapped[str] = mapped_column(String(50), nullable=False)
+
+    input_tokens: Mapped[int] = mapped_column(nullable=False, default=0)
+    cached_tokens: Mapped[int] = mapped_column(nullable=False, default=0)
+    output_tokens: Mapped[int] = mapped_column(nullable=False, default=0)
+
+    input_price: Mapped[Decimal] = mapped_column(
+        Numeric(20, 10), nullable=True, default=Decimal("0.0")
+    )
+    output_price: Mapped[Decimal] = mapped_column(
+        Numeric(20, 10), nullable=True, default=Decimal("0.0")
+    )
+    total_price: Mapped[Decimal] = mapped_column(
+        Numeric(20, 10), nullable=True, default=Decimal("0.0")
+    )
     status: Mapped[str] = mapped_column(String(50), nullable=False, default="pending")
+
     error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     created_at: Mapped[dt.datetime] = mapped_column(

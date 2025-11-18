@@ -2,6 +2,7 @@ import logging
 
 from fastapi import APIRouter, Request, HTTPException, status
 from fastapi.responses import Response
+from sqlalchemy import select
 
 from app.api.deps import SessionDep
 from app.db.models import Bot
@@ -21,20 +22,20 @@ EVENT_HANDLERS = {
 }
 
 
-@router.post("/webhooks/{bot_id}")
-async def webhook(bot_id: int, request: Request, session: SessionDep) -> Response:
-    # load bot
-    bot = await session.get(Bot, bot_id)
+@router.post("/webhooks/{bot_user_id}")
+async def webhook(bot_user_id: int, request: Request, session: SessionDep) -> Response:
+    # load bot (based on the user_id attribute)
+    bot = await session.scalar(select(Bot).where(Bot.gitlab_user_id == bot_user_id))
     if not bot:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Bot with ID {bot_id} not found.",
+            detail=f"Bot with user id {bot_user_id} not found.",
         )
 
     # verify secret token
     gitlab_token = request.headers.get("X-Gitlab-Token")
     if not gitlab_token or gitlab_token != bot.gitlab_webhook_secret:
-        logger.warning(f"Invalid webhook token for bot {bot_id}")
+        logger.warning(f"Invalid webhook token for bot {bot.id}: {bot.name}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid webhook token.",
@@ -43,17 +44,17 @@ async def webhook(bot_id: int, request: Request, session: SessionDep) -> Respons
     # dispatch based on event type
     event_type = request.headers.get("X-Gitlab-Event", "")
     payload = await request.json()
-    logger.info(f"Webhook event {event_type} for bot: #{bot_id}")
+    logger.info(f"Webhook event {event_type} for bot: #{bot.id}")
 
     handler = EVENT_HANDLERS.get(event_type)
     if handler:
         try:
-            await handler(bot, payload)
+            await handler(bot, payload, session)
         except HTTPException:
             # let handler-raised HTTPExceptions propagate
             raise
         except Exception:
-            logger.exception(f"Error handling {event_type} for bot {bot_id}")
+            logger.exception(f"Error handling {event_type} for bot {bot.id}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Error processing webhook payload.",
@@ -61,5 +62,5 @@ async def webhook(bot_id: int, request: Request, session: SessionDep) -> Respons
         return Response(status_code=status.HTTP_200_OK)
 
     # unknown/unhandled event → noop
-    logger.info(f"Received unhandled event '{event_type}' for bot {bot_id}")
+    logger.info(f"Received unhandled event '{event_type}' for bot {bot.id}")
     return Response(status_code=status.HTTP_204_NO_CONTENT)

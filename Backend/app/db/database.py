@@ -9,7 +9,8 @@ SQLALCHEMY_DATABASE_URL = settings.sqlite.url
 # Create an async engine
 async_engine = create_async_engine(
     SQLALCHEMY_DATABASE_URL,
-    echo=True,  # logs SQL for debugging
+    echo=False,  # disable SQL logging
+    echo_pool=False,  # disable echoing for pool events
 )
 
 # Configure a sessionmaker for AsyncSession

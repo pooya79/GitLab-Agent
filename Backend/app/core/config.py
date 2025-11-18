@@ -137,8 +137,8 @@ class Settings(BaseSettings):
     llm_max_output_tokens: int = 5000
     llm_temperature: float = 0.2
     avatar_default_url: str = "api/static/avatars/default.png"
-    max_tokens_per_diff: int = 2000
-    max_tokens_per_context: int = 15000
+    max_tokens_per_diff: int = 4000
+    max_tokens_per_context: int = 20000
 
 
 settings = Settings()

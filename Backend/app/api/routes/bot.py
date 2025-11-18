@@ -200,8 +200,12 @@ async def create_bot(
 
     # Get username associated with the token
     try:
-        gitlab_client.auth()
-        user_info = gitlab_client.user
+        access_token_gitlab_client = gitlab.Gitlab(
+            settings.gitlab.base,
+            private_token=project_token.token,
+        )
+        access_token_gitlab_client.auth()
+        user_info = access_token_gitlab_client.user
         if not user_info:
             raise Exception("Could not fetch user info with the created token.")
         project_token.user_name = user_info.username
@@ -222,7 +226,7 @@ async def create_bot(
 
     # Create project webhook for the bot
     try:
-        webhook_url = f"{settings.backend_url}/api/v1/webhooks/{project_token.user_id}"
+        webhook_url = f"{settings.host_url}/api/v1/webhooks/{project_token.user_id}"
         webhook_secret_token = uuid.uuid4().hex
         webhook = project.hooks.create(
             {

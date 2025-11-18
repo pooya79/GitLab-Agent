@@ -35,7 +35,10 @@ async def handle_merge_request_event(
             current_reviewers = {
                 reviewer["id"] for reviewer in reviewers_change.get("current", [])
             }
-            if bot.gitlab_user_id in current_reviewers and bot.gitlab_user_id not in previous_reviewers:
+            if (
+                bot.gitlab_user_id in current_reviewers
+                and bot.gitlab_user_id not in previous_reviewers
+            ):
                 trigger = True
 
     # Trigger if Re-request review is made
@@ -50,20 +53,17 @@ async def handle_merge_request_event(
                     trigger = True
                     break
 
-
     if not trigger:
         logger.info("No action required for this merge request event.")
         return
 
     # Extract relevant information from the payload
-    mr_id = payload.get("object_attributes", {}).get("id")
-    mr_title = payload.get("object_attributes", {}).get("title")
-    gitlab_project_path = payload.get("project", {}).get("path_with_namespace")
-    username = payload.get("user", {}).get("username") # user who triggered the event
+    mr_iid = payload.get("object_attributes", {}).get("iid")
+    gitlab_project_id = payload.get("project", {}).get("id")
 
     # Create GitLab client
     gitlab_client = gitlab.Gitlab(
-        settings.gitlab_url,
+        settings.gitlab.base,
         private_token=bot.gitlab_access_token,
     )
 
@@ -73,24 +73,16 @@ async def handle_merge_request_event(
         gitlab_client=gitlab_client,
         db_session=db_session,
         model_name=bot.llm_model,
-        system_prompt=bot.llm_system_prompt,
         temperature=bot.llm_temperature,
         max_tokens=bot.llm_max_output_tokens,
         extra_body=bot.llm_additional_kwargs,
     )
 
-    # Fetch merge request context for llm (diffs, title, description, etc.)
-    
-
-
     # Run the agent with the extracted information
-    response = await smart_agent.run()
-
-    # Put response as a comment on the merge request
-    await smart_agent.gitlab_service.post_merge_request_comment(
-        project_path=gitlab_project_path,
-        mr_id=mr_id,
-        comment=response,
+    await smart_agent.run(
+        mr_iid=mr_iid,
+        project_id=gitlab_project_id,
+        system_prompt=bot.llm_system_prompt,
     )
 
     return
