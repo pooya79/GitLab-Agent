@@ -80,7 +80,7 @@ Extra user-provided instructions (should be addressed with high priority):
 {%- endif %}
 
 
-The output must be a YAML object equivalent to type $MRCodeSuggestions, according to the following Pydantic definitions:
+The output must be a JSON object equivalent to type $MRCodeSuggestions, according to the following Pydantic definitions:
 =====
 class CodeSuggestion(BaseModel):
     relevant_file: str = Field(description="Full path of the relevant file")
@@ -102,25 +102,23 @@ class MRCodeSuggestions(BaseModel):
 
 
 Example output:
-```yaml
-code_suggestions:
-- relevant_file: |
-    src/file1.py
-  language: |
-    python
-  existing_code: |
-    ...
-  suggestion_content: |
-    ...
-  improved_code: |
-    ...
-  one_sentence_summary: |
-    ...
-  label: |
-    ...
+```json
+{
+  "code_suggestions": [
+    {
+      "relevant_file": "src/file1.py",
+      "language": "python",
+      "existing_code": "...",
+      "suggestion_content": "...",
+      "improved_code": "...",
+      "one_sentence_summary": "...",
+      "label": "..."
+    }
+  ]
+}
 ```
 
-Each YAML output MUST be after a newline, indented, with block scalar indicator ('|').""")
+Return only valid JSON.""")
 
 user_template = Template("""--MR Info--
 
@@ -140,29 +138,27 @@ The MR code Diff:
 
 
 Example output:
-```yaml
-code_suggestions:
-- relevant_file: |
-    src/file1.py
-  language: |
-    python
-  existing_code: |
-    ...
-  suggestion_content: |
-    ...
-  improved_code: |
-    ...
-  one_sentence_summary: |
-    ...
-  label: |
-    ...
+```json
+{
+  "code_suggestions": [
+    {
+      "relevant_file": "src/file1.py",
+      "language": "python",
+      "existing_code": "...",
+      "suggestion_content": "...",
+      "improved_code": "...",
+      "one_sentence_summary": "...",
+      "label": "..."
+    }
+  ]
+}
 ```
 (replace '...' with actual content)
 {%- endif %}
 
 
-Response (should be a valid YAML, and nothing else):
-```yaml""")
+Response (should be valid JSON only):
+```json""")
 
 reflect_system_template = Template("""You are an AI language model specialized in reviewing and evaluating code suggestions for a Merge Request (MR).
 Your task is to analyze a MR code diff and evaluate the correctness and importance set of AI-generated code suggestions.
@@ -246,7 +242,7 @@ __old hunk__
 {%- endif %}
 
 
-The output must be a YAML object equivalent to type $MRCodeSuggestionsFeedback, according to the following Pydantic definitions:
+The output must be a JSON object equivalent to type $MRCodeSuggestionsFeedback, according to the following Pydantic definitions:
 =====
 class CodeSuggestionFeedback(BaseModel):
     suggestion_summary: str = Field(description="Repeated from the input")
@@ -262,21 +258,23 @@ class MRCodeSuggestionsFeedback(BaseModel):
 
 
 Example output:
-```yaml
-code_suggestions:
-- suggestion_summary: |
-    Use a more descriptive variable name here
-  relevant_file: "src/file1.py"
-  relevant_lines_start: 13
-  relevant_lines_end: 14
-  suggestion_score: 6
-  why: |
-    The variable name 't' is not descriptive enough
-- ...
+```json
+{
+  "code_suggestions": [
+    {
+      "suggestion_summary": "Use a more descriptive variable name here",
+      "relevant_file": "src/file1.py",
+      "relevant_lines_start": 13,
+      "relevant_lines_end": 14,
+      "suggestion_score": 6,
+      "why": "The variable name `t` is not descriptive enough"
+    }
+  ]
+}
 ```
 
 
-Each YAML output MUST be after a newline, indented, with block scalar indicator ('|').""")
+Return only valid JSON.""")
 
 reflect_user_template = Template("""You are given a Merge Request (MR) code diff:
 ======
@@ -294,22 +292,24 @@ Below are {{ num_code_suggestions }} AI-generated code suggestions for the Merge
 
 
 Example output:
-```yaml
-code_suggestions:
-- suggestion_summary: |
-    ...
-  relevant_file: "..."
-  relevant_lines_start: ...
-  relevant_lines_end: ...
-  suggestion_score: ...
-  why: |
-    ...
-- ...
+```json
+{
+  "code_suggestions": [
+    {
+      "suggestion_summary": "...",
+      "relevant_file": "...",
+      "relevant_lines_start": 0,
+      "relevant_lines_end": 0,
+      "suggestion_score": 0,
+      "why": "..."
+    }
+  ]
+}
 ```
 (replace '...' with actual content)
 {%- endif %}
 
-Response (should be a valid YAML, and nothing else):
-```yaml
+Response (should be valid JSON only):
+```json
 {% endchat %} 
 """)

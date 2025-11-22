@@ -49,51 +49,33 @@ Extra instructions from the user:
 {%- endif %}
 
 
-You must use the following YAML schema to format your answer:
-```yaml
-Code Documentation:
-  type: array
-  uniqueItems: true
-  items:
-    relevant file:
-      type: string
-      description: The full file path of the relevant file.
-    relevant line:
-      type: integer
-      description: |-
-        The relevant line number from a '__new hunk__' section where the {{ docs_for_language }} should be added.
-    doc placement:
-      type: string
-      enum:
-        - before
-        - after
-      description: |-
-        The {{ docs_for_language }} placement relative to the relevant line (code component).
-        For example, in Python the docs are placed after the function signature, but in Java they are placed before.
-    documentation:
-      type: string
-      description: |-
-        The {{ docs_for_language }} content. It should be complete, correctly formatted and indented, and without line numbers.
-```
+You must respond with valid JSON that matches this schema:
+{
+  "code_documentation": [
+    {
+      "relevant_file": "string - full path of the relevant file",
+      "relevant_line": "integer - line number from a '__new hunk__' section where the {{ docs_for_language }} should be added",
+      "doc_placement": "\"before\" | \"after\" - placement relative to the relevant line",
+      "documentation": "string - the full {{ docs_for_language }} content without line numbers"
+    }
+  ]
+}
 
 Example output:
-```yaml
-Code Documentation:
--   relevant file: |-
-        src/file1.py
-    relevant lines: 12
-    doc placement: after
-    documentation: |-
-        \"\"\"
-        This is a python docstring for func1.
-        \"\"\"
-- ...
-...
+```json
+{
+  "code_documentation": [
+    {
+      "relevant_file": "src/file1.py",
+      "relevant_line": 12,
+      "doc_placement": "after",
+      "documentation": "'''This is a python docstring for func1.'''\n"
+    }
+  ]
+}
 ```
 
-
-Each YAML output MUST be after a newline, indented, with block scalar indicator ('|-').
-Don't repeat the prompt in the answer, and avoid outputting the 'type' and 'description' fields.""")
+Return only JSON. Do not repeat the prompt, and do not include schema descriptions in the output.""")
 
 
 user_template = Template("""MR Info:
@@ -122,5 +104,5 @@ The MR Diff:
 ======
 
 
-Response (should be a valid YAML, and nothing else):
-```yaml""")
+Response (should be valid JSON only):
+```json""")

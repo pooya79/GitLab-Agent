@@ -20,27 +20,28 @@ class CommandAgent:
         self,
         openrouter_api_key: str,
         gitlab_client: gitlab.Gitlab,
-        db_session: AsyncSession,
+        mongo_db: AsyncSession,
         model_name: str,
         temperature: float = 0.2,
         max_tokens: int = 5000,
         extra_body: dict = None,
     ):
-        model_settings = OpenAIChatModelSettings(
-            model_name=model_name,
+        # Get usage every time
+        extra_body["usage"] = {"include": True}
+
+        # Model settings
+        self.model_settings = OpenAIChatModelSettings(
             temperature=temperature,
             max_tokens=max_tokens,
-            provider=OpenRouterProvider(api_key=openrouter_api_key),
-            extra_body=extra_body or {},
+            extra_body=extra_body,
         )
-
-        assert gitlab_client is not None or db_session is not None, (
-            "GitlabClient and DB session are required."
+        self.model = OpenAIChatModel(
+            model_name=model_name,
+            settings=self.model_settings,
+            provider=OpenRouterProvider(api_key=openrouter_api_key),
         )
         self.gitlab_client = gitlab_client
-        self.db_session = db_session
-
-        self.model = OpenAIChatModel(settings=model_settings)
+        self.mongo_db = mongo_db
 
     async def run(
         self,

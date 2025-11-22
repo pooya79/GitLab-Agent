@@ -1,12 +1,20 @@
 import gitlab
 import requests
-from pydantic_ai import Agent, UsageLimits, ModelMessage, ModelRequest, SystemPromptPart
+from pydantic_ai import (
+    Agent,
+    UsageLimits,
+    ModelMessage,
+    ModelRequest,
+    SystemPromptPart,
+    AgentRunResult,
+)
 from pydantic_ai.models.openai import OpenAIChatModel, OpenAIChatModelSettings
 from pydantic_ai.providers.openrouter import OpenRouterProvider
 
 from app.agents.utils import token_counter
 from app.core.config import settings
 from app.core.log import logger
+from app.db.database import AsyncSession
 from app.prompts.smart_agent import SMART_AGENT_SYSTEM_PROMPT, SMART_AGENT_USER_PROMPT
 
 
@@ -63,6 +71,7 @@ class SmartAgent:
         self,
         openrouter_api_key: str,
         gitlab_client: gitlab.Gitlab,
+        mongo_db: AsyncSession,
         model_name: str,
         temperature: float = 0.2,
         max_tokens: int = 5000,
@@ -83,6 +92,7 @@ class SmartAgent:
             provider=OpenRouterProvider(api_key=openrouter_api_key),
         )
         self.gitlab_client = gitlab_client
+        self.mongo_db = mongo_db
 
     def gather_context(self, mr: "gitlab.v4.objects.ProjectMergeRequest") -> str:
         """Gather context for the merge request including diffs, title, and description."""
@@ -155,7 +165,7 @@ class SmartAgent:
         system_prompt: str = SMART_AGENT_SYSTEM_PROMPT,
         user_prompt: str | None = None,
         message_history: list[ModelMessage] | None = None,
-    ) -> str:
+    ) -> AgentRunResult[str]:
         """Run the agent with a user prompt and optional message history. Posts the response as a comment on the MR.
 
         Args:

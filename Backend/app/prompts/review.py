@@ -58,7 +58,7 @@ Extra instructions from the user:
 {% endif %}
 
 
-The output must be a YAML object equivalent to type $MRReview, according to the following Pydantic definitions:
+The output must be a JSON object equivalent to type $MRReview, according to the following Pydantic definitions:
 =====
 
 class KeyIssuesComponentLink(BaseModel):
@@ -91,7 +91,7 @@ class Review(BaseModel):
     issue_compliance_check: List[IssueCompliance] = Field(description="A list of compliance checks for the related issues")
 {%- endif %}
 {%- if require_estimate_effort_to_review %}
-    estimated_effort_to_review_[1-5]: int = Field(description="Estimate, on a scale of 1-5 (inclusive), the time and effort required to review this MR by an experienced and knowledgeable developer. 1 means short and easy review , 5 means long and hard review. Take into account the size, complexity, quality, and the needed changes of the MR code diff.")
+    estimated_effort_to_review: int = Field(description="Estimate, on a scale of 1-5 (inclusive), the time and effort required to review this MR by an experienced and knowledgeable developer. 1 means short and easy review , 5 means long and hard review. Take into account the size, complexity, quality, and the needed changes of the MR code diff.")
 {%- endif %}
 {%- if require_score %}
     score: str = Field(description="Rate this MR on a scale of 0-100 (inclusive), where 0 means the worst possible MR code, and 100 means MR code of the highest quality, without any bugs or performance issues, that is ready to be merged immediately and run in production at scale.")
@@ -113,49 +113,42 @@ class MRReview(BaseModel):
 
 
 Example output:
-```yaml
-review:
+```json
+{
+  "review": {
 {%- if related_issues %}
-  issue_compliance_check:
-    - issue_id: |
-        ...
-      issue_description: |
-        ...
-      fully_compliant_points: |
-        ...
-      not_compliant_points: |
-        ...
-      overall_compliance_level: |
-        ...
-{%- endif %}
+    "issue_compliance_check": [
+      {
+        "issue_id": "...",
+        "issue_title": "...",
+        "issue_description": "...",
+        "fully_compliant_points": "- ...",
+        "not_compliant_points": "- ...",
+        "requires_further_human_verification": "- ..."
+      }
+    ],{%- endif %}
 {%- if require_estimate_effort_to_review %}
-  estimated_effort_to_review_[1-5]: |
-    3
-{%- endif %}
+    "estimated_effort_to_review": 3,{%- endif %}
 {%- if require_score %}
-  score: 89
-{%- endif %}
-  relevant_tests: |
-    No
-  key_issues_to_review:
-    - relevant_file: |
-        directory/xxx.py
-      issue_header: |
-        Possible Bug
-      issue_content: |
-        ...
-      start_line: 12
-      end_line: 14
-    - ...
-  security_concerns: |
-    No
-{%- if require_todo_scan %}
-  todo_sections: |
-    No
-{%- endif %} 
+    "score": "89",{%- endif %}
+{%- if require_tests %}
+    "relevant_tests": "No",{%- endif %}
+    "key_issues_to_review": [
+      {
+        "relevant_file": "directory/xxx.py",
+        "issue_header": "Possible Bug",
+        "issue_content": "...",
+        "start_line": 12,
+        "end_line": 14
+      }
+    ]{%- if require_security_review %},
+    "security_concerns": "No"{%- endif %}{%- if require_todo_scan %},
+    "todo_sections": "No"{%- endif %}
+  }
+}
 ```
 
-Answer should be a valid YAML, and nothing else. Each YAML output MUST be after a newline, with proper indent, and block scalar indicator ('|')""")
+Answer should be valid JSON, and nothing else.""")
 
 user_template = Template("""{%- if related_issues %}
 --MR Issue Info--
@@ -211,50 +204,43 @@ The MR code diff:
 
 
 Example output:
-```yaml
-review:
+```json
+{
+  "review": {
 {%- if related_issues %}
-  issue_compliance_check:
-    - issue_id: |
-        ...
-      issue_requirements: |
-        ...
-      fully_compliant_points: |
-        ...
-      not_compliant_points: |
-        ...
-      overall_compliance_level: |
-        ...
-{%- endif %}
+    "issue_compliance_check": [
+      {
+        "issue_id": "...",
+        "issue_title": "...",
+        "issue_description": "...",
+        "fully_compliant_points": "- ...",
+        "not_compliant_points": "- ...",
+        "requires_further_human_verification": "- ..."
+      }
+    ],{%- endif %}
 {%- if require_estimate_effort_to_review %}
-  estimated_effort_to_review_[1-5]: |
-    3
-{%- endif %}
+    "estimated_effort_to_review": 3,{%- endif %}
 {%- if require_score %}
-  score: 89
-{%- endif %}
-  relevant_tests: |
-    No
-  key_issues_to_review:
-    - relevant_file: |
-        ...
-      issue_header: |
-        ...
-      issue_content: |
-        ...
-      start_line: ...
-      end_line: ...
-    - ...
-  security_concerns: |
-    No
-{%- if require_todo_scan %}
-  todo_sections: |
-    No
-{%- endif %}
+    "score": "89",{%- endif %}
+{%- if require_tests %}
+    "relevant_tests": "No",{%- endif %}
+    "key_issues_to_review": [
+      {
+        "relevant_file": "...",
+        "issue_header": "...",
+        "issue_content": "...",
+        "start_line": 0,
+        "end_line": 0
+      }
+    ]{%- if require_security_review %},
+    "security_concerns": "No"{%- endif %}{%- if require_todo_scan %},
+    "todo_sections": "No"{%- endif %}
+  }
+}
 ```
 (replace '...' with the actual values)
 {%- endif %}
 
 
-Response (should be a valid YAML, and nothing else):
-```yaml""")
+Response (should be valid JSON, and nothing else):
+```json""")

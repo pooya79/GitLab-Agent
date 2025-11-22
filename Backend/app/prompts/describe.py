@@ -5,7 +5,7 @@ Your task is to provide a full description for the MR content: type, description
 - Focus on the new MR code (lines starting with '+' in the 'MR Git Diff' section).
 - Keep in mind that the 'Previous title', 'Previous description' and 'Commit messages' sections may be partial, simplistic, non-informative or out of date. Hence, compare them to the MR diff code, and use them only as a reference.
 - The generated title and description should prioritize the most significant changes.
-- If needed, each YAML output should be in block scalar indicator ('|')
+- Output must be valid JSON only; use '\\n' inside string values when you need multi-line bullets.
 - When quoting variables, names or file paths from the code, use backticks (`) instead of single quote (').
 - When needed, use '- ' as bullets
 
@@ -20,7 +20,7 @@ Extra instructions from the user:
 {% endif %}
 
 
-The output must be a YAML object equivalent to type $MRDescription, according to the following Pydantic definitions:
+The output must be a JSON object equivalent to type $MRDescription, according to the following Pydantic definitions:
 =====
 class MRType(str, Enum):
     bug_fix = "Bug fix"
@@ -46,7 +46,7 @@ class MRDescription(BaseModel):
     title: str = Field(description="a concise and descriptive title that captures the MR's main theme")
 {%- if enable_diagram %}
     changes_diagram: str = Field(description='a horizontal diagram that represents the main MR changes, in the format of a valid mermaid LR flowchart. The diagram should be concise and easy to read. Leave empty if no diagram is relevant. To create robust Mermaid diagrams, follow this two-step process: (1) Declare the nodes: nodeID["node description"]. (2) Then define the links: nodeID1 -- "link text" --> nodeID2. Node description must always be surrounded with double quotation marks')
-'{%- endif %}
+{%- endif %}
 {%- if enable_files %}
     mr_files: List[FileDescription] = Field(max_items=20, description="a list of all the files that were changed in the MR, and summary of their changes. Each file must be analyzed regardless of change size.")
 {%- endif %}
@@ -55,38 +55,24 @@ class MRDescription(BaseModel):
 
 Example output:
 
-```yaml
-type:
-- ...
-- ...
-description: |
-  ...
-title: |
-  ...
-{%- if enable_diagram %}
-changes_diagram: |
-  ```mermaid
-  flowchart LR
-    ...
-  ```
-{%- endif %}
-{%- if enable_files %}
-mr_files:
-- filename: |
-    ...
-{%- if enable_file_summary %}
-  changes_summary: |
-    ...
-{%- endif %}
-  changes_title: |
-    ...
-  label: |
-    label_key_1
-...
-{%- endif %}
+```json
+{
+  "type": ["Bug fix", "Refactoring"],
+  "description": "- ...\\n- ...",
+  "title": "Concise summary of MR intent"{%- if enable_diagram %},
+  "changes_diagram": "```mermaid\\nflowchart LR\\n  ...\\n```"{%- endif %}{%- if enable_files %},
+  "mr_files": [
+    {
+      "filename": "src/file1.py",{%- if enable_file_summary %}
+      "changes_summary": "- ...\\n- ...",{%- endif %}
+      "changes_title": "Main change in this file",
+      "label": "enhancement"
+    }
+  ]{%- endif %}
+}
 ```
 
-Answer should be a valid YAML, and nothing else. Each YAML output MUST be after a newline, with proper indent, and block scalar indicator ('|')""")
+Answer should be valid JSON, and nothing else.""")
 
 
 user_template = Template("""{%- if related_issues %}
@@ -142,40 +128,25 @@ Note that lines in the diff body are prefixed with a symbol that represents the 
 
 
 Example output:
-```yaml
-type:
-- Bug fix
-- Refactoring
-- ...
-description: |
-  ...
-title: |
-  ...
-{%- if enable_diagram %}
-changes_diagram: |
-  ```mermaid
-  flowchart LR
-    ...
-  ```
-{%- endif %}
-{%- if enable_files %}
-mr_files:
-- filename: |
-    ...
-{%- if enable_file_summary %}
-  changes_summary: |
-    ...
-{%- endif %}
-  changes_title: |
-    ...
-  label: |
-    label_key_1
-...
-{%- endif %}
+```json
+{
+  "type": ["Bug fix", "Refactoring", "..."],
+  "description": "- ...\\n- ...",
+  "title": "Updated concise title"{%- if enable_diagram %},
+  "changes_diagram": "```mermaid\\nflowchart LR\\n  ...\\n```"{%- endif %}{%- if enable_files %},
+  "mr_files": [
+    {
+      "filename": "src/file1.py",{%- if enable_file_summary %}
+      "changes_summary": "- ...\\n- ...",{%- endif %}
+      "changes_title": "Primary update",
+      "label": "label_key_1"
+    }
+  ]{%- endif %}
+}
 ```
 (replace '...' with the actual values)
 {%- endif %}
 
 
-Response (should be a valid YAML, and nothing else):
-```yaml""")
+Response (should be valid JSON, and nothing else):
+```json""")
