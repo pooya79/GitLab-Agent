@@ -1,7 +1,6 @@
 import gitlab
 import requests
-from pydantic_ai import Agent, UsageLimits
-from pydantic_ai.messages import ModelMessage
+from pydantic_ai import Agent, UsageLimits, ModelMessage, ModelRequest, SystemPromptPart
 from pydantic_ai.models.openai import OpenAIChatModel, OpenAIChatModelSettings
 from pydantic_ai.providers.openrouter import OpenRouterProvider
 
@@ -18,7 +17,7 @@ def tools_wrapper(
     """Return the list of tools available to the Smart Agent."""
 
     def approve_mr() -> str:
-        """Tool to approve a GitLab Merge Request."""
+        """Tool to approve a GitLab Merge Request. Use this tool only one time per conversation. If you have already approved the merge request you might get an error (permission error)."""
         try:
             project = gitlab_client.projects.get(project_id, lazy=True)
             mr = project.mergerequests.get(mr_iid)
@@ -156,7 +155,7 @@ class SmartAgent:
         system_prompt: str = SMART_AGENT_SYSTEM_PROMPT,
         user_prompt: str | None = None,
         message_history: list[ModelMessage] | None = None,
-    ) -> None:
+    ) -> str:
         """Run the agent with a user prompt and optional message history. Posts the response as a comment on the MR.
 
         Args:
@@ -188,6 +187,12 @@ class SmartAgent:
             system_prompt=system_prompt,
         )
 
+        # Add system prompt as the first message of the history if history is provided
+        if message_history is not None:
+            message_history.insert(
+                0, ModelRequest(parts=[SystemPromptPart(content=system_prompt)])
+            )
+
         # Run the agent
         response = await self.agent.run(
             user_prompt=user_prompt,
@@ -195,8 +200,8 @@ class SmartAgent:
             usage_limits=UsageLimits(tool_calls_limit=3),
         )
 
-        # Post the response as a comment on the MR
-        mr.notes.create({"body": response.output})
+        # Return the response
+        return response.output
 
     def _get_openrouter_cost(self, provider_response_id: str):
         url = "https://openrouter.ai/api/v1/generation"

@@ -57,7 +57,7 @@ export function CreateBotDialog({
             setCreateError(
                 error instanceof Error
                     ? error.message
-                    : "An unexpected error occurred while creating the bot",
+                    : "An unexpected error occurred while creating the bot"
             );
         } finally {
             setIsCreating(false);
@@ -103,7 +103,7 @@ export function CreateBotDialog({
                             id="bot-name"
                             value={botName}
                             onChange={(e) => setBotName(e.target.value)}
-                            placeholder="e.g., Code Review Bot"
+                            placeholder="e.g., code-review-bot"
                             disabled={isCreating}
                             onKeyDown={(e) => {
                                 if (e.key === "Enter" && !isCreating) {
