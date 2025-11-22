@@ -1,12 +1,14 @@
 import os
+from fastapi.responses import JSONResponse
 import logfire
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
 from app.core.log import logger  # noqa: F401
+from app.schemas import GeneralErrorResponses
 from app.core.config import settings
 from app.db.database import init_db, close_client
 from app.api.main import api_router
@@ -25,7 +27,12 @@ async def lifespan(app: FastAPI):
     close_client()
 
 
-app = FastAPI(title=settings.project_name, lifespan=lifespan, docs_url="/api/docs", openapi_url="/api/openapi.json")
+app = FastAPI(
+    title=settings.project_name,
+    lifespan=lifespan,
+    docs_url="/api/docs",
+    openapi_url="/api/openapi.json",
+)
 
 # Setup logfire for monitoring
 if settings.logfire_token:
@@ -52,4 +59,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(api_router)
+
+# Global exception handler
+@app.middleware("http")
+async def catch_exceptions_middleware(request: Request, call_next):
+    try:
+        return await call_next(request)
+    except Exception as exc:
+        logger.error(f"Unhandled exception: {exc}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Internal server error."},
+        )
+
+
+app.include_router(
+    api_router,
+    responses={
+        400: GeneralErrorResponses.BAD_REQUEST,
+        401: GeneralErrorResponses.UNAUTHORIZED,
+        403: GeneralErrorResponses.FORBIDDEN,
+        404: GeneralErrorResponses.NOT_FOUND,
+        500: GeneralErrorResponses.INTERNAL_SERVER_ERROR,
+        502: GeneralErrorResponses.BAD_GATEWAY,
+    },
+)

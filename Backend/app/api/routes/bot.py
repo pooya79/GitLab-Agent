@@ -1,5 +1,7 @@
 import uuid
 
+from pathlib import Path
+import requests
 import gitlab
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import Response
@@ -28,20 +30,40 @@ router = APIRouter(
     tags=["bots"],
 )
 
-AVAILABLE_BOT_AVATARS = {
-    avatar_name: f"{settings.backend_url}/api/static/avatars/{avatar_name}"
-    for avatar_name in [
-        "8-bit_bot",
-        "analyst",
-        "cyber_samurai",
-        "default",
-        "galactic_bot",
-        "hacker",
-        "khosro",
-        "librarian",
-        "steampunk",
-    ]
-}
+
+def _set_bot_avatar(gitlab_base, gitlab_token: str, avatar_name: str) -> str | None:
+    """Set the avatar for the bot user associated with the given GitLab token."""
+    try:
+        avatar_path = (
+            Path(__file__).parent.parent.parent / "assets" / "avatars" / f"{avatar_name}.png"
+        )
+
+        gitlab_base = gitlab_base.rstrip("/")
+
+        endpoint = f"{gitlab_base}/api/v4/user/avatar"
+        headers = {"PRIVATE-TOKEN": gitlab_token}
+
+        with open(avatar_path, "rb") as avatar_file:
+            # 'avatar' is the specific form field name GitLab expects
+            files = {"avatar": avatar_file}
+
+            # Use PUT
+            avatar_response = requests.put(endpoint, headers=headers, files=files)
+
+        if avatar_response.status_code == 200:
+            avatar_data = avatar_response.json()
+            return avatar_data.get("avatar_url")
+        else:
+            # Log the text to see why GitLab rejected it
+            logger.error(f"Failed to upload avatar to GitLab: {avatar_response.text}")
+            return None
+
+    except FileNotFoundError:
+        logger.error(f"Avatar file not found at: {avatar_path}")
+        return None
+    except Exception as e:
+        logger.error(f"Failed to set bot avatar: {e}")
+        return None
 
 
 def _get_bot(mongo_db: Database, bot_id: int) -> Bot | None:
@@ -212,10 +234,10 @@ async def create_bot(
             private_token=project_token.token,
         )
         access_token_gitlab_client.auth()
-        user_info = access_token_gitlab_client.user
-        if not user_info:
+        bot_user = access_token_gitlab_client.user
+        if not bot_user:
             raise Exception("Could not fetch user info with the created token.")
-        project_token.user_name = user_info.username
+        project_token.user_name = bot_user.username
     except Exception as e:
         # Revoke the created project token in case of failure
         try:
@@ -259,23 +281,41 @@ async def create_bot(
             detail="Failed to create project webhook for the bot. Check your connection with GitLab.",
         )
 
-    bot = Bot(
-        id=get_next_sequence("bots"),
-        name=data.name,
-        gitlab_access_token_id=project_token.id,
-        gitlab_access_token=project_token.token,
-        gitlab_user_id=project_token.user_id,
-        gitlab_user_name=project_token.user_name,
-        gitlab_project_path=project.path_with_namespace,
-        gitlab_webhook_id=webhook.id,
-        gitlab_webhook_secret=webhook_secret_token,
-        gitlab_webhook_url=webhook_url,
-        llm_model=settings.llm_model,
-        llm_max_output_tokens=settings.llm_max_output_tokens,
-        llm_temperature=settings.llm_temperature,
-        avatar_url=f"{settings.backend_url}/{settings.avatar_default_url}",
-    )
+    # Set bot avatar URL
+    warning = None
     try:
+        avatar_name = settings.avatar_default_name
+        avatar_url = _set_bot_avatar(
+            settings.gitlab.base, project_token.token, avatar_name
+        )
+        if avatar_url is None:
+            avatar_name = None
+            warning = "Failed to set bot avatar."
+            logger.error(f"{warning} for bot {bot_user.username}: {data.name}")
+    except Exception as e:
+        avatar_name = None
+        avatar_url = None
+        warning = f"Failed to set bot avatar: {e}"
+        logger.error(warning)
+
+    try:
+        bot = Bot(
+            id=get_next_sequence("bots"),
+            name=data.name,
+            gitlab_access_token_id=project_token.id,
+            gitlab_access_token=project_token.token,
+            gitlab_user_id=project_token.user_id,
+            gitlab_user_name=project_token.user_name,
+            gitlab_project_path=project.path_with_namespace,
+            gitlab_webhook_id=webhook.id,
+            gitlab_webhook_secret=webhook_secret_token,
+            gitlab_webhook_url=webhook_url,
+            llm_model=settings.llm_model,
+            llm_max_output_tokens=settings.llm_max_output_tokens,
+            llm_temperature=settings.llm_temperature,
+            avatar_name=avatar_name,
+            avatar_url=avatar_url,
+        )
         _save_bot(mongo_db, bot)
     except Exception as e:
         # Clean up created GitLab resources in case of DB failure
@@ -297,7 +337,10 @@ async def create_bot(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to save bot to the database.",
         )
-    return BotCreateResponse(bot=BotRead.model_validate(bot))
+    return BotCreateResponse(
+        bot=BotRead.model_validate(bot),
+        warning=warning,
+    )
 
 
 @router.get("/", response_model=BotReadList)
@@ -475,12 +518,30 @@ async def update_bot(
             status_code=status.HTTP_404_NOT_FOUND, detail="Bot not found"
         )
 
+    # If avatar_name is provided, update the avatar
+    warning = None
+    if data.avatar_name is not None:
+        avatar_url = _set_bot_avatar(
+            settings.gitlab.base,
+            bot.gitlab_access_token,
+            data.avatar_name,
+        )
+        if avatar_url:
+            bot.avatar_name = data.avatar_name
+            bot.avatar_url = avatar_url
+        else:
+            data.avatar_name = None
+            logger.error(
+                f"Failed to update avatar for bot {bot.id} with name {bot.name}"
+            )
+            warning = "Failed to update bot avatar."
+
     update_data = data.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(bot, key, value)
 
     _save_bot(mongo_db, bot)
-    return BotUpdateResponse(bot=BotRead.model_validate(bot))
+    return BotUpdateResponse(bot=BotRead.model_validate(bot), warning=warning)
 
 
 @router.patch("/{bot_id}/toggle-active", response_model=BotStatusToggleResponse)

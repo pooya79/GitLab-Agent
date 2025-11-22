@@ -88,8 +88,11 @@ async def get_gitlab_client(
     )
     oauth_account = OAuthAccount.from_document(account_doc)
     if oauth_account is None:
+        # Remove user session since no OAuth account exists
+        mongo_db["refresh_sessions"].delete_many({"user_id": current_user.id})
+
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="GitLab OAuth account not found",
         )
 

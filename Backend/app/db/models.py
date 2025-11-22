@@ -54,6 +54,7 @@ class Bot(MongoModel):
     gitlab_webhook_id: int | None = None
     gitlab_webhook_secret: str | None = None
     gitlab_webhook_url: str | None = None
+    avatar_name: str | None = None
     avatar_url: str | None = None
     llm_model: str = ""
     llm_max_output_tokens: int = 0

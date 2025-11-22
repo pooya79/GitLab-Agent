@@ -142,7 +142,7 @@ class Settings(BaseSettings):
     llm_context_window: int = 40000
     llm_max_output_tokens: int = 5000
     llm_temperature: float = 0.2
-    avatar_default_url: str = "api/static/avatars/default.png"
+    avatar_default_name: str = "default"
     max_tokens_per_diff: int = 4000
     max_tokens_per_context: int = 20000
 

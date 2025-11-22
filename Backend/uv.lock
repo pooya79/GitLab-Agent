@@ -811,6 +811,7 @@ dependencies = [
     { name = "pyjwt" },
     { name = "pymongo" },
     { name = "python-gitlab" },
+    { name = "requests" },
     { name = "uvicorn" },
 ]
 
@@ -832,6 +833,7 @@ requires-dist = [
     { name = "pyjwt", specifier = ">=2.10.1" },
     { name = "pymongo", specifier = ">=4.15.4" },
     { name = "python-gitlab", specifier = ">=7.0.0" },
+    { name = "requests", specifier = ">=2.32.5" },
     { name = "uvicorn", specifier = ">=0.37.0" },
 ]
 

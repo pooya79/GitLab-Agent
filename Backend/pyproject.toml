@@ -17,6 +17,7 @@ dependencies = [
     "pydantic[email]>=2.12.3",
     "opentelemetry-instrumentation-fastapi>=0.58b0",
     "pymongo>=4.15.4",
+    "requests>=2.32.5",
 ]
 
 [dependency-groups]

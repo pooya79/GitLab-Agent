@@ -18,6 +18,7 @@ class BotRead(BaseModel):
     gitlab_user_name: Optional[str] = None
     gitlab_webhook_id: Optional[int] = None
     gitlab_webhook_secret: Optional[str] = None
+    avatar_name: Optional[str] = None
     avatar_url: Optional[str] = None
     llm_model: str
     llm_max_output_tokens: int
@@ -37,7 +38,7 @@ class BotCreateResponse(BaseModel):
 # ---- Update (can change everything it can) ----
 class BotUpdate(BaseModel):
     is_active: Optional[bool] = None
-    avatar_url: Optional[str] = None
+    avatar_name: Optional[str] = None
     llm_model: Optional[str] = None
     llm_max_output_tokens: Optional[int] = None
     llm_temperature: Optional[float] = None

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import logging
 
 from pymongo import MongoClient, ReturnDocument
 from pymongo.database import Database
@@ -10,6 +11,8 @@ from pymongo.database import Database
 from app.core.config import settings
 
 _client: MongoClient | None = None
+
+logging.getLogger("pymongo").setLevel(logging.WARNING)
 
 
 def get_client() -> MongoClient:
