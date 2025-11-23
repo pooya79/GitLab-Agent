@@ -7,6 +7,7 @@ from pydantic_ai import (
     UserPromptPart,
     TextPart,
 )
+from pymongo.database import Database
 
 from app.agents.smart_agent import SmartAgent
 from app.core.config import settings
@@ -14,7 +15,9 @@ from app.core.log import logger
 from app.db.models import Bot
 
 
-async def handle_merge_request_event(bot: Bot, payload: Dict[str, Any]) -> None:
+async def handle_merge_request_event(
+    bot: Bot, payload: Dict[str, Any], mongo_db: Database
+) -> None:
     """
     Handle a merge request event from GitLab.
 
@@ -75,10 +78,8 @@ async def handle_merge_request_event(bot: Bot, payload: Dict[str, Any]) -> None:
     smart_agent = SmartAgent(
         openrouter_api_key=settings.openrouter_api_key,
         gitlab_client=gitlab_client,
-        model_name=bot.llm_model,
-        temperature=bot.llm_temperature,
-        max_tokens=bot.llm_max_output_tokens,
-        extra_body=bot.llm_additional_kwargs,
+        bot=bot,
+        mongo_db=mongo_db,
     )
 
     # Send a note that the bot is working on it
@@ -91,7 +92,6 @@ async def handle_merge_request_event(bot: Bot, payload: Dict[str, Any]) -> None:
         response = await smart_agent.run(
             mr_iid=mr_iid,
             project_id=gitlab_project_id,
-            system_prompt=bot.llm_system_prompt,
         )
     except Exception as e:
         logger.exception(
@@ -108,7 +108,9 @@ async def handle_merge_request_event(bot: Bot, payload: Dict[str, Any]) -> None:
     mr.notes.create({"body": response})
 
 
-async def handle_note_event(bot: Bot, payload: Dict[str, Any]) -> None:
+async def handle_note_event(
+    bot: Bot, payload: Dict[str, Any], mongo_db: Database
+) -> None:
     """
     Handle a note event from GitLab.
 
@@ -177,10 +179,8 @@ async def handle_note_event(bot: Bot, payload: Dict[str, Any]) -> None:
     smart_agent = SmartAgent(
         openrouter_api_key=settings.openrouter_api_key,
         gitlab_client=gitlab_client,
-        model_name=bot.llm_model,
-        temperature=bot.llm_temperature,
-        max_tokens=bot.llm_max_output_tokens,
-        extra_body=bot.llm_additional_kwargs,
+        bot=bot,
+        mongo_db=mongo_db,
     )
 
     # Send a reply that bot is working on it
@@ -192,7 +192,6 @@ async def handle_note_event(bot: Bot, payload: Dict[str, Any]) -> None:
             user_prompt=note_content,
             mr_iid=mr_iid,
             project_id=project_id,
-            system_prompt=bot.llm_system_prompt,
             message_history=history,
         )
     except Exception as e:

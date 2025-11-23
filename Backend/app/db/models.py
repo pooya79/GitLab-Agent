@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
 import datetime as dt
-from typing import Any, Mapping, Type, TypeVar
+from typing import Any, Literal, Mapping, Type, TypeVar
 from bson import ObjectId
 
 from app.prompts.smart_agent import SMART_AGENT_SYSTEM_PROMPT
@@ -64,23 +64,23 @@ class Bot(MongoModel):
 
 
 @dataclass
-class History(MongoModel):
+class MrAgentHistory(MongoModel):
     botname: str = ""
     mr_id: int = 0
     mr_title: str = ""
-    gitlab_project_path: str = ""
-    username: str | None = None
-    messages: str = ""
+    mr_web_url: str = ""
+    project_id: int = 0
+    project_path_with_namespace: str = ""
+    project_web_url: str = ""
+    messages_json_str: str = ""
     request_type: str = ""
     input_tokens: int = 0
-    cached_tokens: int = 0
     output_tokens: int = 0
-    input_price: float | None = None
-    output_price: float | None = None
-    total_price: float | None = None
-    status: str = "pending"
+    cache_read_tokens: int = 0
+    cache_write_tokens: int = 0
+    status: Literal["pending", "completed", "failed"] = "pending"
     error_message: str | None = None
-    created_at: dt.datetime = field(
+    updated_at: dt.datetime = field(
         default_factory=lambda: dt.datetime.now(dt.timezone.utc)
     )
 

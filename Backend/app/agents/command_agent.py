@@ -1,11 +1,11 @@
 from typing import Callable
 import gitlab
+from pymongo.database import Database
+
 from pydantic_ai import Agent
 from pydantic_ai.messages import ModelMessage
 from pydantic_ai.models.openai import OpenAIChatModel, OpenAIChatModelSettings
 from pydantic_ai.providers.openrouter import OpenRouterProvider
-
-from app.db.database import AsyncSession
 
 
 class CommandAgent:
@@ -20,7 +20,7 @@ class CommandAgent:
         self,
         openrouter_api_key: str,
         gitlab_client: gitlab.Gitlab,
-        mongo_db: AsyncSession,
+        mongo_db: Database,
         model_name: str,
         temperature: float = 0.2,
         max_tokens: int = 5000,

@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.core.config import settings, AvailableLlm
+from app.core.llm_configs import AvailableLlm, available_llms
 
 router = APIRouter(
     prefix="/config",
@@ -28,9 +28,9 @@ async def get_available_avatars():
     return AVAILABLE_BOT_AVATARS
 
 
-@router.get("/available-llms", response_model=list[AvailableLlm])
+@router.get("/available-llms", response_model=dict[str, AvailableLlm])
 async def get_available_llms():
     """
     Get a list of available LLM models.
     """
-    return settings.llms
+    return available_llms

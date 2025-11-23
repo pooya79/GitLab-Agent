@@ -48,7 +48,7 @@ async def webhook(
     handler = EVENT_HANDLERS.get(event_type)
     if handler:
         try:
-            await handler(bot, payload)
+            await handler(bot, payload, mongo_db=mongo_db)
         except HTTPException:
             # let handler-raised HTTPExceptions propagate
             raise
