@@ -2,6 +2,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 
+from .command_interface import CommandInterface
 from app.prompts.suggest import (
     reflect_system_template,
     reflect_user_template,
@@ -69,11 +70,8 @@ class SuggestFeedbackInput(BaseModel):
     duplicate_prompt_examples: bool = False
 
 
-class SuggestFeedbackCommand:
-    def __init__(self) -> None:
-        pass
-
-    def run(self, input_data: SuggestFeedbackInput) -> MRCodeSuggestionsFeedbackOutput:
+class SuggestFeedbackCommand(CommandInterface):
+    async def run(self, request_str: str) -> str:
         pass
 
     def _render_input(self, input_data: SuggestFeedbackInput) -> str:

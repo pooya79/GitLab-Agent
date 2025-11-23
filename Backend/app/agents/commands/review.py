@@ -2,6 +2,7 @@ from typing import List, Optional, Union
 
 from pydantic import BaseModel, Field
 
+from .command_interface import CommandInterface
 from app.prompts.review import system_template, user_template
 
 
@@ -70,11 +71,8 @@ class MRReviewOutput(BaseModel):
     review: ReviewBody
 
 
-class ReviewCommand:
-    def __init__(self) -> None:
-        pass
-
-    def run(self, input_data: ReviewInput) -> MRReviewOutput:
+class ReviewCommand(CommandInterface):
+    async def run(self, request_str: str) -> str:
         pass
 
     def _render_input(self, input_data: ReviewInput) -> str:

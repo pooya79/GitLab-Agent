@@ -3,6 +3,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 
+from .command_interface import CommandInterface
 from app.prompts.describe import system_template, user_template
 
 
@@ -50,11 +51,8 @@ class MRDescriptionOutput(BaseModel):
     mr_files: Optional[List[FileDescription]] = None
 
 
-class DescribeCommand:
-    def __init__(self) -> None:
-        pass
-
-    def run(self, input_data: DescribeInput) -> MRDescriptionOutput:
+class DescribeCommand(CommandInterface):
+    async def run(self, request_str: str) -> str:
         pass
 
     def _render_input(self, input_data: DescribeInput) -> str:

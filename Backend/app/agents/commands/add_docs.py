@@ -2,6 +2,7 @@ from typing import List, Optional, Literal
 
 from pydantic import BaseModel
 
+from .command_interface import CommandInterface
 from app.prompts.add_docs import system_template, user_template
 
 
@@ -26,11 +27,8 @@ class AddDocsOutput(BaseModel):
     code_documentation: List[AddDocsDocumentation]
 
 
-class AddDocsCommand:
-    def __init__(self) -> None:
-        pass
-
-    def run(self, input_data: AddDocsInput) -> AddDocsOutput:
+class AddDocsCommand(CommandInterface):
+    async def run(self, request_str: str) -> str:
         pass
 
     def _render_input(self, input_data: AddDocsInput) -> str:
