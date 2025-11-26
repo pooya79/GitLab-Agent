@@ -185,8 +185,11 @@ async def handle_note_event(
             notes = discussion.attributes.get("notes", [])
             history: list[ModelRequest | ModelResponse] = []
 
+            # Sort notes by creation time ascending
+            notes.sort(key=lambda x: x.get("created_at", ""))
+
             # Build chat history
-            for note in reversed(notes):
+            for note in notes[:-1]:  # Exclude current note
                 if len(history) > settings.max_chat_history:
                     break
 
