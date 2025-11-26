@@ -212,8 +212,8 @@ class SmartAgent:
             # Gather context
             context = self.gather_context(mr=mr)
 
-            # Append context to user prompt
-            user_prompt = f"{context}\n\n{user_prompt}"
+            # Append context to system prompt
+            system_prompt = f"{system_prompt}\n\n### Merge Request Context:\n{context}"
 
             # Initialize the agent
             self.agent = Agent(
