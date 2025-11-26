@@ -60,6 +60,8 @@ def tools_wrapper(
         try:
             file = project.files.get(file_path=file_path, ref=source_branch)
             file_content = file.decode().decode("utf-8")
+            if token_counter(file_content) > settings.max_tokens_per_file:
+                return f"Error: The file {file_path} is too large to retrieve."
             return file_content
         except gitlab.GitlabError as e:
             logger.error(
