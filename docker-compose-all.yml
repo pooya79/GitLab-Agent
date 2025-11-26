@@ -4,42 +4,46 @@ services:
     command:
       - "--api.insecure=true"
       - "--providers.docker=true"
-      - "--providers.docker.network=localnet"
+      - "--providers.docker.network=gitlab_agent_network"
       - "--entrypoints.web.address=:80"
+      # CONSTRAINT: Only look for containers with this specific label
+      - "--providers.docker.constraints=Label(`scope`, `gitlab-agent`)"
     ports:
       - "${PORT:-80}:80"
-      - "8080:8080"
+      - "${TRAEFIK_DASHBOARD_PORT:-8080}:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
-      - localnet
+      - gitlab_agent_network
     restart: unless-stopped
 
   backend:
-    # Build the image from the Dockerfile in the current directory
     build:
       context: ./Backend
       dockerfile: Dockerfile
     env_file:
       - .env
     networks:
-      - localnet
+      - gitlab_agent_network
     extra_hosts:
       - "${HOST_VC_DOMAIN:-example.com}:${HOST_VC}"
     labels:
       - traefik.enable=true
+      - scope=gitlab-agent
+      
+      - traefik.http.routers.backend.entrypoints=web
       - traefik.http.routers.backend.rule=PathPrefix(`/api`)
       - traefik.http.services.backend.loadbalancer.server.port=8000
     restart: unless-stopped
 
   mongodb:
     image: mongo:latest
-    container_name: mongodb
+    container_name: gitlab_agent_mongodb
     restart: unless-stopped
     ports:
       - "${MONGODB_OUT_PORT:-27017}:27017"
     networks:
-      - localnet
+      - gitlab_agent_network
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGODB_ROOT_USERNAME:-root}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_ROOT_PASSWORD:-example}
@@ -53,15 +57,18 @@ services:
       context: ./Frontend
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8000}
+        - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-/}
     networks:
-      - localnet
+      - gitlab_agent_network
     extra_hosts:
       - "${HOST_VC_DOMAIN:-example.com}:${HOST_VC}"
     environment:
-      - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8000}
+      - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-/}
     labels:
       - traefik.enable=true
+      - scope=gitlab-agent
+
+      - traefik.http.routers.frontend.entrypoints=web
       - traefik.http.routers.frontend.rule=PathPrefix(`/`)
       - traefik.http.services.frontend.loadbalancer.server.port=3000
     restart: unless-stopped
@@ -71,5 +78,4 @@ volumes:
   mongo_config:
 
 networks:
-  localnet:
-    driver: bridge
+  gitlab_agent_network:
