@@ -57,7 +57,7 @@ export function CreateBotDialog({
             setCreateError(
                 error instanceof Error
                     ? error.message
-                    : "An unexpected error occurred while creating the bot"
+                    : "An unexpected error occurred while creating the bot",
             );
         } finally {
             setIsCreating(false);

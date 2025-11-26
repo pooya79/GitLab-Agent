@@ -11,7 +11,7 @@ from app.api.deps import get_current_user, get_gitlab_client, get_mongo_database
 from app.core.config import settings
 from app.core.log import logger
 from app.db.database import get_next_sequence
-from app.db.models import Bot, Users
+from app.db.models import Bot, Configs, Users
 from app.core.time import parse_iso_datetime, utc_now
 from app.schemas.bot import (
     BotCreate,
@@ -35,7 +35,10 @@ def _set_bot_avatar(gitlab_base, gitlab_token: str, avatar_name: str) -> str | N
     """Set the avatar for the bot user associated with the given GitLab token."""
     try:
         avatar_path = (
-            Path(__file__).parent.parent.parent / "assets" / "avatars" / f"{avatar_name}.png"
+            Path(__file__).parent.parent.parent
+            / "assets"
+            / "avatars"
+            / f"{avatar_name}.png"
         )
 
         gitlab_base = gitlab_base.rstrip("/")
@@ -298,6 +301,22 @@ async def create_bot(
         warning = f"Failed to set bot avatar: {e}"
         logger.error(warning)
 
+    # Get default llm model configs
+    llm_model = settings.default_llm_model
+    configs = mongo_db["configs"].find_one({})
+    if configs:
+        configs_obj = Configs.from_document(configs)
+        if configs_obj and llm_model not in configs_obj.available_llms:
+            llm_model = settings.default_llm_model
+
+    llm_info = configs_obj.available_llms.get(llm_model) if configs_obj else None
+
+    if llm_info is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Could not fetch default LLM model configurations.",
+        )
+
     try:
         bot = Bot(
             id=get_next_sequence("bots"),
@@ -310,9 +329,11 @@ async def create_bot(
             gitlab_webhook_id=webhook.id,
             gitlab_webhook_secret=webhook_secret_token,
             gitlab_webhook_url=webhook_url,
-            llm_model=settings.llm_model,
-            llm_max_output_tokens=settings.llm_max_output_tokens,
-            llm_temperature=settings.llm_temperature,
+            llm_model=llm_info.model_name,
+            llm_context_window=llm_info.context_window,
+            llm_max_output_tokens=llm_info.max_output_tokens,
+            llm_temperature=llm_info.temperature,
+            llm_additional_kwargs=llm_info.additional_kwargs_schema,
             avatar_name=avatar_name,
             avatar_url=avatar_url,
         )
@@ -362,6 +383,25 @@ async def list_bots(
         total=total,
         items=[BotRead.model_validate(bot) for bot in bots if bot],
     )
+
+
+@router.get("/{bot_id}", response_model=BotRead)
+async def get_bot(
+    bot_id: int,
+    mongo_db: Database = Depends(get_mongo_database),
+    current_user: Users = Depends(get_current_user),
+):
+    """
+    Get a bot by its ID.
+    """
+    bot = _get_bot(mongo_db, bot_id)
+
+    if not bot:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Bot not found"
+        )
+
+    return BotRead.model_validate(bot)
 
 
 @router.delete("/{bot_id}", response_model=BotDeleteResponse)
@@ -536,9 +576,34 @@ async def update_bot(
             )
             warning = "Failed to update bot avatar."
 
+    # If llm_model is provided, validate it
+    if data.llm_model is not None:
+        configs = mongo_db["configs"].find_one({})
+        if configs:
+            configs_obj = Configs.from_document(configs)
+            if configs_obj:
+                llm_info = configs_obj.available_llms.get(data.llm_model)
+                if llm_info:
+                    bot.llm_model = llm_info.model_name
+                    bot.llm_context_window = llm_info.context_window
+                    bot.llm_max_output_tokens = llm_info.max_output_tokens
+                    bot.llm_temperature = llm_info.temperature
+                    bot.llm_additional_kwargs = llm_info.additional_kwargs_schema
+                else:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Invalid LLM model specified.",
+                    )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Could not fetch available LLM models from configurations.",
+            )
+
     update_data = data.model_dump(exclude_unset=True)
     for key, value in update_data.items():
-        setattr(bot, key, value)
+        if key not in {"avatar_name", "llm_model"}:
+            setattr(bot, key, value)
 
     _save_bot(mongo_db, bot)
     return BotUpdateResponse(bot=BotRead.model_validate(bot), warning=warning)

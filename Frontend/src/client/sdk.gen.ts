@@ -3,6 +3,9 @@
 import type { Client, Options as Options2, TDataShape } from "./client";
 import { client } from "./client.gen";
 import type {
+    AddUpdateAvailableLlmApiV1ConfigAvailableLlmsPostData,
+    AddUpdateAvailableLlmApiV1ConfigAvailableLlmsPostErrors,
+    AddUpdateAvailableLlmApiV1ConfigAvailableLlmsPostResponses,
     CreateBotApiV1BotsPostData,
     CreateBotApiV1BotsPostErrors,
     CreateBotApiV1BotsPostResponses,
@@ -15,6 +18,9 @@ import type {
     CreateNewBotAccessTokenApiV1BotsBotIdNewAccessTokenPatchData,
     CreateNewBotAccessTokenApiV1BotsBotIdNewAccessTokenPatchErrors,
     CreateNewBotAccessTokenApiV1BotsBotIdNewAccessTokenPatchResponses,
+    DeleteAvailableLlmApiV1ConfigAvailableLlmsModelNameDeleteData,
+    DeleteAvailableLlmApiV1ConfigAvailableLlmsModelNameDeleteErrors,
+    DeleteAvailableLlmApiV1ConfigAvailableLlmsModelNameDeleteResponses,
     DeleteBotApiV1BotsBotIdDeleteData,
     DeleteBotApiV1BotsBotIdDeleteErrors,
     DeleteBotApiV1BotsBotIdDeleteResponses,
@@ -25,13 +31,22 @@ import type {
     GetAccessTokenApiV1AuthTokenSessionIdGetErrors,
     GetAccessTokenApiV1AuthTokenSessionIdGetResponses,
     GetAvailableAvatarsApiV1ConfigAvailableAvatarsGetData,
+    GetAvailableAvatarsApiV1ConfigAvailableAvatarsGetErrors,
     GetAvailableAvatarsApiV1ConfigAvailableAvatarsGetResponses,
     GetAvailableLlmsApiV1ConfigAvailableLlmsGetData,
+    GetAvailableLlmsApiV1ConfigAvailableLlmsGetErrors,
     GetAvailableLlmsApiV1ConfigAvailableLlmsGetResponses,
+    GetBotApiV1BotsBotIdGetData,
+    GetBotApiV1BotsBotIdGetErrors,
+    GetBotApiV1BotsBotIdGetResponses,
     GetBotStatusApiV1BotsBotIdStatusGetData,
     GetBotStatusApiV1BotsBotIdStatusGetErrors,
     GetBotStatusApiV1BotsBotIdStatusGetResponses,
+    GetConfigsApiV1ConfigGetData,
+    GetConfigsApiV1ConfigGetErrors,
+    GetConfigsApiV1ConfigGetResponses,
     GetCurrentUserInfoApiV1AuthMeGetData,
+    GetCurrentUserInfoApiV1AuthMeGetErrors,
     GetCurrentUserInfoApiV1AuthMeGetResponses,
     GetGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdGetData,
     GetGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdGetErrors,
@@ -40,11 +55,13 @@ import type {
     GetGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdGetErrors,
     GetGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdGetResponses,
     GetGitlabUserinfoApiV1GitlabUserinfoGetData,
+    GetGitlabUserinfoApiV1GitlabUserinfoGetErrors,
     GetGitlabUserinfoApiV1GitlabUserinfoGetResponses,
     GitlabAuthApiV1AuthGitlabCallbackGetData,
     GitlabAuthApiV1AuthGitlabCallbackGetErrors,
     GitlabAuthApiV1AuthGitlabCallbackGetResponses,
     GitlabLoginApiV1AuthGitlabLoginGetData,
+    GitlabLoginApiV1AuthGitlabLoginGetErrors,
     GitlabLoginApiV1AuthGitlabLoginGetResponses,
     ListBotsApiV1BotsGetData,
     ListBotsApiV1BotsGetErrors,
@@ -76,14 +93,23 @@ import type {
     UpdateBotApiV1BotsBotIdPatchData,
     UpdateBotApiV1BotsBotIdPatchErrors,
     UpdateBotApiV1BotsBotIdPatchResponses,
+    UpdateConfigsApiV1ConfigPatchData,
+    UpdateConfigsApiV1ConfigPatchErrors,
+    UpdateConfigsApiV1ConfigPatchResponses,
+    WebhookApiV1WebhooksBotUserIdPostData,
+    WebhookApiV1WebhooksBotUserIdPostErrors,
+    WebhookApiV1WebhooksBotUserIdPostResponses,
 } from "./types.gen";
 import {
+    zAddUpdateAvailableLlmApiV1ConfigAvailableLlmsPostData,
+    zAddUpdateAvailableLlmApiV1ConfigAvailableLlmsPostResponse,
     zCreateBotApiV1BotsPostData,
     zCreateBotApiV1BotsPostResponse,
     zCreateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensPostData,
     zCreateGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksPostData,
     zCreateNewBotAccessTokenApiV1BotsBotIdNewAccessTokenPatchData,
     zCreateNewBotAccessTokenApiV1BotsBotIdNewAccessTokenPatchResponse,
+    zDeleteAvailableLlmApiV1ConfigAvailableLlmsModelNameDeleteData,
     zDeleteBotApiV1BotsBotIdDeleteData,
     zDeleteBotApiV1BotsBotIdDeleteResponse,
     zDeleteGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdDeleteData,
@@ -93,8 +119,12 @@ import {
     zGetAvailableAvatarsApiV1ConfigAvailableAvatarsGetResponse,
     zGetAvailableLlmsApiV1ConfigAvailableLlmsGetData,
     zGetAvailableLlmsApiV1ConfigAvailableLlmsGetResponse,
+    zGetBotApiV1BotsBotIdGetData,
+    zGetBotApiV1BotsBotIdGetResponse,
     zGetBotStatusApiV1BotsBotIdStatusGetData,
     zGetBotStatusApiV1BotsBotIdStatusGetResponse,
+    zGetConfigsApiV1ConfigGetData,
+    zGetConfigsApiV1ConfigGetResponse,
     zGetCurrentUserInfoApiV1AuthMeGetData,
     zGetCurrentUserInfoApiV1AuthMeGetResponse,
     zGetGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdGetData,
@@ -121,6 +151,9 @@ import {
     zToggleBotActiveApiV1BotsBotIdToggleActivePatchResponse,
     zUpdateBotApiV1BotsBotIdPatchData,
     zUpdateBotApiV1BotsBotIdPatchResponse,
+    zUpdateConfigsApiV1ConfigPatchData,
+    zUpdateConfigsApiV1ConfigPatchResponse,
+    zWebhookApiV1WebhooksBotUserIdPostData,
 } from "./zod.gen";
 
 export type Options<
@@ -209,7 +242,7 @@ export const getCurrentUserInfoApiV1AuthMeGet = <
 ) => {
     return (options?.client ?? client).get<
         GetCurrentUserInfoApiV1AuthMeGetResponses,
-        unknown,
+        GetCurrentUserInfoApiV1AuthMeGetErrors,
         ThrowOnError
     >({
         requestValidator: async (data) => {
@@ -243,7 +276,7 @@ export const gitlabLoginApiV1AuthGitlabLoginGet = <
 ) => {
     return (options?.client ?? client).get<
         GitlabLoginApiV1AuthGitlabLoginGetResponses,
-        unknown,
+        GitlabLoginApiV1AuthGitlabLoginGetErrors,
         ThrowOnError
     >({
         requestValidator: async (data) => {
@@ -334,7 +367,7 @@ export const getGitlabUserinfoApiV1GitlabUserinfoGet = <
 ) => {
     return (options?.client ?? client).get<
         GetGitlabUserinfoApiV1GitlabUserinfoGetResponses,
-        unknown,
+        GetGitlabUserinfoApiV1GitlabUserinfoGetErrors,
         ThrowOnError
     >({
         requestValidator: async (data) => {
@@ -763,6 +796,36 @@ export const deleteBotApiV1BotsBotIdDelete = <
 };
 
 /**
+ * Get Bot
+ *
+ * Get a bot by its ID.
+ */
+export const getBotApiV1BotsBotIdGet = <ThrowOnError extends boolean = false>(
+    options: Options<GetBotApiV1BotsBotIdGetData, ThrowOnError>,
+) => {
+    return (options.client ?? client).get<
+        GetBotApiV1BotsBotIdGetResponses,
+        GetBotApiV1BotsBotIdGetErrors,
+        ThrowOnError
+    >({
+        requestValidator: async (data) => {
+            return await zGetBotApiV1BotsBotIdGetData.parseAsync(data);
+        },
+        responseValidator: async (data) => {
+            return await zGetBotApiV1BotsBotIdGetResponse.parseAsync(data);
+        },
+        security: [
+            {
+                scheme: "bearer",
+                type: "http",
+            },
+        ],
+        url: "/api/v1/bots/{bot_id}",
+        ...options,
+    });
+};
+
+/**
  * Update Bot
  *
  * Update a bot by its ID.
@@ -969,7 +1032,7 @@ export const getAvailableAvatarsApiV1ConfigAvailableAvatarsGet = <
 ) => {
     return (options?.client ?? client).get<
         GetAvailableAvatarsApiV1ConfigAvailableAvatarsGetResponses,
-        unknown,
+        GetAvailableAvatarsApiV1ConfigAvailableAvatarsGetErrors,
         ThrowOnError
     >({
         requestValidator: async (data) => {
@@ -1002,7 +1065,7 @@ export const getAvailableLlmsApiV1ConfigAvailableLlmsGet = <
 ) => {
     return (options?.client ?? client).get<
         GetAvailableLlmsApiV1ConfigAvailableLlmsGetResponses,
-        unknown,
+        GetAvailableLlmsApiV1ConfigAvailableLlmsGetErrors,
         ThrowOnError
     >({
         requestValidator: async (data) => {
@@ -1016,6 +1079,150 @@ export const getAvailableLlmsApiV1ConfigAvailableLlmsGet = <
             );
         },
         url: "/api/v1/config/available-llms",
+        ...options,
+    });
+};
+
+/**
+ * Add Update Available Llm
+ *
+ * Add a new LLM model configuration to the available models. Or update an existing one.
+ */
+export const addUpdateAvailableLlmApiV1ConfigAvailableLlmsPost = <
+    ThrowOnError extends boolean = false,
+>(
+    options: Options<
+        AddUpdateAvailableLlmApiV1ConfigAvailableLlmsPostData,
+        ThrowOnError
+    >,
+) => {
+    return (options.client ?? client).post<
+        AddUpdateAvailableLlmApiV1ConfigAvailableLlmsPostResponses,
+        AddUpdateAvailableLlmApiV1ConfigAvailableLlmsPostErrors,
+        ThrowOnError
+    >({
+        requestValidator: async (data) => {
+            return await zAddUpdateAvailableLlmApiV1ConfigAvailableLlmsPostData.parseAsync(
+                data,
+            );
+        },
+        responseValidator: async (data) => {
+            return await zAddUpdateAvailableLlmApiV1ConfigAvailableLlmsPostResponse.parseAsync(
+                data,
+            );
+        },
+        url: "/api/v1/config/available-llms",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Delete Available Llm
+ *
+ * Delete an LLM model configuration from the available models.
+ */
+export const deleteAvailableLlmApiV1ConfigAvailableLlmsModelNameDelete = <
+    ThrowOnError extends boolean = false,
+>(
+    options: Options<
+        DeleteAvailableLlmApiV1ConfigAvailableLlmsModelNameDeleteData,
+        ThrowOnError
+    >,
+) => {
+    return (options.client ?? client).delete<
+        DeleteAvailableLlmApiV1ConfigAvailableLlmsModelNameDeleteResponses,
+        DeleteAvailableLlmApiV1ConfigAvailableLlmsModelNameDeleteErrors,
+        ThrowOnError
+    >({
+        requestValidator: async (data) => {
+            return await zDeleteAvailableLlmApiV1ConfigAvailableLlmsModelNameDeleteData.parseAsync(
+                data,
+            );
+        },
+        url: "/api/v1/config/available-llms/{model_name}",
+        ...options,
+    });
+};
+
+/**
+ * Get Configs
+ *
+ * Get the current configuration settings.
+ */
+export const getConfigsApiV1ConfigGet = <ThrowOnError extends boolean = false>(
+    options?: Options<GetConfigsApiV1ConfigGetData, ThrowOnError>,
+) => {
+    return (options?.client ?? client).get<
+        GetConfigsApiV1ConfigGetResponses,
+        GetConfigsApiV1ConfigGetErrors,
+        ThrowOnError
+    >({
+        requestValidator: async (data) => {
+            return await zGetConfigsApiV1ConfigGetData.parseAsync(data);
+        },
+        responseValidator: async (data) => {
+            return await zGetConfigsApiV1ConfigGetResponse.parseAsync(data);
+        },
+        url: "/api/v1/config/",
+        ...options,
+    });
+};
+
+/**
+ * Update Configs
+ *
+ * Update the configuration settings.
+ */
+export const updateConfigsApiV1ConfigPatch = <
+    ThrowOnError extends boolean = false,
+>(
+    options: Options<UpdateConfigsApiV1ConfigPatchData, ThrowOnError>,
+) => {
+    return (options.client ?? client).patch<
+        UpdateConfigsApiV1ConfigPatchResponses,
+        UpdateConfigsApiV1ConfigPatchErrors,
+        ThrowOnError
+    >({
+        requestValidator: async (data) => {
+            return await zUpdateConfigsApiV1ConfigPatchData.parseAsync(data);
+        },
+        responseValidator: async (data) => {
+            return await zUpdateConfigsApiV1ConfigPatchResponse.parseAsync(
+                data,
+            );
+        },
+        url: "/api/v1/config/",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+};
+
+/**
+ * Webhook
+ */
+export const webhookApiV1WebhooksBotUserIdPost = <
+    ThrowOnError extends boolean = false,
+>(
+    options: Options<WebhookApiV1WebhooksBotUserIdPostData, ThrowOnError>,
+) => {
+    return (options.client ?? client).post<
+        WebhookApiV1WebhooksBotUserIdPostResponses,
+        WebhookApiV1WebhooksBotUserIdPostErrors,
+        ThrowOnError
+    >({
+        requestValidator: async (data) => {
+            return await zWebhookApiV1WebhooksBotUserIdPostData.parseAsync(
+                data,
+            );
+        },
+        url: "/api/v1/webhooks/{bot_user_id}",
         ...options,
     });
 };

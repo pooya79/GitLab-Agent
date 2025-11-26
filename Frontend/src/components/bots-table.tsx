@@ -688,7 +688,7 @@ export function BotsTable({
                                                                     asChild
                                                                 >
                                                                     <Link
-                                                                        href={`/dashboard/bots/${bot.botId}/config`}
+                                                                        href={`/dashboard/bots/${bot.botId}/configs`}
                                                                     >
                                                                         <Button
                                                                             variant="outline"

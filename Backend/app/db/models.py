@@ -8,6 +8,7 @@ from typing import Any, Literal, Mapping, Type, TypeVar
 from bson import ObjectId
 
 from app.prompts.smart_agent import SMART_AGENT_SYSTEM_PROMPT
+from app.core.config import settings
 
 T = TypeVar("T", bound="MongoModel")
 
@@ -43,6 +44,49 @@ class MongoModel:
 
 
 @dataclass
+class LLMModelInfo(MongoModel):
+    model_name: str = ""
+    context_window: int = 0
+    max_output_tokens: int = 0
+    temperature: float = 0.2
+    additional_kwargs_schema: dict[str, Any] = field(default_factory=dict)
+
+
+from app.core.llm_configs import llm_model_infos  # noqa: E402
+
+
+@dataclass
+class Configs(MongoModel):
+    max_chat_history: int = settings.max_chat_history
+    max_tokens_per_diff: int = settings.max_tokens_per_diff
+    max_tokens_per_context: int = settings.max_tokens_per_context
+
+    default_llm_model: str = settings.default_llm_model
+    avatar_default_name: str = settings.avatar_default_name
+
+    available_llms: dict[str, LLMModelInfo] = field(
+        default_factory=lambda: {info.model_name: info for info in llm_model_infos}
+    )
+
+    @classmethod
+    def from_document(cls, doc):
+        if doc is None:
+            return None
+
+        data = dict(doc)
+
+        # Convert nested model entries
+        raw_llms = data.get("available_llms", {})
+        fixed_llms = {
+            name: LLMModelInfo.from_document(llm_dict)
+            for name, llm_dict in raw_llms.items()
+        }
+        data["available_llms"] = fixed_llms
+
+        return cls(**data)
+
+
+@dataclass
 class Bot(MongoModel):
     name: str = ""
     is_active: bool = True
@@ -57,10 +101,11 @@ class Bot(MongoModel):
     avatar_name: str | None = None
     avatar_url: str | None = None
     llm_model: str = ""
+    llm_context_window: int = 0
     llm_max_output_tokens: int = 0
     llm_temperature: float = 0.0
-    llm_system_prompt: str = SMART_AGENT_SYSTEM_PROMPT
     llm_additional_kwargs: dict[str, Any] = field(default_factory=dict)
+    llm_system_prompt: str = SMART_AGENT_SYSTEM_PROMPT
 
 
 @dataclass

@@ -16,9 +16,6 @@ from app.api.main import api_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Create data dir if does not exist
-    os.makedirs(settings.data_dir, exist_ok=True)
-
     # Startup: ensure indexes exist
     init_db()
     yield

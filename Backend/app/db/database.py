@@ -9,6 +9,7 @@ from pymongo import MongoClient, ReturnDocument
 from pymongo.database import Database
 
 from app.core.config import settings
+from app.db.models import Configs
 
 _client: MongoClient | None = None
 
@@ -62,6 +63,11 @@ def init_db() -> None:
         expireAfterSeconds=0,
         partialFilterExpression={"expires_at": {"$exists": True}},
     )
+    # Create configs document if not exists (Make sure it only has one document)
+    configs_collection = db["configs"]
+    if configs_collection.count_documents({}) == 0:
+        default_configs = Configs()
+        configs_collection.insert_one(default_configs.to_document())
 
 
 def get_next_sequence(collection_name: str) -> int:

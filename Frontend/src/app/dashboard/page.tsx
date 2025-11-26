@@ -101,11 +101,7 @@ export default function DashboardPage() {
 
                 const rawProjects = Array.isArray(response.data)
                     ? response.data
-                    : (response.data?.projects ?? response.data?.items ?? []);
-
-                if (!Array.isArray(rawProjects)) {
-                    return [];
-                }
+                    : [];
 
                 return rawProjects.map((project: any) => {
                     return {

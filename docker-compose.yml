@@ -8,6 +8,8 @@ services:
     # Host the FastAPI application on port 8000
     ports:
       - "8000:8000"
+    extra_hosts:
+      - "${HOST_VC_DOMAIN:-example.com}:${HOST_VC}"
 
     develop:
       # Create a `watch` configuration to update the app
@@ -37,7 +39,7 @@ services:
     container_name: mongodb
     restart: unless-stopped
     ports:
-      - "${MONGODB_PORT:-27017}:27017"
+      - "${MONGODB_OUT_PORT:-27017}:27017"
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGODB_ROOT_USERNAME:-root}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_ROOT_PASSWORD:-example}

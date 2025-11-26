@@ -7,12 +7,13 @@ services:
       - "--providers.docker.network=localnet"
       - "--entrypoints.web.address=:80"
     ports:
-      - "80:80"
+      - "${PORT:-80}:80"
       - "8080:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - localnet
+    restart: unless-stopped
 
   backend:
     # Build the image from the Dockerfile in the current directory
@@ -21,28 +22,53 @@ services:
       dockerfile: Dockerfile
     env_file:
       - .env
-    volumes:
-      - ./data:/data
     networks:
       - localnet
+    extra_hosts:
+      - "${HOST_VC_DOMAIN:-example.com}:${HOST_VC}"
     labels:
       - traefik.enable=true
       - traefik.http.routers.backend.rule=PathPrefix(`/api`)
       - traefik.http.services.backend.loadbalancer.server.port=8000
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    restart: unless-stopped
+    ports:
+      - "${MONGODB_OUT_PORT:-27017}:27017"
+    networks:
+      - localnet
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_ROOT_USERNAME:-root}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_ROOT_PASSWORD:-example}
+      MONGO_INITDB_DATABASE: ${MONGODB_DATABASE:-appdb}
+    volumes:
+      - mongo_data:/data/db
+      - mongo_config:/data/configdb
 
   frontend:
     build:
       context: ./Frontend
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8000}
     networks:
       - localnet
+    extra_hosts:
+      - "${HOST_VC_DOMAIN:-example.com}:${HOST_VC}"
+    environment:
+      - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:8000}
     labels:
       - traefik.enable=true
       - traefik.http.routers.frontend.rule=PathPrefix(`/`)
       - traefik.http.services.frontend.loadbalancer.server.port=3000
+    restart: unless-stopped
 
 volumes:
-  data:
+  mongo_data:
+  mongo_config:
 
 networks:
   localnet:

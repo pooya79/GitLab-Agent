@@ -1,73 +1,76 @@
-from typing import Any
-from pydantic import BaseModel
+"""Default LLM model configurations available at start."""
 
+from app.db.models import LLMModelInfo
 
-class AvailableLlm(BaseModel):
-    llm_model: str
-    llm_max_output_tokens: int
-    llm_temperature: float
-    llm_additional_kwargs: dict[str, Any] | None = None
-
-
-available_llms: dict[str, AvailableLlm] = {
-    "openai/gpt-5": AvailableLlm(
-        llm_model="openai/gpt-5",
-        llm_max_output_tokens=16384,
-        llm_temperature=0.2,
-        llm_additional_kwargs={"reasoning": {"effort": "medium", "exclude": True}},
+llm_model_infos: list[LLMModelInfo] = [
+    LLMModelInfo(
+        model_name="openai/gpt-5",
+        context_window=16384,
+        max_output_tokens=16384,
+        temperature=0.2,
+        additional_kwargs_schema={"reasoning": {"effort": "medium", "exclude": True}},
     ),
-    "openai/gpt-5-mini": AvailableLlm(
-        llm_model="openai/gpt-5-mini",
-        llm_max_output_tokens=16384,
-        llm_temperature=0.2,
-        llm_additional_kwargs={"reasoning": {"effort": "medium", "exclude": True}},
+    LLMModelInfo(
+        model_name="openai/gpt-5-mini",
+        context_window=16384,
+        max_output_tokens=16384,
+        temperature=0.2,
+        additional_kwargs_schema={"reasoning": {"effort": "medium", "exclude": True}},
     ),
-    "openai/gpt-4o": AvailableLlm(
-        llm_model="openai/gpt-4o",
-        llm_max_output_tokens=16384,
-        llm_temperature=0.2,
-        llm_additional_kwargs=None,
+    LLMModelInfo(
+        model_name="openai/gpt-4o",
+        context_window=16384,
+        max_output_tokens=16384,
+        temperature=0.2,
+        additional_kwargs_schema={},
     ),
-    "openai/gpt-4o-mini": AvailableLlm(
-        llm_model="openai/gpt-4o-mini",
-        llm_max_output_tokens=16384,
-        llm_temperature=0.2,
-        llm_additional_kwargs=None,
+    LLMModelInfo(
+        model_name="openai/gpt-4o-mini",
+        context_window=16384,
+        max_output_tokens=16384,
+        temperature=0.2,
+        additional_kwargs_schema={},
     ),
-    "openai/gpt-4.1": AvailableLlm(
-        llm_model="openai/gpt-4.1",
-        llm_max_output_tokens=16384,
-        llm_temperature=0.2,
-        llm_additional_kwargs=None,
+    LLMModelInfo(
+        model_name="openai/gpt-4.1",
+        context_window=16384,
+        max_output_tokens=16384,
+        temperature=0.2,
+        additional_kwargs_schema={},
     ),
-    "openai/gpt-4.1-mini": AvailableLlm(
-        llm_model="openai/gpt-4.1-mini",
-        llm_max_output_tokens=16384,
-        llm_temperature=0.2,
-        llm_additional_kwargs=None,
+    LLMModelInfo(
+        model_name="openai/gpt-4.1-mini",
+        context_window=16384,
+        max_output_tokens=16384,
+        temperature=0.2,
+        additional_kwargs_schema={},
     ),
-    "google/gemini-2.5-pro": AvailableLlm(
-        llm_model="google/gemini-2.5-pro",
-        llm_max_output_tokens=16384,
-        llm_temperature=0.2,
-        llm_additional_kwargs={"thinkingConfig": {"thinkingBudget": 4096}},
+    LLMModelInfo(
+        model_name="google/gemini-2.5-pro",
+        context_window=16384,
+        max_output_tokens=16384,
+        temperature=0.2,
+        additional_kwargs_schema={"thinkingConfig": {"thinkingBudget": 4096}},
     ),
-    "google/gemini-2.5-flash": AvailableLlm(
-        llm_model="google/gemini-2.5-flash",
-        llm_max_output_tokens=16384,
-        llm_temperature=0.2,
-        llm_additional_kwargs={"thinkingConfig": {"thinkingBudget": 4096}},
+    LLMModelInfo(
+        model_name="google/gemini-2.5-flash",
+        context_window=16384,
+        max_output_tokens=16384,
+        temperature=0.2,
+        additional_kwargs_schema={"thinkingConfig": {"thinkingBudget": 4096}},
     ),
-    "anthropic/claude-sonnet-4.5": AvailableLlm(
-        llm_model="anthropic/claude-sonnet-4.5",
-        llm_max_output_tokens=16384,
-        llm_temperature=0.2,
-        llm_additional_kwargs={"reasoning": {"max_tokens": 4096}},
+    LLMModelInfo(
+        model_name="anthropic/claude-sonnet-4.5",
+        context_window=16384,
+        max_output_tokens=16384,
+        temperature=0.2,
+        additional_kwargs_schema={"reasoning": {"max_tokens": 4096}},
     ),
-    "anthropic/claude-haiku-4.5": AvailableLlm(
-        llm_model="anthropic/claude-haiku-4.5",
-        llm_max_output_tokens=16384,
-        llm_temperature=0.2,
-        llm_additional_kwargs={"reasoning": {"max_tokens": 4096}},
+    LLMModelInfo(
+        model_name="anthropic/claude-haiku-4.5",
+        context_window=16384,
+        max_output_tokens=16384,
+        temperature=0.2,
+        additional_kwargs_schema={"reasoning": {"max_tokens": 4096}},
     ),
-}
+]

@@ -40,10 +40,7 @@ class BotUpdate(BaseModel):
     is_active: Optional[bool] = None
     avatar_name: Optional[str] = None
     llm_model: Optional[str] = None
-    llm_max_output_tokens: Optional[int] = None
-    llm_temperature: Optional[float] = None
     llm_system_prompt: Optional[str] = None
-    llm_additional_kwargs: Optional[Dict[str, Any]] = None
 
 
 # ---- Update (response) ----

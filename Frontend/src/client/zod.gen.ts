@@ -3,18 +3,6 @@
 import { z } from "zod";
 
 /**
- * AvailableLlm
- */
-export const zAvailableLlm = z.object({
-    llm_model: z.string(),
-    llm_max_output_tokens: z.int(),
-    llm_temperature: z.number(),
-    llm_additional_kwargs: z.optional(
-        z.union([z.record(z.string(), z.unknown()), z.null()]),
-    ),
-});
-
-/**
  * BotCreate
  */
 export const zBotCreate = z.object({
@@ -41,6 +29,7 @@ export const zBotRead = z.object({
     gitlab_user_name: z.optional(z.union([z.string(), z.null()])),
     gitlab_webhook_id: z.optional(z.union([z.int(), z.null()])),
     gitlab_webhook_secret: z.optional(z.union([z.string(), z.null()])),
+    avatar_name: z.optional(z.union([z.string(), z.null()])),
     avatar_url: z.optional(z.union([z.string(), z.null()])),
     llm_model: z.string(),
     llm_max_output_tokens: z.int(),
@@ -87,14 +76,9 @@ export const zBotStatusToggleResponse = z.object({
  */
 export const zBotUpdate = z.object({
     is_active: z.optional(z.union([z.boolean(), z.null()])),
-    avatar_url: z.optional(z.union([z.string(), z.null()])),
+    avatar_name: z.optional(z.union([z.string(), z.null()])),
     llm_model: z.optional(z.union([z.string(), z.null()])),
-    llm_max_output_tokens: z.optional(z.union([z.int(), z.null()])),
-    llm_temperature: z.optional(z.union([z.number(), z.null()])),
     llm_system_prompt: z.optional(z.union([z.string(), z.null()])),
-    llm_additional_kwargs: z.optional(
-        z.union([z.record(z.string(), z.unknown()), z.null()]),
-    ),
 });
 
 /**
@@ -103,6 +87,26 @@ export const zBotUpdate = z.object({
 export const zBotUpdateResponse = z.object({
     bot: zBotRead,
     warning: z.optional(z.union([z.string(), z.null()])),
+});
+
+/**
+ * ConfigsUpdate
+ */
+export const zConfigsUpdate = z.object({
+    max_chat_history: z.optional(z.union([z.int(), z.null()])),
+    max_tokens_per_diff: z.optional(z.union([z.int(), z.null()])),
+    max_tokens_per_context: z.optional(z.union([z.int(), z.null()])),
+    default_llm_model: z.optional(z.union([z.string(), z.null()])),
+    avatar_default_name: z.optional(z.union([z.string(), z.null()])),
+});
+
+/**
+ * ErrorResponseModel
+ *
+ * Standard error response model.
+ */
+export const zErrorResponseModel = z.object({
+    detail: z.string(),
 });
 
 /**
@@ -124,6 +128,29 @@ export const zGitlabProject = z.object({
     bot_id: z.optional(z.union([z.int(), z.null()])),
     bot_name: z.optional(z.union([z.string(), z.null()])),
     avatar_url: z.optional(z.union([z.string(), z.null()])),
+});
+
+/**
+ * LLMModelInfo
+ */
+export const zLlmModelInfo = z.object({
+    model_name: z.string(),
+    context_window: z.int(),
+    max_output_tokens: z.int(),
+    temperature: z.number(),
+    additional_kwargs_schema: z.optional(z.record(z.string(), z.unknown())),
+});
+
+/**
+ * Configs
+ */
+export const zConfigs = z.object({
+    max_chat_history: z.int(),
+    max_tokens_per_diff: z.int(),
+    max_tokens_per_context: z.int(),
+    default_llm_model: z.string(),
+    avatar_default_name: z.string(),
+    available_llms: z.optional(z.record(z.string(), zLlmModelInfo)),
 });
 
 /**
@@ -396,6 +423,19 @@ export const zDeleteBotApiV1BotsBotIdDeleteData = z.object({
  */
 export const zDeleteBotApiV1BotsBotIdDeleteResponse = zBotDeleteResponse;
 
+export const zGetBotApiV1BotsBotIdGetData = z.object({
+    body: z.optional(z.never()),
+    path: z.object({
+        bot_id: z.int(),
+    }),
+    query: z.optional(z.never()),
+});
+
+/**
+ * Successful Response
+ */
+export const zGetBotApiV1BotsBotIdGetResponse = zBotRead;
+
 export const zUpdateBotApiV1BotsBotIdPatchData = z.object({
     body: zBotUpdate,
     path: z.object({
@@ -489,5 +529,58 @@ export const zGetAvailableLlmsApiV1ConfigAvailableLlmsGetData = z.object({
  *
  * Successful Response
  */
-export const zGetAvailableLlmsApiV1ConfigAvailableLlmsGetResponse =
-    z.array(zAvailableLlm);
+export const zGetAvailableLlmsApiV1ConfigAvailableLlmsGetResponse = z.record(
+    z.string(),
+    zLlmModelInfo,
+);
+
+export const zAddUpdateAvailableLlmApiV1ConfigAvailableLlmsPostData = z.object({
+    body: zLlmModelInfo,
+    path: z.optional(z.never()),
+    query: z.optional(z.never()),
+});
+
+/**
+ * Successful Response
+ */
+export const zAddUpdateAvailableLlmApiV1ConfigAvailableLlmsPostResponse =
+    zLlmModelInfo;
+
+export const zDeleteAvailableLlmApiV1ConfigAvailableLlmsModelNameDeleteData =
+    z.object({
+        body: z.optional(z.never()),
+        path: z.object({
+            model_name: z.string(),
+        }),
+        query: z.optional(z.never()),
+    });
+
+export const zGetConfigsApiV1ConfigGetData = z.object({
+    body: z.optional(z.never()),
+    path: z.optional(z.never()),
+    query: z.optional(z.never()),
+});
+
+/**
+ * Successful Response
+ */
+export const zGetConfigsApiV1ConfigGetResponse = zConfigs;
+
+export const zUpdateConfigsApiV1ConfigPatchData = z.object({
+    body: zConfigsUpdate,
+    path: z.optional(z.never()),
+    query: z.optional(z.never()),
+});
+
+/**
+ * Successful Response
+ */
+export const zUpdateConfigsApiV1ConfigPatchResponse = zConfigs;
+
+export const zWebhookApiV1WebhooksBotUserIdPostData = z.object({
+    body: z.optional(z.never()),
+    path: z.object({
+        bot_user_id: z.int(),
+    }),
+    query: z.optional(z.never()),
+});

@@ -5,30 +5,6 @@ export type ClientOptions = {
 };
 
 /**
- * AvailableLlm
- */
-export type AvailableLlm = {
-    /**
-     * Llm Model
-     */
-    llm_model: string;
-    /**
-     * Llm Max Output Tokens
-     */
-    llm_max_output_tokens: number;
-    /**
-     * Llm Temperature
-     */
-    llm_temperature: number;
-    /**
-     * Llm Additional Kwargs
-     */
-    llm_additional_kwargs?: {
-        [key: string]: unknown;
-    } | null;
-};
-
-/**
  * BotCreate
  */
 export type BotCreate = {
@@ -99,6 +75,10 @@ export type BotRead = {
      * Gitlab Webhook Secret
      */
     gitlab_webhook_secret?: string | null;
+    /**
+     * Avatar Name
+     */
+    avatar_name?: string | null;
     /**
      * Avatar Url
      */
@@ -174,31 +154,17 @@ export type BotUpdate = {
      */
     is_active?: boolean | null;
     /**
-     * Avatar Url
+     * Avatar Name
      */
-    avatar_url?: string | null;
+    avatar_name?: string | null;
     /**
      * Llm Model
      */
     llm_model?: string | null;
     /**
-     * Llm Max Output Tokens
-     */
-    llm_max_output_tokens?: number | null;
-    /**
-     * Llm Temperature
-     */
-    llm_temperature?: number | null;
-    /**
      * Llm System Prompt
      */
     llm_system_prompt?: string | null;
-    /**
-     * Llm Additional Kwargs
-     */
-    llm_additional_kwargs?: {
-        [key: string]: unknown;
-    } | null;
 };
 
 /**
@@ -210,6 +176,76 @@ export type BotUpdateResponse = {
      * Warning
      */
     warning?: string | null;
+};
+
+/**
+ * Configs
+ */
+export type Configs = {
+    /**
+     * Max Chat History
+     */
+    max_chat_history: number;
+    /**
+     * Max Tokens Per Diff
+     */
+    max_tokens_per_diff: number;
+    /**
+     * Max Tokens Per Context
+     */
+    max_tokens_per_context: number;
+    /**
+     * Default Llm Model
+     */
+    default_llm_model: string;
+    /**
+     * Avatar Default Name
+     */
+    avatar_default_name: string;
+    /**
+     * Available Llms
+     */
+    available_llms?: {
+        [key: string]: LlmModelInfo;
+    };
+};
+
+/**
+ * ConfigsUpdate
+ */
+export type ConfigsUpdate = {
+    /**
+     * Max Chat History
+     */
+    max_chat_history?: number | null;
+    /**
+     * Max Tokens Per Diff
+     */
+    max_tokens_per_diff?: number | null;
+    /**
+     * Max Tokens Per Context
+     */
+    max_tokens_per_context?: number | null;
+    /**
+     * Default Llm Model
+     */
+    default_llm_model?: string | null;
+    /**
+     * Avatar Default Name
+     */
+    avatar_default_name?: string | null;
+};
+
+/**
+ * ErrorResponseModel
+ *
+ * Standard error response model.
+ */
+export type ErrorResponseModel = {
+    /**
+     * Detail
+     */
+    detail: string;
 };
 
 /**
@@ -268,6 +304,34 @@ export type HttpValidationError = {
      * Detail
      */
     detail?: Array<ValidationError>;
+};
+
+/**
+ * LLMModelInfo
+ */
+export type LlmModelInfo = {
+    /**
+     * Model Name
+     */
+    model_name: string;
+    /**
+     * Context Window
+     */
+    context_window: number;
+    /**
+     * Max Output Tokens
+     */
+    max_output_tokens: number;
+    /**
+     * Temperature
+     */
+    temperature: number;
+    /**
+     * Additional Kwargs Schema
+     */
+    additional_kwargs_schema?: {
+        [key: string]: unknown;
+    };
 };
 
 /**
@@ -385,9 +449,33 @@ export type RefreshTokenApiV1AuthRefreshPostData = {
 
 export type RefreshTokenApiV1AuthRefreshPostErrors = {
     /**
+     * Bad Request
+     */
+    400: ErrorResponseModel;
+    /**
+     * Invalid credentials
+     */
+    401: ErrorResponseModel;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponseModel;
+    /**
+     * Resource not found
+     */
+    404: ErrorResponseModel;
+    /**
      * Validation Error
      */
     422: HttpValidationError;
+    /**
+     * Internal Server Error
+     */
+    500: ErrorResponseModel;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponseModel;
 };
 
 export type RefreshTokenApiV1AuthRefreshPostError =
@@ -412,9 +500,33 @@ export type LogoutApiV1AuthLogoutPostData = {
 
 export type LogoutApiV1AuthLogoutPostErrors = {
     /**
+     * Bad Request
+     */
+    400: ErrorResponseModel;
+    /**
+     * Invalid credentials
+     */
+    401: ErrorResponseModel;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponseModel;
+    /**
+     * Resource not found
+     */
+    404: ErrorResponseModel;
+    /**
      * Validation Error
      */
     422: HttpValidationError;
+    /**
+     * Internal Server Error
+     */
+    500: ErrorResponseModel;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponseModel;
 };
 
 export type LogoutApiV1AuthLogoutPostError =
@@ -434,6 +546,36 @@ export type GetCurrentUserInfoApiV1AuthMeGetData = {
     url: "/api/v1/auth/me";
 };
 
+export type GetCurrentUserInfoApiV1AuthMeGetErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponseModel;
+    /**
+     * Invalid credentials
+     */
+    401: ErrorResponseModel;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponseModel;
+    /**
+     * Resource not found
+     */
+    404: ErrorResponseModel;
+    /**
+     * Internal Server Error
+     */
+    500: ErrorResponseModel;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponseModel;
+};
+
+export type GetCurrentUserInfoApiV1AuthMeGetError =
+    GetCurrentUserInfoApiV1AuthMeGetErrors[keyof GetCurrentUserInfoApiV1AuthMeGetErrors];
+
 export type GetCurrentUserInfoApiV1AuthMeGetResponses = {
     /**
      * Successful Response
@@ -450,6 +592,36 @@ export type GitlabLoginApiV1AuthGitlabLoginGetData = {
     query?: never;
     url: "/api/v1/auth/gitlab/login";
 };
+
+export type GitlabLoginApiV1AuthGitlabLoginGetErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponseModel;
+    /**
+     * Invalid credentials
+     */
+    401: ErrorResponseModel;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponseModel;
+    /**
+     * Resource not found
+     */
+    404: ErrorResponseModel;
+    /**
+     * Internal Server Error
+     */
+    500: ErrorResponseModel;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponseModel;
+};
+
+export type GitlabLoginApiV1AuthGitlabLoginGetError =
+    GitlabLoginApiV1AuthGitlabLoginGetErrors[keyof GitlabLoginApiV1AuthGitlabLoginGetErrors];
 
 export type GitlabLoginApiV1AuthGitlabLoginGetResponses = {
     /**
@@ -479,9 +651,33 @@ export type GitlabAuthApiV1AuthGitlabCallbackGetData = {
 
 export type GitlabAuthApiV1AuthGitlabCallbackGetErrors = {
     /**
+     * Bad Request
+     */
+    400: ErrorResponseModel;
+    /**
+     * Invalid credentials
+     */
+    401: ErrorResponseModel;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponseModel;
+    /**
+     * Resource not found
+     */
+    404: ErrorResponseModel;
+    /**
      * Validation Error
      */
     422: HttpValidationError;
+    /**
+     * Internal Server Error
+     */
+    500: ErrorResponseModel;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponseModel;
 };
 
 export type GitlabAuthApiV1AuthGitlabCallbackGetError =
@@ -508,9 +704,33 @@ export type GetAccessTokenApiV1AuthTokenSessionIdGetData = {
 
 export type GetAccessTokenApiV1AuthTokenSessionIdGetErrors = {
     /**
+     * Bad Request
+     */
+    400: ErrorResponseModel;
+    /**
+     * Invalid credentials
+     */
+    401: ErrorResponseModel;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponseModel;
+    /**
+     * Resource not found
+     */
+    404: ErrorResponseModel;
+    /**
      * Validation Error
      */
     422: HttpValidationError;
+    /**
+     * Internal Server Error
+     */
+    500: ErrorResponseModel;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponseModel;
 };
 
 export type GetAccessTokenApiV1AuthTokenSessionIdGetError =
@@ -532,6 +752,36 @@ export type GetGitlabUserinfoApiV1GitlabUserinfoGetData = {
     query?: never;
     url: "/api/v1/gitlab/userinfo";
 };
+
+export type GetGitlabUserinfoApiV1GitlabUserinfoGetErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponseModel;
+    /**
+     * Invalid credentials
+     */
+    401: ErrorResponseModel;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponseModel;
+    /**
+     * Resource not found
+     */
+    404: ErrorResponseModel;
+    /**
+     * Internal Server Error
+     */
+    500: ErrorResponseModel;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponseModel;
+};
+
+export type GetGitlabUserinfoApiV1GitlabUserinfoGetError =
+    GetGitlabUserinfoApiV1GitlabUserinfoGetErrors[keyof GetGitlabUserinfoApiV1GitlabUserinfoGetErrors];
 
 export type GetGitlabUserinfoApiV1GitlabUserinfoGetResponses = {
     /**
@@ -565,9 +815,33 @@ export type ListGitlabProjectsApiV1GitlabProjectsGetData = {
 
 export type ListGitlabProjectsApiV1GitlabProjectsGetErrors = {
     /**
+     * Bad Request
+     */
+    400: ErrorResponseModel;
+    /**
+     * Invalid credentials
+     */
+    401: ErrorResponseModel;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponseModel;
+    /**
+     * Resource not found
+     */
+    404: ErrorResponseModel;
+    /**
      * Validation Error
      */
     422: HttpValidationError;
+    /**
+     * Internal Server Error
+     */
+    500: ErrorResponseModel;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponseModel;
 };
 
 export type ListGitlabProjectsApiV1GitlabProjectsGetError =
@@ -601,9 +875,33 @@ export type ListGitlabProjectAccessTokensApiV1GitlabProjectsProjectIdAccessToken
 export type ListGitlabProjectAccessTokensApiV1GitlabProjectsProjectIdAccessTokensGetErrors =
     {
         /**
+         * Bad Request
+         */
+        400: ErrorResponseModel;
+        /**
+         * Invalid credentials
+         */
+        401: ErrorResponseModel;
+        /**
+         * Forbidden
+         */
+        403: ErrorResponseModel;
+        /**
+         * Resource not found
+         */
+        404: ErrorResponseModel;
+        /**
          * Validation Error
          */
         422: HttpValidationError;
+        /**
+         * Internal Server Error
+         */
+        500: ErrorResponseModel;
+        /**
+         * Bad Gateway
+         */
+        502: ErrorResponseModel;
     };
 
 export type ListGitlabProjectAccessTokensApiV1GitlabProjectsProjectIdAccessTokensGetError =
@@ -633,9 +931,33 @@ export type CreateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessToke
 export type CreateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensPostErrors =
     {
         /**
+         * Bad Request
+         */
+        400: ErrorResponseModel;
+        /**
+         * Invalid credentials
+         */
+        401: ErrorResponseModel;
+        /**
+         * Forbidden
+         */
+        403: ErrorResponseModel;
+        /**
+         * Resource not found
+         */
+        404: ErrorResponseModel;
+        /**
          * Validation Error
          */
         422: HttpValidationError;
+        /**
+         * Internal Server Error
+         */
+        500: ErrorResponseModel;
+        /**
+         * Bad Gateway
+         */
+        502: ErrorResponseModel;
     };
 
 export type CreateGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensPostError =
@@ -669,9 +991,33 @@ export type GetGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensA
 export type GetGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdGetErrors =
     {
         /**
+         * Bad Request
+         */
+        400: ErrorResponseModel;
+        /**
+         * Invalid credentials
+         */
+        401: ErrorResponseModel;
+        /**
+         * Forbidden
+         */
+        403: ErrorResponseModel;
+        /**
+         * Resource not found
+         */
+        404: ErrorResponseModel;
+        /**
          * Validation Error
          */
         422: HttpValidationError;
+        /**
+         * Internal Server Error
+         */
+        500: ErrorResponseModel;
+        /**
+         * Bad Gateway
+         */
+        502: ErrorResponseModel;
     };
 
 export type GetGitlabProjectAccessTokenApiV1GitlabProjectsProjectIdAccessTokensAccessTokenIdGetError =
@@ -701,9 +1047,33 @@ export type ListGitlabProjectWebhooksApiV1GitlabProjectsProjectIdWebhooksGetData
 export type ListGitlabProjectWebhooksApiV1GitlabProjectsProjectIdWebhooksGetErrors =
     {
         /**
+         * Bad Request
+         */
+        400: ErrorResponseModel;
+        /**
+         * Invalid credentials
+         */
+        401: ErrorResponseModel;
+        /**
+         * Forbidden
+         */
+        403: ErrorResponseModel;
+        /**
+         * Resource not found
+         */
+        404: ErrorResponseModel;
+        /**
          * Validation Error
          */
         422: HttpValidationError;
+        /**
+         * Internal Server Error
+         */
+        500: ErrorResponseModel;
+        /**
+         * Bad Gateway
+         */
+        502: ErrorResponseModel;
     };
 
 export type ListGitlabProjectWebhooksApiV1GitlabProjectsProjectIdWebhooksGetError =
@@ -733,9 +1103,33 @@ export type CreateGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksPostDa
 export type CreateGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksPostErrors =
     {
         /**
+         * Bad Request
+         */
+        400: ErrorResponseModel;
+        /**
+         * Invalid credentials
+         */
+        401: ErrorResponseModel;
+        /**
+         * Forbidden
+         */
+        403: ErrorResponseModel;
+        /**
+         * Resource not found
+         */
+        404: ErrorResponseModel;
+        /**
          * Validation Error
          */
         422: HttpValidationError;
+        /**
+         * Internal Server Error
+         */
+        500: ErrorResponseModel;
+        /**
+         * Bad Gateway
+         */
+        502: ErrorResponseModel;
     };
 
 export type CreateGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksPostError =
@@ -769,9 +1163,33 @@ export type DeleteGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookId
 export type DeleteGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdDeleteErrors =
     {
         /**
+         * Bad Request
+         */
+        400: ErrorResponseModel;
+        /**
+         * Invalid credentials
+         */
+        401: ErrorResponseModel;
+        /**
+         * Forbidden
+         */
+        403: ErrorResponseModel;
+        /**
+         * Resource not found
+         */
+        404: ErrorResponseModel;
+        /**
          * Validation Error
          */
         422: HttpValidationError;
+        /**
+         * Internal Server Error
+         */
+        500: ErrorResponseModel;
+        /**
+         * Bad Gateway
+         */
+        502: ErrorResponseModel;
     };
 
 export type DeleteGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdDeleteError =
@@ -805,9 +1223,33 @@ export type GetGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdGet
 export type GetGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdGetErrors =
     {
         /**
+         * Bad Request
+         */
+        400: ErrorResponseModel;
+        /**
+         * Invalid credentials
+         */
+        401: ErrorResponseModel;
+        /**
+         * Forbidden
+         */
+        403: ErrorResponseModel;
+        /**
+         * Resource not found
+         */
+        404: ErrorResponseModel;
+        /**
          * Validation Error
          */
         422: HttpValidationError;
+        /**
+         * Internal Server Error
+         */
+        500: ErrorResponseModel;
+        /**
+         * Bad Gateway
+         */
+        502: ErrorResponseModel;
     };
 
 export type GetGitlabProjectWebhookApiV1GitlabProjectsProjectIdWebhooksHookIdGetError =
@@ -835,9 +1277,33 @@ export type GetBotStatusApiV1BotsBotIdStatusGetData = {
 
 export type GetBotStatusApiV1BotsBotIdStatusGetErrors = {
     /**
+     * Bad Request
+     */
+    400: ErrorResponseModel;
+    /**
+     * Invalid credentials
+     */
+    401: ErrorResponseModel;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponseModel;
+    /**
+     * Resource not found
+     */
+    404: ErrorResponseModel;
+    /**
      * Validation Error
      */
     422: HttpValidationError;
+    /**
+     * Internal Server Error
+     */
+    500: ErrorResponseModel;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponseModel;
 };
 
 export type GetBotStatusApiV1BotsBotIdStatusGetError =
@@ -871,9 +1337,33 @@ export type ListBotsApiV1BotsGetData = {
 
 export type ListBotsApiV1BotsGetErrors = {
     /**
+     * Bad Request
+     */
+    400: ErrorResponseModel;
+    /**
+     * Invalid credentials
+     */
+    401: ErrorResponseModel;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponseModel;
+    /**
+     * Resource not found
+     */
+    404: ErrorResponseModel;
+    /**
      * Validation Error
      */
     422: HttpValidationError;
+    /**
+     * Internal Server Error
+     */
+    500: ErrorResponseModel;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponseModel;
 };
 
 export type ListBotsApiV1BotsGetError =
@@ -898,9 +1388,33 @@ export type CreateBotApiV1BotsPostData = {
 
 export type CreateBotApiV1BotsPostErrors = {
     /**
+     * Bad Request
+     */
+    400: ErrorResponseModel;
+    /**
+     * Invalid credentials
+     */
+    401: ErrorResponseModel;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponseModel;
+    /**
+     * Resource not found
+     */
+    404: ErrorResponseModel;
+    /**
      * Validation Error
      */
     422: HttpValidationError;
+    /**
+     * Internal Server Error
+     */
+    500: ErrorResponseModel;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponseModel;
 };
 
 export type CreateBotApiV1BotsPostError =
@@ -930,9 +1444,33 @@ export type DeleteBotApiV1BotsBotIdDeleteData = {
 
 export type DeleteBotApiV1BotsBotIdDeleteErrors = {
     /**
+     * Bad Request
+     */
+    400: ErrorResponseModel;
+    /**
+     * Invalid credentials
+     */
+    401: ErrorResponseModel;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponseModel;
+    /**
+     * Resource not found
+     */
+    404: ErrorResponseModel;
+    /**
      * Validation Error
      */
     422: HttpValidationError;
+    /**
+     * Internal Server Error
+     */
+    500: ErrorResponseModel;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponseModel;
 };
 
 export type DeleteBotApiV1BotsBotIdDeleteError =
@@ -948,6 +1486,62 @@ export type DeleteBotApiV1BotsBotIdDeleteResponses = {
 export type DeleteBotApiV1BotsBotIdDeleteResponse =
     DeleteBotApiV1BotsBotIdDeleteResponses[keyof DeleteBotApiV1BotsBotIdDeleteResponses];
 
+export type GetBotApiV1BotsBotIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Bot Id
+         */
+        bot_id: number;
+    };
+    query?: never;
+    url: "/api/v1/bots/{bot_id}";
+};
+
+export type GetBotApiV1BotsBotIdGetErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponseModel;
+    /**
+     * Invalid credentials
+     */
+    401: ErrorResponseModel;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponseModel;
+    /**
+     * Resource not found
+     */
+    404: ErrorResponseModel;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+    /**
+     * Internal Server Error
+     */
+    500: ErrorResponseModel;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponseModel;
+};
+
+export type GetBotApiV1BotsBotIdGetError =
+    GetBotApiV1BotsBotIdGetErrors[keyof GetBotApiV1BotsBotIdGetErrors];
+
+export type GetBotApiV1BotsBotIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: BotRead;
+};
+
+export type GetBotApiV1BotsBotIdGetResponse =
+    GetBotApiV1BotsBotIdGetResponses[keyof GetBotApiV1BotsBotIdGetResponses];
+
 export type UpdateBotApiV1BotsBotIdPatchData = {
     body: BotUpdate;
     path: {
@@ -962,9 +1556,33 @@ export type UpdateBotApiV1BotsBotIdPatchData = {
 
 export type UpdateBotApiV1BotsBotIdPatchErrors = {
     /**
+     * Bad Request
+     */
+    400: ErrorResponseModel;
+    /**
+     * Invalid credentials
+     */
+    401: ErrorResponseModel;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponseModel;
+    /**
+     * Resource not found
+     */
+    404: ErrorResponseModel;
+    /**
      * Validation Error
      */
     422: HttpValidationError;
+    /**
+     * Internal Server Error
+     */
+    500: ErrorResponseModel;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponseModel;
 };
 
 export type UpdateBotApiV1BotsBotIdPatchError =
@@ -994,9 +1612,33 @@ export type CreateNewBotAccessTokenApiV1BotsBotIdNewAccessTokenPatchData = {
 
 export type CreateNewBotAccessTokenApiV1BotsBotIdNewAccessTokenPatchErrors = {
     /**
+     * Bad Request
+     */
+    400: ErrorResponseModel;
+    /**
+     * Invalid credentials
+     */
+    401: ErrorResponseModel;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponseModel;
+    /**
+     * Resource not found
+     */
+    404: ErrorResponseModel;
+    /**
      * Validation Error
      */
     422: HttpValidationError;
+    /**
+     * Internal Server Error
+     */
+    500: ErrorResponseModel;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponseModel;
 };
 
 export type CreateNewBotAccessTokenApiV1BotsBotIdNewAccessTokenPatchError =
@@ -1027,9 +1669,33 @@ export type ToggleBotActiveApiV1BotsBotIdToggleActivePatchData = {
 
 export type ToggleBotActiveApiV1BotsBotIdToggleActivePatchErrors = {
     /**
+     * Bad Request
+     */
+    400: ErrorResponseModel;
+    /**
+     * Invalid credentials
+     */
+    401: ErrorResponseModel;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponseModel;
+    /**
+     * Resource not found
+     */
+    404: ErrorResponseModel;
+    /**
      * Validation Error
      */
     422: HttpValidationError;
+    /**
+     * Internal Server Error
+     */
+    500: ErrorResponseModel;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponseModel;
 };
 
 export type ToggleBotActiveApiV1BotsBotIdToggleActivePatchError =
@@ -1059,9 +1725,33 @@ export type RevokeBotTokenApiV1BotsBotIdRevokeDeleteData = {
 
 export type RevokeBotTokenApiV1BotsBotIdRevokeDeleteErrors = {
     /**
+     * Bad Request
+     */
+    400: ErrorResponseModel;
+    /**
+     * Invalid credentials
+     */
+    401: ErrorResponseModel;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponseModel;
+    /**
+     * Resource not found
+     */
+    404: ErrorResponseModel;
+    /**
      * Validation Error
      */
     422: HttpValidationError;
+    /**
+     * Internal Server Error
+     */
+    500: ErrorResponseModel;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponseModel;
 };
 
 export type RevokeBotTokenApiV1BotsBotIdRevokeDeleteError =
@@ -1091,9 +1781,33 @@ export type RotateBotTokenApiV1BotsBotIdRotateTokenPatchData = {
 
 export type RotateBotTokenApiV1BotsBotIdRotateTokenPatchErrors = {
     /**
+     * Bad Request
+     */
+    400: ErrorResponseModel;
+    /**
+     * Invalid credentials
+     */
+    401: ErrorResponseModel;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponseModel;
+    /**
+     * Resource not found
+     */
+    404: ErrorResponseModel;
+    /**
      * Validation Error
      */
     422: HttpValidationError;
+    /**
+     * Internal Server Error
+     */
+    500: ErrorResponseModel;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponseModel;
 };
 
 export type RotateBotTokenApiV1BotsBotIdRotateTokenPatchError =
@@ -1116,6 +1830,36 @@ export type GetAvailableAvatarsApiV1ConfigAvailableAvatarsGetData = {
     url: "/api/v1/config/available-avatars";
 };
 
+export type GetAvailableAvatarsApiV1ConfigAvailableAvatarsGetErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponseModel;
+    /**
+     * Invalid credentials
+     */
+    401: ErrorResponseModel;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponseModel;
+    /**
+     * Resource not found
+     */
+    404: ErrorResponseModel;
+    /**
+     * Internal Server Error
+     */
+    500: ErrorResponseModel;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponseModel;
+};
+
+export type GetAvailableAvatarsApiV1ConfigAvailableAvatarsGetError =
+    GetAvailableAvatarsApiV1ConfigAvailableAvatarsGetErrors[keyof GetAvailableAvatarsApiV1ConfigAvailableAvatarsGetErrors];
+
 export type GetAvailableAvatarsApiV1ConfigAvailableAvatarsGetResponses = {
     /**
      * Response Get Available Avatars Api V1 Config Available Avatars Get
@@ -1137,14 +1881,302 @@ export type GetAvailableLlmsApiV1ConfigAvailableLlmsGetData = {
     url: "/api/v1/config/available-llms";
 };
 
+export type GetAvailableLlmsApiV1ConfigAvailableLlmsGetErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponseModel;
+    /**
+     * Invalid credentials
+     */
+    401: ErrorResponseModel;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponseModel;
+    /**
+     * Resource not found
+     */
+    404: ErrorResponseModel;
+    /**
+     * Internal Server Error
+     */
+    500: ErrorResponseModel;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponseModel;
+};
+
+export type GetAvailableLlmsApiV1ConfigAvailableLlmsGetError =
+    GetAvailableLlmsApiV1ConfigAvailableLlmsGetErrors[keyof GetAvailableLlmsApiV1ConfigAvailableLlmsGetErrors];
+
 export type GetAvailableLlmsApiV1ConfigAvailableLlmsGetResponses = {
     /**
      * Response Get Available Llms Api V1 Config Available Llms Get
      *
      * Successful Response
      */
-    200: Array<AvailableLlm>;
+    200: {
+        [key: string]: LlmModelInfo;
+    };
 };
 
 export type GetAvailableLlmsApiV1ConfigAvailableLlmsGetResponse =
     GetAvailableLlmsApiV1ConfigAvailableLlmsGetResponses[keyof GetAvailableLlmsApiV1ConfigAvailableLlmsGetResponses];
+
+export type AddUpdateAvailableLlmApiV1ConfigAvailableLlmsPostData = {
+    body: LlmModelInfo;
+    path?: never;
+    query?: never;
+    url: "/api/v1/config/available-llms";
+};
+
+export type AddUpdateAvailableLlmApiV1ConfigAvailableLlmsPostErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponseModel;
+    /**
+     * Invalid credentials
+     */
+    401: ErrorResponseModel;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponseModel;
+    /**
+     * Resource not found
+     */
+    404: ErrorResponseModel;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+    /**
+     * Internal Server Error
+     */
+    500: ErrorResponseModel;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponseModel;
+};
+
+export type AddUpdateAvailableLlmApiV1ConfigAvailableLlmsPostError =
+    AddUpdateAvailableLlmApiV1ConfigAvailableLlmsPostErrors[keyof AddUpdateAvailableLlmApiV1ConfigAvailableLlmsPostErrors];
+
+export type AddUpdateAvailableLlmApiV1ConfigAvailableLlmsPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: LlmModelInfo;
+};
+
+export type AddUpdateAvailableLlmApiV1ConfigAvailableLlmsPostResponse =
+    AddUpdateAvailableLlmApiV1ConfigAvailableLlmsPostResponses[keyof AddUpdateAvailableLlmApiV1ConfigAvailableLlmsPostResponses];
+
+export type DeleteAvailableLlmApiV1ConfigAvailableLlmsModelNameDeleteData = {
+    body?: never;
+    path: {
+        /**
+         * Model Name
+         */
+        model_name: string;
+    };
+    query?: never;
+    url: "/api/v1/config/available-llms/{model_name}";
+};
+
+export type DeleteAvailableLlmApiV1ConfigAvailableLlmsModelNameDeleteErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponseModel;
+    /**
+     * Invalid credentials
+     */
+    401: ErrorResponseModel;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponseModel;
+    /**
+     * Resource not found
+     */
+    404: ErrorResponseModel;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+    /**
+     * Internal Server Error
+     */
+    500: ErrorResponseModel;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponseModel;
+};
+
+export type DeleteAvailableLlmApiV1ConfigAvailableLlmsModelNameDeleteError =
+    DeleteAvailableLlmApiV1ConfigAvailableLlmsModelNameDeleteErrors[keyof DeleteAvailableLlmApiV1ConfigAvailableLlmsModelNameDeleteErrors];
+
+export type DeleteAvailableLlmApiV1ConfigAvailableLlmsModelNameDeleteResponses =
+    {
+        /**
+         * Successful Response
+         */
+        200: unknown;
+    };
+
+export type GetConfigsApiV1ConfigGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: "/api/v1/config/";
+};
+
+export type GetConfigsApiV1ConfigGetErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponseModel;
+    /**
+     * Invalid credentials
+     */
+    401: ErrorResponseModel;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponseModel;
+    /**
+     * Resource not found
+     */
+    404: ErrorResponseModel;
+    /**
+     * Internal Server Error
+     */
+    500: ErrorResponseModel;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponseModel;
+};
+
+export type GetConfigsApiV1ConfigGetError =
+    GetConfigsApiV1ConfigGetErrors[keyof GetConfigsApiV1ConfigGetErrors];
+
+export type GetConfigsApiV1ConfigGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: Configs;
+};
+
+export type GetConfigsApiV1ConfigGetResponse =
+    GetConfigsApiV1ConfigGetResponses[keyof GetConfigsApiV1ConfigGetResponses];
+
+export type UpdateConfigsApiV1ConfigPatchData = {
+    body: ConfigsUpdate;
+    path?: never;
+    query?: never;
+    url: "/api/v1/config/";
+};
+
+export type UpdateConfigsApiV1ConfigPatchErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponseModel;
+    /**
+     * Invalid credentials
+     */
+    401: ErrorResponseModel;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponseModel;
+    /**
+     * Resource not found
+     */
+    404: ErrorResponseModel;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+    /**
+     * Internal Server Error
+     */
+    500: ErrorResponseModel;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponseModel;
+};
+
+export type UpdateConfigsApiV1ConfigPatchError =
+    UpdateConfigsApiV1ConfigPatchErrors[keyof UpdateConfigsApiV1ConfigPatchErrors];
+
+export type UpdateConfigsApiV1ConfigPatchResponses = {
+    /**
+     * Successful Response
+     */
+    200: Configs;
+};
+
+export type UpdateConfigsApiV1ConfigPatchResponse =
+    UpdateConfigsApiV1ConfigPatchResponses[keyof UpdateConfigsApiV1ConfigPatchResponses];
+
+export type WebhookApiV1WebhooksBotUserIdPostData = {
+    body?: never;
+    path: {
+        /**
+         * Bot User Id
+         */
+        bot_user_id: number;
+    };
+    query?: never;
+    url: "/api/v1/webhooks/{bot_user_id}";
+};
+
+export type WebhookApiV1WebhooksBotUserIdPostErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponseModel;
+    /**
+     * Invalid credentials
+     */
+    401: ErrorResponseModel;
+    /**
+     * Forbidden
+     */
+    403: ErrorResponseModel;
+    /**
+     * Resource not found
+     */
+    404: ErrorResponseModel;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+    /**
+     * Internal Server Error
+     */
+    500: ErrorResponseModel;
+    /**
+     * Bad Gateway
+     */
+    502: ErrorResponseModel;
+};
+
+export type WebhookApiV1WebhooksBotUserIdPostError =
+    WebhookApiV1WebhooksBotUserIdPostErrors[keyof WebhookApiV1WebhooksBotUserIdPostErrors];
+
+export type WebhookApiV1WebhooksBotUserIdPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
