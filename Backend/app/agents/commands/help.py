@@ -17,7 +17,7 @@ Example: `@bot how can I improve this code?`
 ## Command Agent — Help
 
 Invoke the Command Agent by typing `@<bot_name>/<command>` or `@<bot_username>/<command>` at the **start** of your message.  
-Example: `@project_90_bot_b4a2e933c93d73e105430f3224e52815/help`
+Example: `@project_123_bot_klahsdovhowienfla/help`
 
 Available commands:
 - `/help` — Show this help message.
