@@ -1,4 +1,6 @@
 from .add_docs import AddDocsCommand, AddDocsDocumentation, AddDocsInput, AddDocsOutput
+from .command_interface import CommandInterface
+from .help import HelpCommand
 from .describe import (
     DescribeCommand,
     DescribeInput,
@@ -27,7 +29,14 @@ from .suggest import (
     SuggestInput,
 )
 
+
+class CommandParseError(Exception):
+    pass
+
+
 __all__ = [
+    "CommandInterface",
+    "HelpCommand",
     "AddDocsCommand",
     "AddDocsDocumentation",
     "AddDocsInput",

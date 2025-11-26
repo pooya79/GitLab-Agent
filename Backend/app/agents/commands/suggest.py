@@ -71,7 +71,7 @@ class SuggestFeedbackInput(BaseModel):
 
 
 class SuggestFeedbackCommand(CommandInterface):
-    async def run(self, request_str: str) -> str:
+    async def run(self, flags: dict[str, str | bool], args: list[str]) -> str:
         pass
 
     def _render_input(self, input_data: SuggestFeedbackInput) -> str:

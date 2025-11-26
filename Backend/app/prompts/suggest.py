@@ -1,7 +1,6 @@
 from jinja2 import Template
 
-system_template = Template("""{% chat role="system" %}
-You are MR-Reviewer, an AI specializing in Merge Request (MR) code analysis and suggestions.
+system_template = Template("""You are MR-Reviewer, an AI specializing in Merge Request (MR) code analysis and suggestions.
 {%- if not focus_only_on_problems %}
 Your task is to examine the provided code diff, focusing on new code (lines prefixed with '+'), and offer concise, actionable suggestions to fix possible bugs and problems, and enhance code quality and performance.
 {%- else %}
@@ -311,5 +310,4 @@ Example output:
 
 Response (should be valid JSON only):
 ```json
-{% endchat %} 
 """)

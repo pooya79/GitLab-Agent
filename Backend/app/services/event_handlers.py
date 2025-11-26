@@ -13,6 +13,7 @@ from app.agents.smart_agent import SmartAgent
 from app.core.config import settings
 from app.core.log import logger
 from app.db.models import Bot
+from app.agents.command_agent import CommandAgent
 
 
 async def handle_merge_request_event(
@@ -113,15 +114,11 @@ async def handle_note_event(
 ) -> None:
     """
     Handle a note event from GitLab.
-
-    :param bot: The Bot instance associated with this webhook.
-    :param payload: The JSON payload sent by GitLab.
     """
     logger.info(
         f"Handling note event for bot {bot.id} (project {bot.gitlab_project_path})"
     )
 
-    # Extract the note attributes
     attrs = payload.get("object_attributes", {})
     noteable_type = attrs.get("noteable_type")
 
@@ -130,78 +127,103 @@ async def handle_note_event(
         logger.info("Note is not on a merge request. No action taken.")
         return
 
-    # Prepare reply details
     project_id = payload.get("project", {}).get("id")
     mr_iid = payload.get("merge_request", {}).get("iid")
     discussion_id = attrs.get("discussion_id")
-    note_content = attrs.get("note", "")
+    note_content = attrs.get("note", "") or ""
 
-    # Check if bot name is mentioned in the note
-    if (
-        f"@{bot.name.lower()}" not in note_content.lower()
-        and f"@{bot.gitlab_user_name}" not in note_content.lower()
-    ):
+    note_lower = note_content.strip().lower()
+    name_lower = bot.name.lower()
+    username_lower = bot.gitlab_user_name.lower()
+
+    # Check if bot is mentioned at all
+    if f"@{name_lower}" not in note_lower and f"@{username_lower}" not in note_lower:
         logger.info("Bot not mentioned in the note. No action taken.")
         return
 
-    # Create a gitlab client
     gitlab_client = gitlab.Gitlab(
         settings.gitlab.base,
         private_token=bot.gitlab_access_token,
     )
 
-    # Gather history of the discussion
+    # Detect command syntax: @bot/command
+    is_command = note_lower.startswith(f"@{name_lower}/") or note_lower.startswith(
+        f"@{username_lower}/"
+    )
+
+    # Get MR discussion now (used by both flows)
     project = gitlab_client.projects.get(project_id, lazy=True)
     mr = project.mergerequests.get(mr_iid, lazy=True)
     discussion = mr.discussions.get(discussion_id)
-    notes = discussion.attributes.get("notes", [])
-    history = []
-    for note in reversed(notes):
-        if len(history) > settings.max_chat_history:
-            break
 
-        if (
-            f"@{bot.name.lower()}" in note.get("body", "").lower()
-            or f"@{bot.gitlab_user_name}" in note.get("body", "").lower()
-        ):
-            history.append(
-                ModelRequest(parts=[UserPromptPart(content=note.get("body", ""))])
-            )
-        else:
-            history.append(
-                ModelResponse(parts=[TextPart(content=note.get("body", ""))])
-            )
-    # remove last one
-    if history:
-        history.pop(0)
-
-    # Create an instance of the SmartAgent
-    smart_agent = SmartAgent(
-        openrouter_api_key=settings.openrouter_api_key,
-        gitlab_client=gitlab_client,
-        bot=bot,
-        mongo_db=mongo_db,
-    )
-
-    # Send a reply that bot is working on it
+    # Create a temporary "Processing..." note
     wait_note = discussion.notes.create({"body": "Processing your request..."})
 
-    # Run the agent to generate a reply
     try:
-        reply = await smart_agent.run(
-            user_prompt=note_content,
-            mr_iid=mr_iid,
-            project_id=project_id,
-            message_history=history,
-        )
+        if is_command:
+            logger.info("Command detected in the note. Handling via CommandAgent.")
+
+            command_agent = CommandAgent(
+                openrouter_api_key=settings.openrouter_api_key,
+                gitlab_client=gitlab_client,
+                mongo_db=mongo_db,
+                bot=bot,
+            )
+
+            command = note_content.strip()
+            # Remove bot mention
+            if command.lower().startswith(f"@{name_lower}/"):
+                command = command[len(f"@{bot.name}/") :].strip()
+            elif command.lower().startswith(f"@{username_lower}/"):
+                command = command[len(f"@{bot.gitlab_user_name}/") :].strip()
+
+            reply = await command_agent.run(input_command=command)
+
+        else:
+            logger.info("No command detected. Handling via SmartAgent.")
+
+            notes = discussion.attributes.get("notes", [])
+            history: list[ModelRequest | ModelResponse] = []
+
+            # Build chat history
+            for note in reversed(notes):
+                if len(history) > settings.max_chat_history:
+                    break
+
+                body = note.get("body", "")
+                body_lower = body.lower()
+
+                if f"@{name_lower}" in body_lower or f"@{username_lower}" in body_lower:
+                    history.append(ModelRequest(parts=[UserPromptPart(content=body)]))
+                else:
+                    history.append(ModelResponse(parts=[TextPart(content=body)]))
+
+            # Remove the last one (the current message)
+            if history:
+                history.pop(0)
+
+            smart_agent = SmartAgent(
+                openrouter_api_key=settings.openrouter_api_key,
+                gitlab_client=gitlab_client,
+                bot=bot,
+                mongo_db=mongo_db,
+            )
+
+            reply = await smart_agent.run(
+                user_prompt=note_content,
+                mr_iid=mr_iid,
+                project_id=project_id,
+                message_history=history,
+            )
+
     except Exception as e:
         logger.exception(
             f"Error generating reply for note event on MR {mr_iid} in project {project_id}"
         )
         reply = f"Error processing your request: {str(e)}"
+
     finally:
-        # Remove the "Processing your request..." note
         wait_note.delete()
 
-    # Post the reply as a note in the discussion remove previous processing note
+    # Post final reply
     discussion.notes.create({"body": reply})
