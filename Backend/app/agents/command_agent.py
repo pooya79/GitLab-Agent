@@ -65,6 +65,8 @@ class CommandAgent:
     async def run(
         self,
         input_command: str,
+        project_id: int,
+        mr_iid: int,
     ) -> str:
         command_name, flags, args = self._parse_bot_command(input_command)
 
@@ -76,9 +78,15 @@ class CommandAgent:
             gitlab_client=self.gitlab_client,
             mongo_db=self.mongo_db,
             bot=self.bot,
+            model=self.model,
         )
 
-        return await command_instance.run(flags, args)
+        return await command_instance.run(
+            project_id,
+            mr_iid,
+            flags,
+            args,
+        )
 
     def _init_agent(self, system_prompt: str) -> Agent:
         return Agent(

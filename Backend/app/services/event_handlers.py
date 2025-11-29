@@ -177,7 +177,9 @@ async def handle_note_event(
             elif command.lower().startswith(f"@{username_lower}/"):
                 command = command[len(f"@{bot.gitlab_user_name}/") :].strip()
 
-            reply = await command_agent.run(input_command=command)
+            reply = await command_agent.run(
+                input_command=command, project_id=project_id, mr_iid=mr_iid
+            )
 
         else:
             logger.info("No command detected. Handling via SmartAgent.")

@@ -4,7 +4,13 @@ from app.core.config import settings
 
 
 class HelpCommand(CommandInterface):
-    async def run(self, flags: dict[str, str | bool], args: list[str]) -> str:
+    async def run(
+        self,
+        project_id: int,
+        mr_iid: int,
+        flags: dict[str, str | bool],
+        args: list[str],
+    ) -> str:
         return f"""## Smart Agent — Help
 
 Invoke the Smart Agent by typing `@<bot_name>` or `@<bot_username>` anywhere in your message.  

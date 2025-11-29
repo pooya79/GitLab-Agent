@@ -12,11 +12,8 @@ from .describe import (
 from .review import (
     IssueCompliance,
     KeyIssuesComponentLink,
-    MRReviewOutput,
-    ReviewBody,
     ReviewCommand,
     ReviewInput,
-    TodoSection,
 )
 from .suggest import (
     CodeSuggestion,
@@ -49,11 +46,8 @@ __all__ = [
     "MRDescriptionOutput",
     "ReviewCommand",
     "ReviewInput",
-    "ReviewBody",
-    "MRReviewOutput",
     "IssueCompliance",
     "KeyIssuesComponentLink",
-    "TodoSection",
     "CodeSuggestion",
     "CodeSuggestionFeedback",
     "MRCodeSuggestionsOutput",

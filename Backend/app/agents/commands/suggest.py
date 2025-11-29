@@ -40,7 +40,13 @@ class SuggestCommand:
     def __init__(self) -> None:
         pass
 
-    def run(self, input_data: SuggestInput) -> MRCodeSuggestionsOutput:
+    async def run(
+        self,
+        project_id: int,
+        mr_iid: int,
+        flags: dict[str, str | bool],
+        args: list[str],
+    ) -> str:
         pass
 
     def _render_input(self, input_data: SuggestInput) -> str:

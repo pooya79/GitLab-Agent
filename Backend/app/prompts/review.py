@@ -68,13 +68,6 @@ class KeyIssuesComponentLink(BaseModel):
     start_line: int = Field(description="The start line that corresponds to this issue in the relevant file")
     end_line: int = Field(description="The end line that corresponds to this issue in the relevant file")
 
-{%- if require_todo_scan %}
-class TodoSection(BaseModel):
-    relevant_file: str = Field(description="The full path of the file containing the TODO comment")
-    line_number: int = Field(description="The line number where the TODO comment starts")
-    content: str = Field(description="The content of the TODO comment. Only include actual TODO comments within code comments (e.g., comments starting with '#', '//', '/*', '<!--', ...).  Remove leading 'TODO' prefixes. If more than 10 words, summarize the TODO comment to a single short sentence up to 10 words.")
-{%- endif %}
-
 {%- if related_issues %}
 
 class IssueCompliance(BaseModel):
@@ -102,9 +95,6 @@ class Review(BaseModel):
     key_issues_to_review: List[KeyIssuesComponentLink] = Field("A short and diverse list (0-{{ num_max_findings }} issues) of high-priority bugs, problems or performance concerns introduced in the MR code, which the MR reviewer should further focus on and validate during the review process.")
 {%- if require_security_review %}
     security_concerns: str = Field(description="Does this MR code introduce vulnerabilities such as exposure of sensitive information (e.g., API keys, secrets, passwords), or security concerns like SQL injection, XSS, CSRF, and others ? Answer 'No' (without explaining why) if there are no possible issues. If there are security concerns or issues, start your answer with a short header, such as: 'Sensitive information exposure: ...', 'SQL injection: ...', etc. Explain your answer. Be specific and give examples if possible")
-{%- endif %}
-{%- if require_todo_scan %}
-    todo_sections: Union[List[TodoSection], str] = Field(description="A list of TODO comments found in the MR code. Return 'No' (as a string) if there are no TODO comments in the MR")
 {%- endif %}
 
 class MRReview(BaseModel):
@@ -142,8 +132,7 @@ Example output:
         "end_line": 14
       }
     ]{%- if require_security_review %},
-    "security_concerns": "No"{%- endif %}{%- if require_todo_scan %},
-    "todo_sections": "No"{%- endif %}
+    "security_concerns": "No"{%- endif %}
   }
 }
 ```
@@ -233,8 +222,7 @@ Example output:
         "end_line": 0
       }
     ]{%- if require_security_review %},
-    "security_concerns": "No"{%- endif %}{%- if require_todo_scan %},
-    "todo_sections": "No"{%- endif %}
+    "security_concerns": "No"{%- endif %}
   }
 }
 ```
