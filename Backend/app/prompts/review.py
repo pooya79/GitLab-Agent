@@ -96,6 +96,9 @@ class Review(BaseModel):
 {%- if require_security_review %}
     security_concerns: str = Field(description="Does this MR code introduce vulnerabilities such as exposure of sensitive information (e.g., API keys, secrets, passwords), or security concerns like SQL injection, XSS, CSRF, and others ? Answer 'No' (without explaining why) if there are no possible issues. If there are security concerns or issues, start your answer with a short header, such as: 'Sensitive information exposure: ...', 'SQL injection: ...', etc. Explain your answer. Be specific and give examples if possible")
 {%- endif %}
+{%- if require_prompt_suggestion %}
+    prompt_suggestion_for_agent: str = Field(description="Based on the MR code diff and the context provided, suggest one prompt that could be used to guide an AI assistant in reviewing this MR. The agent has more access to the codebase and context than you but does not know the diff. The prompt should be specific to the changes made in the MR and aim to enhance the review process.")
+{%- endif %}
 
 class MRReview(BaseModel):
     review: Review
@@ -132,7 +135,8 @@ Example output:
         "end_line": 14
       }
     ]{%- if require_security_review %},
-    "security_concerns": "No"{%- endif %}
+    "security_concerns": "No"{%- endif %}{%- if require_prompt_suggestion %},
+    "prompt_suggestion_for_agent": "Please review the changes made in 'directory/xxx.py' and provide feedback on potential bugs and performance issues introduced in this MR."{%- endif %}
   }
 }
 ```
@@ -222,7 +226,8 @@ Example output:
         "end_line": 0
       }
     ]{%- if require_security_review %},
-    "security_concerns": "No"{%- endif %}
+    "security_concerns": "No"{%- endif %}{%- if require_prompt_suggestion %},
+    "prompt_suggestion_for_agent": "Please review the changes made in 'directory/xxx.py' and provide feedback on potential bugs and performance issues introduced in this MR."{%- endif %}
   }
 }
 ```

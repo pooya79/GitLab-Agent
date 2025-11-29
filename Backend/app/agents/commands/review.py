@@ -30,6 +30,7 @@ class ReviewInput(BaseModel):
     require_score: bool = False
     require_tests: bool = False
     require_security_review: bool = False
+    require_prompt_suggestion: bool = False
     num_max_findings: int = 5
     is_ai_metadata: bool = False
     duplicate_prompt_examples: bool = False
@@ -66,6 +67,7 @@ class ReviewCommand(CommandInterface):
         "Code feedback": "🤖",
         "Estimated effort to review": "⏱️",
         "Issue compliance check": "🎫",
+        "Prompt suggestion for agent": "🤖",
     }
 
     async def run(
@@ -91,6 +93,7 @@ class ReviewCommand(CommandInterface):
             require_score=flags.get("require_score", True),
             require_tests=flags.get("require_tests", True),
             require_security_review=flags.get("require_security_review", True),
+            require_prompt_suggestion=flags.get("require_prompt_suggestion", True),
         )
 
         # Render prompts
@@ -112,6 +115,9 @@ class ReviewCommand(CommandInterface):
             else (None, ...),
             "security_concerns": (Optional[str], None)
             if input_data.require_security_review
+            else (None, ...),
+            "prompt_suggestion_for_agent": (Optional[str], None)
+            if input_data.require_prompt_suggestion
             else (None, ...),
             "key_issues_to_review": (List[KeyIssuesComponentLink], ...),
         }
@@ -330,6 +336,16 @@ class ReviewCommand(CommandInterface):
 
                     markdown_text += f"{issue_str}\n\n"
 
+                markdown_text += "</td></tr>\n"
+            elif "prompt suggestion for agent" in key_nice.lower():
+                markdown_text += "<tr><td>"
+                if _is_value_no(value):
+                    markdown_text += (
+                        f"{emoji}&nbsp;<strong>No prompt suggestion provided</strong>"
+                    )
+                else:
+                    markdown_text += f"{emoji}&nbsp;<strong>Prompt suggestion for comprehensive review by agent</strong><br><br>\n\n"
+                    markdown_text += emphasize_header(str(value).strip())
                 markdown_text += "</td></tr>\n"
             else:
                 markdown_text += f"<tr><td>{emoji}&nbsp;<strong>{key_nice}</strong>: {value}</td></tr>\n"
