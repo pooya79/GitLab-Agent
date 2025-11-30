@@ -5,8 +5,9 @@ from pydantic import BaseModel, create_model
 from pydantic_ai import AgentRunResult
 
 from .command_interface import CommandInterface, RelatedIssue
-from app.agents.utils import get_line_link, emphasize_header
+from app.agents.utils import get_line_link
 from app.prompts.describe import system_template, user_template
+from app.core.config import settings
 
 
 class MRType(str, Enum):
@@ -102,8 +103,6 @@ class DescribeCommand(CommandInterface):
         source_branch: str | None = None,
     ) -> str:
         """Render the model output into the legacy markdown layout."""
-
-        from app.core.config import settings  # Local import to limit file changes
 
         def _normalize_dict(data: BaseModel | dict) -> dict:
             if isinstance(data, BaseModel):

@@ -129,7 +129,7 @@ class ReviewCommand(CommandInterface):
 
         # Convert to markdown
         markdown_text = self._convert_to_markdown(
-            output_data, project_id, mr_iid, input_data.branch
+            output_data, project_id, input_data.branch
         )
 
         return markdown_text
