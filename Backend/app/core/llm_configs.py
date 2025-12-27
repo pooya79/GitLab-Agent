@@ -60,6 +60,15 @@ llm_model_infos: list[LLMModelInfo] = [
         additional_kwargs_schema={"thinkingConfig": {"thinkingBudget": 4096}},
     ),
     LLMModelInfo(
+        model_name="google/gemini-3-flash-preview",
+        context_window=32000,
+        max_output_tokens=32000,
+        temperature=0.2,
+        additional_kwargs_schema={
+            "reasoning": {"max_tokens": 4096, "effort": "medium"}
+        },
+    ),
+    LLMModelInfo(
         model_name="anthropic/claude-sonnet-4.5",
         context_window=16384,
         max_output_tokens=16384,
