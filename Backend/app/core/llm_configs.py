@@ -64,9 +64,7 @@ llm_model_infos: list[LLMModelInfo] = [
         context_window=32000,
         max_output_tokens=32000,
         temperature=0.2,
-        additional_kwargs_schema={
-            "reasoning": {"max_tokens": 4096, "effort": "medium"}
-        },
+        additional_kwargs_schema={"reasoning": {"effort": "medium"}},
     ),
     LLMModelInfo(
         model_name="anthropic/claude-sonnet-4.5",
